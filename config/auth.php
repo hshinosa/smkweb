@@ -40,6 +40,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        // --- TAMBAHKAN GUARD ADMIN ---
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admins', // Provider yang akan kita buat
+        ],
+        // --- AKHIR GUARD ADMIN ---
     ],
 
     /*
@@ -62,13 +68,14 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => App\Models\User::class,
         ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        // --- TAMBAHKAN PROVIDER ADMINS ---
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Admin::class, // Model Admin yang baru dibuat
+        ],
+        // --- AKHIR PROVIDER ADMINS ---
     ],
 
     /*

@@ -1,4 +1,4 @@
-import React from 'react'; // Removed useState as it's now in Navbar
+import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import CountUp from 'react-countup';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -10,9 +10,10 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 // Import Components
-import Navbar from '@/Components/Navbar'; // Adjust path as per your project structure
-import Footer from '@/Components/Footer'; // Adjust path
-import { ChevronLeftIcon, ChevronRightIcon, InstagramIcon, FacebookIcon, LinkedinIcon, XIcon } from '@/Components/Icons'; // Adjust path
+import Navbar from '@/Components/Navbar';
+import Footer from '@/Components/Footer';
+// Impor ikon dari lucide-react
+import { ChevronLeft, ChevronRight, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react'; // Ganti XIcon dengan Twitter jika itu maksudnya
 
 // Path ke aset gambar Anda
 const logoSmkn15 = '/images/logo-smkn15.png';
@@ -26,12 +27,12 @@ const placeholderProgram3 = 'https://placehold.co/600x400/E2E8F0/A0AEC0?text=Pro
 const placeholderProgram4 = 'https://placehold.co/600x400/E2E8F0/A0AEC0?text=Program+4';
 const placeholderProgram5 = 'https://placehold.co/600x400/E2E8F0/A0AEC0?text=Program+5';
 
-// Data untuk Program Keahlian
 const placeholderDKV = 'https://placehold.co/400x300/E2E8F0/A0AEC0?text=DKV';
 const placeholderKuliner = 'https://placehold.co/400x300/E2E8F0/A0AEC0?text=Kuliner';
 const placeholderPekerjaanSosial = 'https://placehold.co/400x300/E2E8F0/A0AEC0?text=Peksos';
 const placeholderPerhotelan = 'https://placehold.co/400x300/E2E8F0/A0AEC0?text=Hotel';
 
+// Data untuk Program Keahlian (sama seperti sebelumnya)
 const programKeahlianDataNav = [
     { nama: "DKV", link: "/programkeahlian/dkv" },
     { nama: "Perhotelan", link: "/programkeahlian/perhotelan" },
@@ -46,6 +47,7 @@ const programKeahlianData = [
     { nama: "Perhotelan", gambar: placeholderPerhotelan, link: "/programkeahlian/perhotelan" },
 ];
 
+// Data Fakta Sekolah (sama seperti sebelumnya)
 const faktaSekolah = [
     { angka: 40, label: "Guru" },
     { angka: 10, label: "Staff" },
@@ -54,6 +56,7 @@ const faktaSekolah = [
     { angka: 10, label: "Fasilitas" },
 ];
 
+// Data Program Sekolah (sama seperti sebelumnya)
 const programSekolah = [
     { nama: "Menuju Badan Layanan Umum Daerah (BLUD)", gambar: placeholderProgram1, link: "/program/blud" },
     { nama: "Kelas Industri Program Keahlian Perhotelan & Kuliner", gambar: placeholderProgram2, link: "/program/kelas-industri" },
@@ -62,8 +65,9 @@ const programSekolah = [
     { nama: "Program Kewirausahaan Siswa", gambar: placeholderProgram5, link: "/program/kewirausahaan" },
 ];
 
+// Data Link Navigasi (sama seperti sebelumnya)
 const googleMapsEmbedUrl = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.7320221071664!2d107.6164360758815!3d-6.922603993077097!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e62c87267923%3A0x7ef8aaa0fcd59ec9!2sSMKN%2015%20Kota%20Bandung!5e0!3m2!1sid!2sid!4v1746550004423!5m2!1sid!2sid";
-    
+
 const tentangKamiLinks = [
     { title: "Profil Sekolah", href: "/profil-sekolah" },
     { title: "Visi & Misi", href: "/visi-misi" },
@@ -86,16 +90,17 @@ const akademikInformasiLinks = [
     { title: "Berita dan Pengumuman", href: "/berita-pengumuman" },
 ];
 
+// Update socialMediaLinks untuk menggunakan komponen Lucide
 const socialMediaLinks = [
-    { name: "Instagram", href: "https://www.instagram.com/smkn_15bandung", icon: InstagramIcon, handle: "@smkn_15bandung" },
-    { name: "Facebook", href: "https://www.facebook.com/SMKN15Bandung", icon: FacebookIcon, handle: "SMKN 15 Bandung" },
-    { name: "LinkedIn", href: "https://www.linkedin.com/school/smkn-15-bandung/", icon: LinkedinIcon, handle: "SMKN 15 Bandung" },
-    { name: "X", href: "https://twitter.com/smkn15bandung", icon: XIcon, handle: "@smkn15bandung" },
+    { name: "Instagram", href: "https://www.instagram.com/smkn_15bandung", icon: Instagram, handle: "@smkn_15bandung" },
+    { name: "Facebook", href: "https://www.facebook.com/SMKN15Bandung", icon: Facebook, handle: "SMKN 15 Bandung" },
+    { name: "LinkedIn", href: "https://www.linkedin.com/school/smkn-15-bandung/", icon: Linkedin, handle: "SMKN 15 Bandung" },
+    { name: "X", href: "https://twitter.com/smkn15bandung", icon: Twitter, handle: "@smkn15bandung" }, // Menggunakan ikon Twitter
 ];
 
 
 export default function LandingPage({ auth }) {
-    
+
     return (
         <div className="bg-secondary text-gray-800 font-sans">
             <Head title="SMKN 15 Bandung" />
@@ -108,8 +113,9 @@ export default function LandingPage({ auth }) {
                 programKeahlianDataNav={programKeahlianDataNav}
             />
 
-            {/* Hero Section */}
-            <div className="relative pt-16 bg-cover bg-center h-[70vh] flex items-center justify-center" style={{ backgroundImage: `url('${heroBgImage}')` }}>
+            {/* ... (Hero, Tentang, Sambutan, Program Keahlian, Fakta sections remain the same) ... */}
+             {/* Hero Section */}
+             <div className="relative pt-16 bg-cover bg-center h-[70vh] flex items-center justify-center" style={{ backgroundImage: `url('${heroBgImage}')` }}>
                 <div className="absolute inset-0 bg-black opacity-50"></div>
                 <div className="relative z-10 text-center px-4">
                     <h2 className="text-3xl sm:text-3xl md:text-5xl font-bold text-white leading-tight">Selamat Datang di</h2>
@@ -149,6 +155,7 @@ export default function LandingPage({ auth }) {
                             <img src={kepalaSekolahPhoto} alt="Dra. Lilis Yuyun, M.M.Pd. - Kepala Sekolah SMKN 15 Bandung" className="rounded-lg w-full max-w-xs mx-auto md:mx-0"/>
                         </div>
                         <div className="md:col-span-8 prose-sm text-gray-700 max-w-none">
+                            {/* Konten Sambutan */}
                             <p className="font-semibold">Sampurasun!</p>
                             <p>Bismillahirrahmanirrahim.</p>
                             <p>Alhamdulillahi rabbil ‘alamin. Wassalatu wassalamu ‘ala asyrafil anbiya-i wal mursalin, wa’ala alihi wasahbihi ajma’in.</p>
@@ -180,19 +187,19 @@ export default function LandingPage({ auth }) {
             {/* Program Keahlian Section */}
             <section className="py-12 bg-white sm:py-16 lg:py-20">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center md:text-left mb-10 md:mb-12">
+                     <div className="text-center md:text-left mb-10 md:mb-12">
                         <h2 className="text-3xl font-bold text-gray-800 mb-1">
                             4 Program Keahlian <span className="text-primary">SMKN 15 Bandung</span>
                         </h2>
                         <div className="h-1 w-24 bg-primary mt-2 mx-auto md:mx-0"></div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                         {programKeahlianData.map((program, index) => (
                             <Link href={program.link} key={index} className="group block bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out overflow-hidden transform hover:-translate-y-1 hover:scale-105">
                                 <div className="w-full h-48 bg-gray-200">
-                                    <img 
-                                        src={program.gambar} 
-                                        alt={program.nama} 
+                                    <img
+                                        src={program.gambar}
+                                        alt={program.nama}
                                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                                     />
                                 </div>
@@ -209,7 +216,7 @@ export default function LandingPage({ auth }) {
                 </div>
             </section>
 
-            {/* Fakta SMKN 15 Bandung Section */}
+             {/* Fakta SMKN 15 Bandung Section */}
             <section className="py-12 sm:py-12 lg:py-18 bg-primary text-white">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-10 md:mb-12">
@@ -232,6 +239,7 @@ export default function LandingPage({ auth }) {
                 </div>
             </section>
 
+
             {/* Program-Program SMKN 15 Bandung Section */}
             <section className="py-12 bg-white sm:py-16 lg:py-20">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -242,7 +250,7 @@ export default function LandingPage({ auth }) {
                             </h2>
                             <div className="h-1 w-32 bg-primary mt-2 mx-auto md:mx-0 mb-4 md:mb-0"></div>
                         </div>
-                        <Link 
+                        <Link
                             href="/program"
                             className="bg-primary text-white hover:bg-primary-darker px-6 py-2 rounded-md text-sm font-semibold transition duration-300"
                         >
@@ -271,9 +279,9 @@ export default function LandingPage({ auth }) {
                                 <SwiperSlide key={index} className="pb-1 overflow-visible"> {/* Allow shadow to be visible */}
                                     <Link href={program.link} className="group block bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 ease-in-out overflow-hidden h-full flex flex-col">
                                         <div className="w-full h-40 bg-gray-200">
-                                            <img 
-                                                src={program.gambar} 
-                                                alt={program.nama} 
+                                            <img
+                                                src={program.gambar}
+                                                alt={program.nama}
                                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                             />
                                         </div>
@@ -286,26 +294,26 @@ export default function LandingPage({ auth }) {
                                 </SwiperSlide>
                             ))}
                         </Swiper>
-                        {/* Custom Navigation Buttons */}
+                        {/* Custom Navigation Buttons - Menggunakan Lucide Icons */}
                         <div className="swiper-button-prev-custom absolute top-1/2 left-0 transform -translate-y-1/2 z-10 cursor-pointer p-2 bg-white/70 hover:bg-white rounded-full shadow-md">
-                           <ChevronLeftIcon className="w-6 h-6 text-primary" />
+                           <ChevronLeft size={24} className="text-primary" />
                         </div>
                         <div className="swiper-button-next-custom absolute top-1/2 right-0 transform -translate-y-1/2 z-10 cursor-pointer p-2 bg-white/70 hover:bg-white rounded-full shadow-md">
-                           <ChevronRightIcon className="w-6 h-6 text-primary" /> {/* Make sure this uses the correct icon */}
+                           <ChevronRight size={24} className="text-primary" />
                         </div>
                         {/* Custom Pagination Container */}
                         <div className="swiper-pagination-custom text-center mt-4"></div>
                     </div>
                 </div>
             </section>
-            
+
             <Footer
                 logoSmkn15={logoSmkn15}
                 googleMapsEmbedUrl={googleMapsEmbedUrl}
                 tentangKamiLinks={tentangKamiLinks}
                 akademikInformasiLinks={akademikInformasiLinks}
                 programKeahlianDataNav={programKeahlianDataNav}
-                socialMediaLinks={socialMediaLinks}
+                socialMediaLinks={socialMediaLinks} // Pastikan data ini sudah diupdate
             />
         </div>
     );

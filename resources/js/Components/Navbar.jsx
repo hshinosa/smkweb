@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
-import { ChevronDownIcon, ChevronRightIcon, InformationCircleIcon } from './Icons'; // Assuming Icons.jsx is in the same folder
+import { ChevronDown, ChevronRight, Info, Menu, X } from 'lucide-react';
 
 export default function Navbar({
     logoSmkn15,
@@ -8,7 +8,6 @@ export default function Navbar({
     manajemenSekolahSublinks,
     akademikInformasiLinks,
     programKeahlianDataNav
-    // auth // if needed for user-specific navbar items
 }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -16,6 +15,7 @@ export default function Navbar({
         <nav className="bg-white fixed w-full z-50 shadow-navbar">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
+                    {/* ... (logo and desktop title remains the same) ... */}
                     <div className="flex-shrink-0 flex items-center">
                         <Link href="/">
                             <img className="h-10 w-auto" src={logoSmkn15} alt="Logo SMKN 15 Bandung" />
@@ -31,10 +31,12 @@ export default function Navbar({
                         <div className="relative group">
                             <button className="text-gray-700 hover:text-primary inline-flex items-center px-1 py-2 text-sm font-medium focus:outline-none">
                                 Tentang Kami
-                                <ChevronDownIcon className="ml-1 h-5 w-5 text-gray-400 group-hover:text-primary" />
+                                {/* Ganti ikon */}
+                                <ChevronDown size={20} className="ml-1 text-gray-400 group-hover:text-primary" />
                             </button>
                             <div className="absolute left-0 mt-0 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-in-out z-20 transform-gpu">
                                 <div className="py-1 divide-y divide-gray-100" role="menu" aria-orientation="vertical" aria-labelledby="tentang-kami-menu">
+                                    {/* ... (map tentangKamiLinks) ... */}
                                     {tentangKamiLinks.map(link => (
                                         <Link key={link.title} href={link.href} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary" role="menuitem">
                                             {link.title}
@@ -44,7 +46,8 @@ export default function Navbar({
                                     <div className="relative group/submenu">
                                         <div className="flex justify-between items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary cursor-default" role="menuitem">
                                             <span>Manajemen Sekolah</span>
-                                            <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+                                            {/* Ganti ikon */}
+                                            <ChevronRight size={16} className="text-gray-400" />
                                         </div>
                                         <div className="absolute left-full top-[-1px] ml-px w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover/submenu:opacity-100 group-hover/submenu:visible transition-all duration-200 ease-in-out z-30">
                                             <div className="py-1 divide-y divide-gray-100" role="menu" aria-orientation="vertical">
@@ -64,10 +67,12 @@ export default function Navbar({
                         <div className="relative group">
                             <button className="text-gray-700 hover:text-primary inline-flex items-center px-1 py-2 text-sm font-medium focus:outline-none">
                                 Akademik & Informasi
-                                <ChevronDownIcon className="ml-1 h-5 w-5 text-gray-400 group-hover:text-primary" />
+                                {/* Ganti ikon */}
+                                <ChevronDown size={20} className="ml-1 text-gray-400 group-hover:text-primary" />
                             </button>
                             <div className="absolute left-0 mt-0 w-60 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-in-out z-20 transform-gpu">
                                 <div className="py-1 divide-y divide-gray-100" role="menu" aria-orientation="vertical" aria-labelledby="akademik-menu">
+                                    {/* ... (map akademikInformasiLinks) ... */}
                                     {akademikInformasiLinks.map(link => (
                                         <Link key={link.title} href={link.href} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary" role="menuitem">
                                             {link.title}
@@ -76,7 +81,8 @@ export default function Navbar({
                                     <div className="relative group/submenu">
                                         <div className="flex justify-between items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary cursor-default" role="menuitem">
                                             <span>Program Keahlian</span>
-                                            <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+                                             {/* Ganti ikon */}
+                                            <ChevronRight size={16} className="text-gray-400" />
                                         </div>
                                         <div className="absolute left-full top-[-1px] ml-px w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover/submenu:opacity-100 group-hover/submenu:visible transition-all duration-200 ease-in-out z-30">
                                             <div className="py-1 divide-y divide-gray-100" role="menu" aria-orientation="vertical">
@@ -94,7 +100,8 @@ export default function Navbar({
 
                         {/* Tombol Informasi SPMB */}
                         <Link href="/informasi-spmb" className="bg-primary text-white hover:bg-primary-darker inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md self-center">
-                            <InformationCircleIcon className="h-5 w-5 mr-2" />
+                            {/* Ganti ikon */}
+                            <Info size={20} className="mr-2" />
                             Informasi SPMB
                         </Link>
                     </div>
@@ -109,14 +116,11 @@ export default function Navbar({
                             aria-expanded={mobileMenuOpen}
                         >
                             <span className="sr-only">Open main menu</span>
+                            {/* Ganti ikon hamburger/close */}
                             {mobileMenuOpen ? (
-                                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+                                <X className="block h-6 w-6" aria-hidden="true" />
                             ) : (
-                                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
+                                <Menu className="block h-6 w-6" aria-hidden="true" />
                             )}
                         </button>
                     </div>
@@ -129,7 +133,7 @@ export default function Navbar({
                         <div className="group">
                             <button className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50 flex justify-between items-center"
                                 onClick={(e) => e.currentTarget.nextElementSibling.classList.toggle('hidden')}>
-                                Tentang Kami <ChevronDownIcon className="h-5 w-5" />
+                                Tentang Kami <ChevronDown size={20} /> {/* Ganti ikon */}
                             </button>
                             <div className="hidden pl-4 mt-1 space-y-1">
                                 {tentangKamiLinks.map(link => (
@@ -139,7 +143,7 @@ export default function Navbar({
                                 <div className="group/submenu">
                                     <button className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 flex justify-between items-center"
                                         onClick={(e) => e.currentTarget.nextElementSibling.classList.toggle('hidden')}>
-                                        Manajemen Sekolah <ChevronDownIcon className="h-5 w-5" />
+                                        Manajemen Sekolah <ChevronDown size={20} /> {/* Ganti ikon */}
                                     </button>
                                     <div className="hidden pl-4 mt-1 space-y-1">
                                         {manajemenSekolahSublinks.map(sublink => (
@@ -152,7 +156,7 @@ export default function Navbar({
                          <div className="group">
                             <button className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50 flex justify-between items-center"
                                 onClick={(e) => e.currentTarget.nextElementSibling.classList.toggle('hidden')}>
-                                Akademik & Informasi <ChevronDownIcon className="h-5 w-5" />
+                                Akademik & Informasi <ChevronDown size={20} /> {/* Ganti ikon */}
                             </button>
                             <div className="hidden pl-4 mt-1 space-y-1">
                                 {akademikInformasiLinks.map(link => (
@@ -161,7 +165,7 @@ export default function Navbar({
                                 <div className="group/submenu">
                                     <button className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 flex justify-between items-center"
                                         onClick={(e) => e.currentTarget.nextElementSibling.classList.toggle('hidden')}>
-                                        Program Keahlian <ChevronDownIcon className="h-5 w-5" />
+                                        Program Keahlian <ChevronDown size={20} /> {/* Ganti ikon */}
                                     </button>
                                     <div className="hidden pl-4 mt-1 space-y-1">
                                         {programKeahlianDataNav.map(prog => (
@@ -172,7 +176,8 @@ export default function Navbar({
                             </div>
                         </div>
                         <Link href="/informasi-spmb" className="bg-primary text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-primary-darker text-center mt-2">
-                            <InformationCircleIcon className="h-5 w-5 mr-1 inline" />
+                             {/* Ganti ikon */}
+                            <Info size={20} className="mr-1 inline" />
                             Informasi SPMB
                         </Link>
                     </div>

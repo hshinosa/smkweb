@@ -20,10 +20,9 @@ export default function Footer({
                         <div className="flex items-center mb-4">
                             <img src={logoSmkn15} alt="Logo SMKN 15 Bandung" className="h-12 mr-3" />
                             <span className="text-xl font-semibold text-gray-800">SMK Negeri 15 Bandung</span>
-                        </div>
-                        <p className="text-sm mb-2">Jalan Jendral Gatot Subroto No. 4, Kelurahan Burangrang, Kecamatan Lengkong, Kota Bandung, Jawa Barat 40262</p>
-                        <p className="text-sm mb-2">(022) 7303659</p>
-                        <p className="text-sm mb-4">smklimabelas@gmail.com</p>
+                        </div>                        <p className="text-sm leading-relaxed mb-2">Jalan Jendral Gatot Subroto No. 4, Kelurahan Burangrang, Kecamatan Lengkong, Kota Bandung, Jawa Barat 40262</p>
+                        <p className="text-sm leading-relaxed mb-2">(022) 7303659</p>
+                        <p className="text-sm leading-relaxed mb-4">smklimabelas@gmail.com</p>
                         <div className="aspect-[16/9] rounded-lg overflow-hidden shadow-md">
                             <iframe
                                 src={googleMapsEmbedUrl}

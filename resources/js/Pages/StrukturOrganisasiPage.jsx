@@ -83,8 +83,7 @@ export default function StrukturOrganisasiPage({ auth }) {
                  <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4 text-center md:text-left">
                         Struktur Organisasi
-                    </h1>
-                    <p className="text-lg text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left">
+                    </h1>                    <p className="text-sm sm:text-base leading-relaxed text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left">
                         Bagan struktur organisasi SMK Negeri 15 Bandung yang menunjukkan hierarki kepemimpinan dan koordinasi antar unit kerja di sekolah.
                     </p>
                 </div>

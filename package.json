@@ -25,9 +25,11 @@
     },
     "dependencies": {
         "@radix-ui/react-navigation-menu": "^1.2.12",
+        "chart.js": "^4.4.9",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "lucide-react": "^0.507.0",
+        "react-chartjs-2": "^5.3.0",
         "react-countup": "^6.5.3",
         "swiper": "^11.2.6",
         "tailwind-merge": "^3.2.0",

@@ -158,8 +158,7 @@ export default function ProgramSekolahPage({ auth }) {
                   <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4 text-center md:text-left">
                         Program & Kegiatan Sekolah
-                    </h1>
-                    <p className="text-lg text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left">
+                    </h1>                    <p className="text-sm sm:text-base leading-relaxed text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left">
                         Berbagai inisiatif dan aktivitas yang dirancang untuk mengembangkan kompetensi, kreativitas, dan karakter siswa SMK Negeri 15 Bandung secara holistik.
                     </p>
                 </div>
@@ -278,9 +277,7 @@ export default function ProgramSekolahPage({ auth }) {
                                     onError={(e) => { e.target.onerror = null; e.target.src = '/images/placeholder-fallback.png'; }}
                                 />
                             </div>
-                            {/* ==== AKHIR MODIFIKASI ==== */}
-
-                            <div className="text-sm text-gray-700 space-y-3 prose prose-sm max-w-none">
+                            {/* ==== AKHIR MODIFIKASI ==== */}                            <div className="text-sm leading-relaxed text-gray-700 space-y-3 prose prose-sm max-w-none">
                                 <p>{selectedProgram.description || "Deskripsi untuk program ini belum tersedia."}</p>
                             </div>
 

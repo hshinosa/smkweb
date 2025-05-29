@@ -195,8 +195,7 @@ export default function InformasiSpmbPage({ auth }) {
                  <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4">
                         Informasi SPMB
-                    </h1>
-                    <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                    </h1>                    <p className="text-sm sm:text-base leading-relaxed text-gray-600 max-w-3xl mx-auto">
                         Wujudkan Masa Depan Cerahmu Bersama SMK Negeri 15 Bandung. Temukan semua informasi penting mengenai Seleksi Penerimaan Murid Baru (SPMB) di halaman ini.
                     </p>
                 </div>
@@ -206,13 +205,12 @@ export default function InformasiSpmbPage({ auth }) {
              <section className="py-12 bg-secondary sm:py-16 lg:py-20">
                 {/* ... (Konten intro sama) ... */}
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-                        <div className="prose-sm text-gray-700 max-w-none">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">                        <div className="prose-sm text-gray-700 max-w-none">
                              <h2 className="text-3xl font-bold text-gray-800 mb-2">Siap Menjadi <span className="text-primary">Profesional Muda?</span></h2>
                             <div className="h-1 w-24 bg-primary mb-6"></div>
-                            <p>SMK Negeri 15 Bandung membuka pintu kesempatan bagi para lulusan SMP/MTs yang bersemangat untuk mengembangkan potensi diri dan meraih masa depan gemilang di dunia kerja. Kami menyediakan pendidikan vokasi berkualitas yang relevan dengan tuntutan industri saat ini.</p>
-                            <p>Dengan didukung oleh fasilitas modern, pengajar berpengalaman, dan program keahlian yang diminati, kami siap membekali Anda dengan keterampilan teknis dan soft skills yang dibutuhkan untuk sukses. Jangan biarkan mimpimu menunggu lebih lama!</p>
-                             <p>Bergabunglah dengan ribuan alumni sukses kami dan mulailah perjalananmu menuju karir impian bersama SMK Negeri 15 Bandung.</p>
+                            <p className="text-sm sm:text-base leading-relaxed mb-4">SMK Negeri 15 Bandung membuka pintu kesempatan bagi para lulusan SMP/MTs yang bersemangat untuk mengembangkan potensi diri dan meraih masa depan gemilang di dunia kerja. Kami menyediakan pendidikan vokasi berkualitas yang relevan dengan tuntutan industri saat ini.</p>
+                            <p className="text-sm sm:text-base leading-relaxed mb-4">Dengan didukung oleh fasilitas modern, pengajar berpengalaman, dan program keahlian yang diminati, kami siap membekali Anda dengan keterampilan teknis dan soft skills yang dibutuhkan untuk sukses. Jangan biarkan mimpimu menunggu lebih lama!</p>
+                             <p className="text-sm sm:text-base leading-relaxed">Bergabunglah dengan ribuan alumni sukses kami dan mulailah perjalananmu menuju karir impian bersama SMK Negeri 15 Bandung.</p>
                         </div>
                         <div className="mt-8 md:mt-0 flex justify-center">
                              <img src="/images/logo-smkn15-large.png" alt="Logo SMKN 15 Bandung" className="max-w-xs w-full opacity-80"/>
@@ -239,8 +237,7 @@ export default function InformasiSpmbPage({ auth }) {
                                         {IconComponent && <IconComponent size={48} className="text-primary mx-auto mb-4" strokeWidth={1.5} />}
                                         <h3 className="text-xl font-semibold text-gray-800 mb-2 group-hover:text-primary transition-colors min-h-[2.5em]">
                                             {info.title}
-                                        </h3>
-                                        <p className="text-sm text-gray-600 mb-4">
+                                        </h3>                                        <p className="text-sm leading-relaxed text-gray-600 mb-4">
                                             {info.description}
                                         </p>
                                     </div>
@@ -266,15 +263,13 @@ export default function InformasiSpmbPage({ auth }) {
                  <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <h2 className="text-3xl font-bold text-center text-gray-800 mb-10">
                         Kenapa <span className="text-primary">SMK Negeri 15 Bandung?</span>
-                    </h2>
-                     <p className="text-center text-gray-600 mb-12 max-w-3xl mx-auto">
+                    </h2>                     <p className="text-center text-sm sm:text-base leading-relaxed text-gray-600 mb-12 max-w-3xl mx-auto">
                         Mencari sekolah yang tepat itu seperti memilih jalan menuju masa depan. Nah, SMK Negeri 15 Bandung hadir sebagai sekolah yang siap membentuk kamu menjadi profesional yang handal dan siap kerja. Ragu? Ini dia alasan kenapa SMK Negeri 15 Bandung adalah pilihan terbaik untukmu:
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-                        {kenapaSmkData.map((item, index) => (
-                            <div key={index} className="p-6 bg-white rounded-lg shadow-md">
+                        {kenapaSmkData.map((item, index) => (                            <div key={index} className="p-6 bg-white rounded-lg shadow-md">
                                 <h3 className="font-semibold text-primary text-lg mb-2">{item.title}</h3>
-                                <p className="text-sm text-gray-600">{item.description}</p>
+                                <p className="text-sm leading-relaxed text-gray-600">{item.description}</p>
                             </div>
                         ))}
                     </div>
@@ -316,8 +311,7 @@ export default function InformasiSpmbPage({ auth }) {
                         <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 focus:outline-none">
                             <X size={24} />
                         </button>
-                    </div>
-                    <div className="text-sm text-gray-700 space-y-3 prose prose-sm max-w-none">
+                    </div>                    <div className="text-sm leading-relaxed text-gray-700 space-y-3 prose prose-sm max-w-none">
                         {/* Render konten detail */}
                         {modalContent.content}
                     </div>

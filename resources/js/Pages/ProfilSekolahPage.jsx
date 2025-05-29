@@ -80,8 +80,7 @@ export default function ProfilSekolahPage({ auth }) {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4 text-center md:text-left">
                         Profil dan Sejarah SMK Negeri 15 Bandung
-                    </h1>
-                    <p className="text-lg text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left">
+                    </h1>                    <p className="text-sm sm:text-base leading-relaxed text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left">
                         Menelusuri jejak langkah SMK Negeri 15 Bandung dari masa ke masa, sebuah institusi pendidikan vokasi yang terus bertransformasi dan berkontribusi untuk negeri.
                     </p>
                 </div>
@@ -90,32 +89,31 @@ export default function ProfilSekolahPage({ auth }) {
             {/* Sejarah & Summary Section */}
             <section className="py-12 bg-secondary sm:py-16 lg:py-20">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-                        {/* Kolom Teks Sejarah */}
-                        <div className="md:col-span-2 prose max-w-none text-gray-700">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">                        {/* Kolom Teks Sejarah */}
+                        <div className="md:col-span-2 prose prose-sm max-w-none text-gray-700">
                             <h2 className="text-3xl font-bold text-gray-800 mb-4">
                                 Perjalanan Panjang <span className="text-primary">SMKN 15 Bandung</span>
                             </h2>
                             <div className="h-1 w-24 bg-primary mb-8"></div>
 
                             <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">Era Awal (1919 - 1953)</h3>
-                            <p>
+                            <p className="text-sm sm:text-base leading-relaxed">
                                 Sejarah SMK Negeri 15 Bandung berakar panjang, dimulai pada tahun <strong>1919</strong>. Pada masa itu, gedung sekolah yang kini berdiri megah di Jalan Jenderal Gatot Subroto, dibangun oleh organisasi Indo Europee Verbond (IEV). Fungsi awalnya adalah sebagai <strong>Kweek School Voor Onderwijzer</strong> (Sekolah Guru), sebuah lembaga pendidikan penting di era kolonial Belanda. Setelah kemerdekaan Indonesia diproklamasikan, semangat nasionalisme mendorong perubahan. Sekolah ini kemudian berganti nama menjadi <strong>Indooeenheidts Verbond</strong> atau Gabungan Indo Unit Kesatuan Indonesia (GIKI) pada tahun 1952. Transformasi berlanjut, dan pada tanggal <strong>1 Mei 1953</strong>, GIKI secara resmi berubah status menjadi <strong>SGA Negeri II Bandung</strong> (Sekolah Guru Atas).
                             </p>
 
                             <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">Transformasi Menuju Vokasi (1978 - 1997)</h3>
-                            <p>
+                            <p className="text-sm sm:text-base leading-relaxed">
                                 Perkembangan sistem pendidikan nasional terus berjalan. Pada tanggal <strong>22 April 1978</strong>, SGA Negeri II Bandung diubah menjadi <strong>SPG Negeri I Bandung</strong> (Sekolah Pendidikan Guru). Lima tahun kemudian, tepatnya pada <strong>1 September 1983</strong>, terjadi peralihan fungsi lagi. Berdasarkan Keputusan Kementerian Pendidikan dan Kebudayaan, SPG Negeri I Bandung dialihfungsikan menjadi <strong>SGO Negeri Bandung</strong> (Sekolah Guru Olahraga), menunjukkan fokus baru pada pendidikan keolahragaan.
                             </p>
-                            <p>
+                            <p className="text-sm sm:text-base leading-relaxed">
                                 Seiring dengan kebijakan baru pendidikan kejuruan, pada tahun <strong>1989</strong>, SGO Negeri Bandung kembali bertransformasi menjadi <strong>Sekolah Menengah Pekerjaan Sosial (SMPS) Negeri Bandung</strong>. Perubahan ini menandai awal fokus sekolah pada bidang kejuruan pekerjaan sosial. Puncak transformasi terjadi pada tahun <strong>1997</strong>. Melalui Keputusan Resmi Menteri Pendidikan, SMPS Negeri Bandung secara resmi berubah nama dan status menjadi <strong>SMK Negeri 15 Bandung</strong>, dengan fokus awal yang kuat pada Program Keahlian Pekerjaan Sosial. Nama inilah yang melekat hingga sekarang.
                             </p>
 
                             <h3 className="text-xl font-semibold text-gray-800 mt-6 mb-2">Perkembangan Modern (2006 - Sekarang)</h3>
-                            <p>
+                            <p className="text-sm sm:text-base leading-relaxed">
                                 Seiring berjalannya waktu dan tuntutan dunia kerja yang dinamis, SMK Negeri 15 Bandung terus beradaptasi dan berkembang. Sekolah mulai menambahkan program keahlian baru untuk menjawab kebutuhan industri. Pada tahun <strong>2006</strong>, sekolah ini membuka Program Keahlian <strong>Akomodasi Perhotelan</strong>. Langkah ini kemudian disusul dengan pembukaan Program Keahlian <strong>Jasa Boga</strong> (sekarang Kuliner) dan <strong>Multimedia</strong> (yang kemudian menjadi Desain Komunikasi Visual) pada tahun <strong>2016</strong>.
                             </p>
-                            <p>
+                            <p className="text-sm sm:text-base leading-relaxed">
                                 Saat ini, SMK Negeri 15 Bandung bangga menawarkan empat program keahlian utama yang relevan dan diminati: <strong>Pekerjaan Sosial, Akomodasi Perhotelan, Kuliner,</strong> dan <strong>Desain Komunikasi Visual (DKV)</strong>. Di tengah modernisasi program, gedung sekolah ini tetap mempertahankan arsitektur asli peninggalan kolonial Belanda, menjadikannya saksi bisu sekaligus simbol perjalanan sejarah panjang institusi ini dalam dunia pendidikan vokasi di Indonesia.
                             </p>
                         </div>
@@ -131,12 +129,11 @@ export default function ProfilSekolahPage({ auth }) {
                                 <h3 className="text-2xl font-bold text-gray-800 mb-3 flex items-center">
                                     <Building size={24} className="mr-2 text-primary" />
                                     SMK Negeri 15 Bandung
-                                </h3>
-                                <p className="text-sm text-gray-600 mb-4">
+                                </h3>                                <p className="text-sm leading-relaxed text-gray-600 mb-4">
                                     SMKN 15 Bandung adalah salah satu sekolah kejuruan unggulan di Kota Bandung yang memiliki reputasi baik di bidang pendidikan vokasi. Sekolah ini berfokus pada pengembangan kompetensi siswa dalam berbagai program keahlian yang relevan dengan kebutuhan industri modern.
                                 </p>
                                 <h4 className="text-md font-semibold text-gray-700 mb-2">Program Keahlian Unggulan:</h4>
-                                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                                <ul className="list-disc list-inside text-sm leading-relaxed text-gray-600 space-y-1">
                                     <li>Pekerjaan Sosial</li>
                                     <li>Kuliner</li>
                                     <li>Perhotelan</li>

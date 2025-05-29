@@ -83,8 +83,7 @@ export default function VisiMisiPage({ auth }) {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4 text-center md:text-left">
                         Visi dan Misi SMK Negeri 15 Bandung
-                    </h1>
-                    <p className="text-lg text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left">
+                    </h1>                    <p className="text-sm sm:text-base leading-relaxed text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left">
                         Landasan dan arah tujuan pendidikan di SMK Negeri 15 Bandung dalam mencetak generasi penerus bangsa yang unggul dan berkarakter.
                     </p>
                 </div>
@@ -112,11 +111,11 @@ export default function VisiMisiPage({ auth }) {
                             <h2 className="text-4xl font-bold text-gray-800 mb-4 flex items-center">
                                 <Eye size={36} className="mr-3 text-primary" /> Visi
                             </h2>
-                            <div className="h-1 w-16 bg-primary mb-6"></div>
-                            <p className="text-primary font-semibold text-lg mb-4 italic">
+                            <div className="h-1 w-16 bg-primary mb-6"></div>                            
+                            <p className="text-primary font-semibold text-sm sm:text-base leading-relaxed mb-4 italic">
                                 {visiMotto}
                             </p>
-                            <p className="text-gray-700 text-lg leading-relaxed">
+                            <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
                                 {visiText}
                             </p>
                         </div>
@@ -133,12 +132,11 @@ export default function VisiMisiPage({ auth }) {
                             <h2 className="text-4xl font-bold text-gray-800 mb-4 flex items-center">
                                 <Target size={36} className="mr-3 text-primary" /> Misi
                             </h2>
-                            <div className="h-1 w-16 bg-primary mb-6"></div>
-                            <ul className="space-y-4 text-gray-700">
+                            <div className="h-1 w-16 bg-primary mb-6"></div>                            <ul className="space-y-4 text-gray-700">
                                 {misiPoints.map((item, index) => (
                                     <li key={index} className="flex items-start">
                                         <Dot className="text-primary w-6 h-6 mr-2 flex-shrink-0 mt-1" />
-                                        <span>{item}</span>
+                                        <span className="text-sm sm:text-base leading-relaxed">{item}</span>
                                     </li>
                                 ))}
                             </ul>

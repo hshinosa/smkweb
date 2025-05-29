@@ -17,9 +17,6 @@ import { ChevronLeft, ChevronRight, Instagram, Facebook, Linkedin, Twitter } fro
 
 // Path ke aset gambar Anda
 const logoSmkn15 = '/images/logo-smkn15.png';
-const heroBgImage = '/images/hero-bg-smkn15.jpg';
-const groupPhoto = '/images/keluarga-besar-smkn15.png';
-const kepalaSekolahPhoto = '/images/kepala-sekolah.jpg';
 
 const placeholderProgram1 = 'https://placehold.co/600x400/E2E8F0/A0AEC0?text=Program+1';
 const placeholderProgram2 = 'https://placehold.co/600x400/E2E8F0/A0AEC0?text=Program+2';
@@ -99,11 +96,46 @@ const socialMediaLinks = [
 ];
 
 
-export default function LandingPage({ auth }) {
+
+export default function LandingPage({ 
+    auth, 
+    heroContent, 
+    aboutLpContent, 
+    kepsekWelcomeLpContent, 
+    faktaLpContent 
+}) {
+    // Fallback data jika props tidak ada atau fieldnya kosong (pengamanan tambahan)
+    const currentHeroContent = {
+        title_line1: heroContent?.title_line1 || 'Selamat Datang di',
+        title_line2: heroContent?.title_line2 || 'SMK Negeri 15 Bandung',
+        background_image_url: heroContent?.background_image_url || '/images/hero-bg-smkn15.jpg',
+    };
+
+    const currentAboutLpContent = {
+        title: aboutLpContent?.title || 'Tentang SMKN 15 Bandung',
+        description_html: aboutLpContent?.description_html || '<p>Deskripsi default tentang sekolah kami. Kami berkomitmen untuk memberikan pendidikan berkualitas...</p>',
+        image_url: aboutLpContent?.image_url || '/images/keluarga-besar-smkn15.png', // Ganti dengan placeholder yang sesuai
+    };
+
+    const currentKepsekWelcomeLpContent = {
+        title: kepsekWelcomeLpContent?.title || 'Sambutan Kepala Sekolah',
+        kepsek_name: kepsekWelcomeLpContent?.kepsek_name || 'Nama Kepala Sekolah',
+        kepsek_title: kepsekWelcomeLpContent?.kepsek_title || 'Kepala SMK Negeri 15 Bandung',
+        kepsek_image_url: kepsekWelcomeLpContent?.kepsek_image_url || '/images/kepala-sekolah.jpg',
+        welcome_text_html: kepsekWelcomeLpContent?.welcome_text_html || '<p>Assalamu\'alaikum Warahmatullahi Wabarakatuh...</p>',
+    };
+
+    const currentFaktaLpContent = {
+        items: faktaLpContent?.items && faktaLpContent.items.length > 0 ? faktaLpContent.items : [
+            { label: "Guru", value: 30 }, // Fallback jika items kosong
+            { label: "Siswa", value: 1500 },
+        ]
+    };
+
 
     return (
         <div className="bg-secondary text-gray-800 font-sans">
-            <Head title="SMKN 15 Bandung" />
+            <Head title="SMKN 15 Bandung - Berani Berkarya" /> {/* Judul lebih spesifik */}
 
             <Navbar
                 logoSmkn15={logoSmkn15}
@@ -113,32 +145,35 @@ export default function LandingPage({ auth }) {
                 programKeahlianDataNav={programKeahlianDataNav}
             />
 
-            {/* ... (Hero, Tentang, Sambutan, Program Keahlian, Fakta sections remain the same) ... */}
              {/* Hero Section */}
-             <div className="relative pt-16 bg-cover bg-center h-[70vh] flex items-center justify-center" style={{ backgroundImage: `url('${heroBgImage}')` }}>
+            <div className="relative pt-16 bg-cover bg-center h-[70vh] flex items-center justify-center"
+                style={{ backgroundImage: `url('${currentHeroContent.background_image_url}')` }}>
                 <div className="absolute inset-0 bg-black opacity-50"></div>
                 <div className="relative z-10 text-center px-4">
-                    <h2 className="text-3xl sm:text-3xl md:text-5xl font-bold text-white leading-tight">Selamat Datang di</h2>
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mt-2">SMK Negeri 15 Bandung</h1>
+                    <h2 className="text-3xl sm:text-3xl md:text-5xl font-bold text-white leading-tight">
+                        {currentHeroContent.title_line1}
+                    </h2>
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mt-2">
+                        {currentHeroContent.title_line2}
+                    </h1>
                 </div>
             </div>
 
             {/* Tentang SMKN 15 Bandung Section */}
             <section className="py-12 bg-white sm:py-16 lg:py-20">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-                        <div className="prose-sm text-gray-700 max-w-none">
-                            <h2 className="text-3xl font-bold text-gray-800 mb-2">Tentang <span className="text-primary">SMKN 15 Bandung</span></h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">                        <div className="prose prose-sm text-gray-700 max-w-none"> {/* Ukuran prose diperkecil untuk readability */}
+                            <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                                {currentAboutLpContent.title}
+                            </h2>
                             <div className="h-1 w-24 bg-primary mb-6"></div>
-                            <p>SMKN 15 Bandung adalah salah satu sekolah kejuruan negeri unggulan di Kota Bandung yang memiliki reputasi baik dalam pendidikan vokasi. Sekolah ini berfokus pada pengembangan kompetensi siswa agar relevan dengan kebutuhan industri modern.</p>
-                            <p>Kami menawarkan berbagai program keahlian strategis, termasuk Pekerjaan Sosial, Kuliner, Perhotelan, dan Desain Komunikasi Visual, yang didukung oleh pengajar kompeten dan fasilitas memadai.</p>
-                            <p>Tujuan kami adalah mencetak lulusan yang tidak hanya terampil secara profesional tetapi juga berkarakter mulia, berani, dan penuh karya, siap untuk bekerja maupun melanjutkan pendidikan ke jenjang yang lebih tinggi. Mari bersama membangun masa depan di SMKN 15 Bandung.</p>
-                            <Link href="/profil-sekolah" className="mt-6 inline-block bg-primary text-white hover:bg-primary-darker transition duration-300 px-6 py-2 rounded-md text-lg font-semibold no-underline">
+                            <div className="text-sm sm:text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: currentAboutLpContent.description_html }} />
+                            <Link href={route('profil.sekolah')} className="mt-6 inline-block bg-primary text-white hover:bg-primary-darker transition duration-300 px-6 py-2 rounded-md text-base sm:text-lg font-semibold no-underline">
                                 Lihat Selengkapnya
                             </Link>
                         </div>
                         <div className="mt-8 md:mt-0 flex justify-center">
-                            <img src={groupPhoto} alt="Keluarga Besar SMKN 15 Bandung Tahun 2024-2025" className="rounded-lg shadow-xl max-w-2xl w-full"/>
+                            <img src={currentAboutLpContent.image_url} alt="Tentang SMKN 15 Bandung" className="rounded-lg shadow-xl max-w-full md:max-w-2xl w-full h-auto object-cover aspect-video md:aspect-square"/> {/* Aspek rasio disesuaikan */}
                         </div>
                     </div>
                 </div>
@@ -149,36 +184,17 @@ export default function LandingPage({ auth }) {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
                         <div className="md:col-span-4">
-                            <h2 className="text-2xl font-bold text-gray-800 mb-1">Sambutan Kepala Sekolah</h2>
-                            <h3 className="text-4xl font-semibold text-primary mb-2">SMKN 15 Bandung</h3>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                                {currentKepsekWelcomeLpContent.title}
+                            </h2>
+                            <h3 className="text-3xl sm:text-4xl font-semibold text-primary mb-2">SMKN 15 Bandung</h3>
                             <div className="h-1 w-24 bg-primary mb-8"></div>
-                            <img src={kepalaSekolahPhoto} alt="Dra. Lilis Yuyun, M.M.Pd. - Kepala Sekolah SMKN 15 Bandung" className="rounded-lg w-full max-w-xs mx-auto md:mx-0"/>
-                        </div>
-                        <div className="md:col-span-8 prose-sm text-gray-700 max-w-none">
-                            {/* Konten Sambutan */}
-                            <p className="font-semibold">Sampurasun!</p>
-                            <p>Bismillahirrahmanirrahim.</p>
-                            <p>Alhamdulillahi rabbil ‘alamin. Wassalatu wassalamu ‘ala asyrafil anbiya-i wal mursalin, wa’ala alihi wasahbihi ajma’in.</p>
-                            <p>Puji syukur senantiasa kita panjatkan kehadirat Allah SWT, Tuhan Yang Maha Esa, atas limpahan rahmat dan karunia-Nya yang tiada henti. Shalawat serta salam semoga selalu tercurah kepada junjungan kita, Nabi Muhammad SAW, beserta keluarga dan para sahabatnya. Alhamdulillahilladzi bi ni’matihi tatimmush sholihat, Alhamdulillah rabbil ‘alamin.</p>
-                            <p>Dengan penuh kehangatan, saya, Dra. Lilis Yuyun, M.M.Pd., selaku Kepala Sekolah, menyambut Bapak, Ibu, para Pendidik dan Tenaga Kependidikan, Orang Tua/Wali Murid, para Alumni, Mitra Industri, serta Ananda siswa-siswi SMK Negeri 15 Bandung yang kami banggakan, di situs resmi sekolah kita. Platform digital ini kami persembahkan sebagai jendela informasi utama, sarana untuk mengenal lebih dekat dinamika kehidupan di SMK Negeri 15 Bandung.</p>
-                            <p>Melalui situs ini, kami berupaya menyajikan informasi yang relevan dan terkini mengenai profil sekolah, visi-misi, program keahlian unggulan kami yaitu Pekerjaan Sosial, Kuliner, Perhotelan, dan Desain Komunikasi Visual, berbagai kegiatan kesiswaan yang positif, prestasi yang telah diraih, serta fasilitas pendukung pembelajaran yang terus kami kembangkan.</p>
-                            <p>Saya ingin menyampaikan apresiasi dan ucapan terima kasih yang tulus kepada tim pengelola website yang telah berupaya keras menyajikan informasi sekolah secara komprehensif. Tentu, kami menyadari bahwa situs ini masih dalam proses pengembangan dan penyempurnaan. Oleh karena itu, masukan, saran, dan kritik yang membangun dari seluruh civitas akademika dan masyarakat umum sangat kami nantikan demi kemajuan bersama.</p>
-                            <p>Lebih dari sekadar penyedia informasi, kami berharap website ini dapat menjadi ruang interaksi yang positif, mempererat jalinan silaturahmi, dan membangun sinergi antar seluruh elemen sekolah dan masyarakat. Semangat ini selaras dengan motto yang menjadi jiwa sekolah kita:</p>
-                            <p className="font-semibold">SMK Negeri 15 Bandung: CARE</p>
-                            <ul className="list-disc pl-5 space-y-1">
-                                <li><strong>Creativity (Kreativitas):</strong> Mengembangkan daya cipta dan inovasi.</li>
-                                <li><strong>Adaptability (Adaptabilitas):</strong> Siap beradaptasi dengan perubahan.</li>
-                                <li><strong>Responsibility (Tanggung Jawab):</strong> Memiliki rasa tanggung jawab yang tinggi.</li>
-                                <li><strong>Empathy (Empati):</strong> Menumbuhkan kepedulian terhadap sesama.</li>
-                            </ul>
-                            <p>Nilai-nilai inilah yang kami tanamkan dalam setiap langkah pendidikan dan pembinaan karakter, agar lulusan kami tidak hanya cakap secara teknis, tetapi juga memiliki kepribadian yang luhur dan siap berkontribusi.</p>
-                            <p>Akhir kata, mari kita satukan langkah, bekerja dan berkarya dengan niat tulus ikhlas demi mengantarkan anak-anak didik kita menuju gerbang kesuksesan. Terima kasih atas kunjungan dan perhatian Anda. Semoga Allah SWT senantiasa membimbing dan meridhoi setiap usaha kita, memberikan kesehatan, kebahagiaan, dan kelancaran. Amin Ya Rabbal ‘Alamin.</p>
-                            <p>Wassalamu’alaikum Warahmatullahi Wabarakatuh.</p>
-                            <div className="mt-6">
-                                <p className="font-semibold">Hormat kami,</p>
-                                <p className="font-semibold">Dra. Lilis Yuyun, M.M.Pd.</p>
-                                <p>Kepala Sekolah SMK Negeri 15 Bandung</p>
-                            </div>
+                            <img src={currentKepsekWelcomeLpContent.kepsek_image_url} 
+                                 alt={currentKepsekWelcomeLpContent.kepsek_name} 
+                                 className="rounded-lg w-full max-w-xs mx-auto md:mx-0 shadow-lg"/>
+                        </div>                        
+                            <div className="md:col-span-8 prose prose-sm text-gray-700 max-w-none">                            
+                                <div className="text-sm sm:text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: currentKepsekWelcomeLpContent.welcome_text_html }} />
                         </div>
                     </div>
                 </div>
@@ -214,30 +230,28 @@ export default function LandingPage({ auth }) {
                         ))}
                     </div>
                 </div>
-            </section>
-
-             {/* Fakta SMKN 15 Bandung Section */}
-            <section className="py-12 sm:py-12 lg:py-18 bg-primary text-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-10 md:mb-12">
-                        <h2 className="text-3xl font-bold">
-                            Fakta SMKN 15 Bandung
-                        </h2>
+            </section>            {/* Fakta SMKN 15 Bandung Section */}
+            {currentFaktaLpContent && currentFaktaLpContent.items && currentFaktaLpContent.items.length > 0 && (
+                <section className="py-12 sm:py-16 lg:py-20 bg-primary text-white">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl font-bold">Fakta SMKN 15 Bandung</h2>
+                        </div>
+                        <div className="grid grid-cols-5 gap-4">
+                            {currentFaktaLpContent.items.map((fakta, index) => (
+                                <div key={index} className="text-center">
+                                    <p className="text-4xl lg:text-5xl font-bold">
+                                        <CountUp start={0} end={Number(fakta.value) || 0} duration={2.5} separator="." decimal="," enableScrollSpy scrollSpyOnce />
+                                    </p>
+                                    <p className="text-sm lg:text-base uppercase tracking-wider mt-1">
+                                        {fakta.label || 'Label Fakta'}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 md:gap-8 text-center">
-                        {faktaSekolah.map((fakta, index) => (
-                            <div key={index} className="py-4">
-                                <p className="text-4xl lg:text-5xl font-bold">
-                                    <CountUp start={0} end={fakta.angka} duration={2} separator="," enableScrollSpy scrollSpyOnce />
-                                </p>
-                                <p className="text-sm lg:text-base uppercase tracking-wider mt-1">
-                                    {fakta.label}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+                </section>
+            )}
 
 
             {/* Program-Program SMKN 15 Bandung Section */}

@@ -7,48 +7,25 @@ import { Head, Link } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import Modal from '@/Components/Modal'; // Import Modal
+import { TYPOGRAPHY } from '@/Utils/typography';
+import { getNavigationData } from '@/Utils/navigationData';
 // Import ikon
 import { Instagram, Facebook, Linkedin, Twitter, Search, ChevronLeft, ChevronRight, X } from 'lucide-react'; // Tambahkan X
 
 // Path ke aset gambar Anda
-const logoSmkn15 = '/images/logo-smkn15.png';
+// Get navigation data from centralized source
+const navigationData = getNavigationData();
+
 // Base URL untuk placeholder, bisa disesuaikan
 const placeholderBaseUrl = "https://placehold.co/400x300/E2E8F0/A0AEC0";
 const placeholderProgramImage = `${placeholderBaseUrl}`;
 
 // Data Navigasi & Footer
 // ... (Salin data navigasi & footer) ...
-const programKeahlianDataNav = [
-    { nama: "DKV", link: "/programkeahlian/dkv" },
-    { nama: "Perhotelan", link: "/programkeahlian/perhotelan" },
-    { nama: "Kuliner", link: "/programkeahlian/kuliner" },
-    { nama: "Pekerjaan Sosial", link: "/programkeahlian/pekerjaan-sosial" },
-];
-const tentangKamiLinks = [
-    { title: "Profil Sekolah", href: "/profil-sekolah" },
-    { title: "Visi & Misi", href: "/visi-misi" },
-    { title: "Struktur Organisasi", href: "/struktur-organisasi" },
-    { title: "Fasilitas", href: "/fasilitas" },
-    { title: "Program Sekolah", href: "/program" },
-    { title: "Daftar Guru & TU", href: "/daftar-guru-tu" },
-    { title: "Hubungi Kami", href: "/hubungi-kami" },
-];
-const manajemenSekolahSublinks = [
-    { title: "Kurikulum", href: "/manajemen/kurikulum" },
-    { title: "Kesiswaan", href: "/manajemen/kesiswaan" },
-    { title: "Hubungan Masyarakat dan Industri", href: "/manajemen/humas-industri" },
-    { title: "Sarana Prasarana", href: "/manajemen/sarpras" },
-];
-const akademikInformasiLinks = [
-    { title: "Kalender Akademik", href: "/kalender-akademik" },
-    { title: "Berita dan Pengumuman", href: "/berita-pengumuman" },
-];
-const googleMapsEmbedUrl = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.7320221071664!2d107.6164360758815!3d-6.922603993077097!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e62c87267923%3A0x7ef8aaa0fcd59ec9!2sSMKN%2015%20Kota%20Bandung!5e0!3m2!1sid!2sid!4v1746550004423!5m2!1sid!2sid";
-const socialMediaLinks = [
-    { name: "Instagram", href: "https://www.instagram.com/smkn_15bandung", icon: Instagram, handle: "@smkn_15bandung" },
-    { name: "Facebook", href: "https://www.facebook.com/SMKN15Bandung", icon: Facebook, handle: "SMKN 15 Bandung" },
-    { name: "LinkedIn", href: "https://www.linkedin.com/school/smkn-15-bandung/", icon: Linkedin, handle: "SMKN 15 Bandung" },
-    { name: "X", href: "https://twitter.com/smkn15bandung", icon: Twitter, handle: "@smkn15bandung" },
+const programStudiDataNav = [
+    { nama: "MIPA", link: "/program-studi/mipa" },
+    { nama: "IPS", link: "/program-studi/ips" },
+    { nama: "Bahasa", link: "/program-studi/bahasa" },
 ];
 
 // --- DATA PROGRAM SEKOLAH DENGAN DESKRIPSI ---
@@ -69,7 +46,7 @@ const allProgramSekolahData = [
     { id: 5, title: "Pembelajaran dan Asesmen Berbasis Proyek Kolaborasi", image: `${placeholderBaseUrl}?text=Prog+5`, link: `/program/${createSlug("Pembelajaran dan Asesmen Berbasis Proyek Kolaborasi")}`, description: "Metode pembelajaran yang mendorong siswa bekerja sama dalam tim untuk menyelesaikan proyek nyata, mengintegrasikan berbagai mata pelajaran dan dinilai secara autentik." },
     { id: 6, title: "Pembelajaran Berbasis Dunia Kerja", image: `${placeholderBaseUrl}?text=Prog+6`, link: `/program/${createSlug("Pembelajaran Berbasis Dunia Kerja")}`, description: "Pendekatan pembelajaran yang mengintegrasikan praktik dan standar industri ke dalam kurikulum, termasuk magang dan guru tamu dari industri." },
     { id: 7, title: "Implementasi Jabar Masagi dan P5", image: `${placeholderBaseUrl}?text=Prog+7`, link: `/program/${createSlug("Implementasi Jabar Masagi dan P5")}`, description: "Mengintegrasikan nilai-nilai kearifan lokal Jawa Barat (Jabar Masagi) dan Proyek Penguatan Profil Pelajar Pancasila (P5) dalam pembelajaran dan kegiatan sekolah." },
-    { id: 8, title: "Pengembangan TEFA dari semua Program Keahlian", image: `${placeholderBaseUrl}?text=Prog+8`, link: `/program/${createSlug("Pengembangan TEFA dari semua Program Keahlian")}`, description: "Mengembangkan unit produksi atau layanan (Teaching Factory) di setiap program keahlian sebagai wahana belajar siswa yang berorientasi pada standar industri." },
+    { id: 8, title: "Pengembangan Laboratorium Sains dan Bahasa", image: `${placeholderBaseUrl}?text=Prog+8`, link: `/program/${createSlug("Pengembangan Laboratorium Sains dan Bahasa")}`, description: "Mengembangkan fasilitas laboratorium sains (fisika, kimia, biologi) dan laboratorium bahasa untuk mendukung pembelajaran program studi MIPA, IPS, dan Bahasa." },
     { id: 9, title: "Sekolah Pencetak Wirausaha (SPW)", image: `${placeholderBaseUrl}?text=Prog+9`, link: `/program/${createSlug("Sekolah Pencetak Wirausaha (SPW)")}`, description: "Program yang bertujuan menumbuhkan jiwa kewirausahaan siswa melalui pelatihan, pendampingan, dan fasilitasi pengembangan ide bisnis." },
     { id: 10, title: "Sekolah Ramah Anak (SRA)", image: `${placeholderBaseUrl}?text=Prog+10`, link: `/program/${createSlug("Sekolah Ramah Anak (SRA)")}`, description: "Menciptakan lingkungan sekolah yang aman, nyaman, inklusif, dan melindungi hak-hak anak selama proses belajar mengajar." },
     { id: 11, title: "Sekoper Cinta", image: `${placeholderBaseUrl}?text=Prog+11`, link: `/program/${createSlug("Sekoper Cinta")}`, description: "Program pemberdayaan perempuan (Sekolah Perempuan Capai Impian dan Cita-cita) yang mungkin diadaptasi atau didukung oleh sekolah." },
@@ -81,7 +58,7 @@ const allProgramSekolahData = [
     { id: 17, title: "LKS dan Berbagai Kegiatan Lomba", image: `${placeholderBaseUrl}?text=Prog+17`, link: `/program/${createSlug("LKS dan Berbagai Kegiatan Lomba")}`, description: "Partisipasi aktif sekolah dalam Lomba Kompetensi Siswa (LKS) dan berbagai kompetisi akademik maupun non-akademik lainnya." },
     { id: 18, title: "Beasiswa dan kerjasama dengan PT", image: `${placeholderBaseUrl}?text=Prog+18`, link: `/program/${createSlug("Beasiswa dan kerjasama dengan PT")}`, description: "Upaya menjalin kerjasama dengan Perguruan Tinggi (PT) untuk program beasiswa, jalur masuk khusus, atau program kemitraan lainnya." },
     { id: 19, title: "Job Fair - Edu Fair dan Tracer Study", image: `${placeholderBaseUrl}?text=Prog+19`, link: `/program/${createSlug("Job Fair - Edu Fair dan Tracer Study")}`, description: "Kegiatan pameran kerja, pameran pendidikan lanjut, serta pelacakan alumni (Tracer Study) untuk membantu lulusan dan evaluasi program." },
-    { id: 20, title: "Kelas Industri Program Keahlian Perhotelan & Kuliner", image: `${placeholderBaseUrl}?text=Prog+20`, link: `/program/${createSlug("Kelas Industri Program Keahlian Perhotelan & Kuliner")}`, description: "Program kelas khusus yang kurikulum dan pembelajarannya diselaraskan secara intensif dengan kebutuhan industri perhotelan dan kuliner terkemuka." },
+    { id: 20, title: "Kelas Unggulan Program Studi MIPA dan IPS", image: `${placeholderBaseUrl}?text=Prog+20`, link: `/program/${createSlug("Kelas Unggulan Program Studi MIPA dan IPS")}`, description: "Program kelas khusus dengan kurikulum diperkaya dan pembelajaran intensif untuk mempersiapkan siswa menghadapi kompetisi akademik dan seleksi perguruan tinggi terbaik." },
     { id: 21, title: "Menuju Badan Layanan Umum Daerah (BLUD)", image: `${placeholderBaseUrl}?text=Prog+21`, link: `/program/${createSlug("Menuju Badan Layanan Umum Daerah (BLUD)")}`, description: "Proses transformasi sekolah menjadi BLUD untuk meningkatkan fleksibilitas pengelolaan keuangan dan layanan pendidikan." },
 ];
 // --- AKHIR DATA PROGRAM SEKOLAH ---
@@ -140,26 +117,25 @@ export default function ProgramSekolahPage({ auth }) {
     return (
         <div className="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col">
             <Head>
-                 <title>Program Unggulan & Kegiatan - SMKN 15 Bandung</title>
-                 <meta name="description" content="Jelajahi berbagai program unggulan dan kegiatan kesiswaan di SMK Negeri 15 Bandung, mulai dari penguatan karakter, pembelajaran berbasis proyek, TEFA, kewirausahaan, hingga kemitraan industri." />
+                 <title>Program Unggulan & Kegiatan - SMAN 1 Baleendah</title>
+                 <meta name="description" content="Jelajahi berbagai program unggulan dan kegiatan kesiswaan di SMA Negeri 1 Baleendah, mulai dari penguatan karakter akademik, program MIPA, IPS, Bahasa, olimpiade sains, hingga kegiatan ekstrakurikuler yang beragam." />
             </Head>
 
             <Navbar
-                logoSmkn15={logoSmkn15}
-                tentangKamiLinks={tentangKamiLinks}
-                manajemenSekolahSublinks={manajemenSekolahSublinks}
-                akademikInformasiLinks={akademikInformasiLinks}
-                programKeahlianDataNav={programKeahlianDataNav}
+                logoSman1={navigationData.logoSman1}
+                profilLinks={navigationData.profilLinks}
+                akademikLinks={navigationData.akademikLinks}
+                programStudiLinks={navigationData.programStudiLinks}
             />
 
             {/* Header Section */}
             <section className="pt-24 pb-12 bg-white shadow-sm">
                  {/* ... (Konten header sama) ... */}
                   <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4 text-center md:text-left">
+                    <h1 className={TYPOGRAPHY.pageTitle + " text-center md:text-left"}>
                         Program & Kegiatan Sekolah
-                    </h1>                    <p className="text-sm sm:text-base leading-relaxed text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left">
-                        Berbagai inisiatif dan aktivitas yang dirancang untuk mengembangkan kompetensi, kreativitas, dan karakter siswa SMK Negeri 15 Bandung secara holistik.
+                    </h1>                    <p className={TYPOGRAPHY.bodyText + " text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left"}>
+                        Berbagai inisiatif dan aktivitas yang dirancang untuk mengembangkan prestasi akademik, kreativitas, dan karakter siswa SMA Negeri 1 Baleendah secara holistik.
                     </p>
                 </div>
             </section>
@@ -203,7 +179,7 @@ export default function ProgramSekolahPage({ auth }) {
                                         />
                                     </div>
                                     <div className="p-4 flex flex-col flex-grow">
-                                        <h3 className="text-md font-semibold text-gray-800 group-hover:text-primary transition-colors mb-2 flex-grow min-h-[3em] leading-snug">
+                                        <h3 className={TYPOGRAPHY.cardTitle + " group-hover:text-primary transition-colors flex-grow min-h-[3em] leading-snug"}>
                                             {program.title}
                                         </h3>
                                     </div>
@@ -211,7 +187,7 @@ export default function ProgramSekolahPage({ auth }) {
                             ))}
                         </div>
                     ) : (
-                        <p className="text-center text-gray-500 mt-10">Program atau kegiatan tidak ditemukan.</p>
+                        <p className={TYPOGRAPHY.secondaryText + " text-center mt-10"}>Program atau kegiatan tidak ditemukan.</p>
                     )}
 
                     {/* --- PAGINATION CONTROLS --- */}
@@ -243,12 +219,12 @@ export default function ProgramSekolahPage({ auth }) {
             </section>
 
             <Footer
-                logoSmkn15={logoSmkn15}
-                googleMapsEmbedUrl={googleMapsEmbedUrl}
-                tentangKamiLinks={tentangKamiLinks}
-                akademikInformasiLinks={akademikInformasiLinks}
-                programKeahlianDataNav={programKeahlianDataNav}
-                socialMediaLinks={socialMediaLinks}
+                logoSman1={navigationData.logoSman1}
+                googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
+                profilLinks={navigationData.profilLinks}
+                akademikLinks={navigationData.akademikLinks}
+                programStudiLinks={navigationData.programStudiLinks}
+                socialMediaLinks={navigationData.socialMediaLinks}
             />
 
              {/* --- MODAL DETAIL PROGRAM (GAMBAR 16:9) --- */}
@@ -257,7 +233,7 @@ export default function ProgramSekolahPage({ auth }) {
                     {selectedProgram ? (
                         <>
                             <div className="flex justify-between items-start mb-4">
-                                <h2 className="text-xl md:text-2xl font-semibold text-primary pr-8">{selectedProgram.title}</h2>
+                                <h2 className={TYPOGRAPHY.sectionHeading + " text-primary pr-8"}>{selectedProgram.title}</h2>
                                 <button
                                     onClick={closeProgramModal}
                                     className="text-gray-400 hover:text-gray-600 focus:outline-none flex-shrink-0"
@@ -277,7 +253,7 @@ export default function ProgramSekolahPage({ auth }) {
                                     onError={(e) => { e.target.onerror = null; e.target.src = '/images/placeholder-fallback.png'; }}
                                 />
                             </div>
-                            {/* ==== AKHIR MODIFIKASI ==== */}                            <div className="text-sm leading-relaxed text-gray-700 space-y-3 prose prose-sm max-w-none">
+                            {/* ==== AKHIR MODIFIKASI ==== */}                            <div className={TYPOGRAPHY.bodyText + " space-y-3 prose prose-sm max-w-none"}>
                                 <p>{selectedProgram.description || "Deskripsi untuk program ini belum tersedia."}</p>
                             </div>
 
@@ -292,7 +268,7 @@ export default function ProgramSekolahPage({ auth }) {
                             </div>
                         </>
                     ) : (
-                         <div className="text-center p-10 text-gray-500">Menutup...</div>
+                         <div className={TYPOGRAPHY.secondaryText + " text-center p-10"}>Menutup...</div>
                     )}
                 </div>
             </Modal>

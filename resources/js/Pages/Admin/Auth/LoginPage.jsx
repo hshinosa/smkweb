@@ -7,8 +7,8 @@ import InputError from '@/Components/InputError'; // Asumsi Anda punya komponen 
 import { GraduationCap } from 'lucide-react';   // Ikon untuk tombol
 
 // Path ke aset gambar
-const logoSmkn15 = '/images/logo-smkn15.png'; // Pastikan path ini benar
-const loginBgImage = '/images/hero-bg-smkn15.jpg'; // GANTI DENGAN PATH GAMBAR LATAR YANG SESUAI
+const logoSman1Baleendah = '/images/logo-sman1baleendah.png'; // Logo SMAN 1 Baleendah
+const loginBgImage = '/images/hero-bg-sman1baleendah.jpg'; // Background image SMAN 1 Baleendah
 
 export default function LoginPage() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -44,11 +44,11 @@ export default function LoginPage() {
                     <div className="w-full max-w-md">
                         <div className="flex justify-center mb-8">
                             <Link href="/">
-                                <img src={logoSmkn15} alt="Logo SMKN 15 Bandung" className="h-16 w-auto" />
+                                <img src={logoSman1Baleendah} alt="Logo SMAN 1 Baleendah" className="h-16 w-auto" />
                             </Link>
                         </div>
                         <h2 className="text-2xl font-bold text-center text-gray-700 mb-1">
-                            SMK Negeri 15 Bandung
+                            SMA Negeri 1 Baleendah
                         </h2>
                         <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">
                             Masuk

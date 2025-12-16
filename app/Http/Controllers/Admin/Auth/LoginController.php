@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
-use Illuminate\Validation\ValidationException; // Untuk error login
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia; // Untuk error login
 
 class LoginController extends Controller
 {
@@ -19,6 +19,7 @@ class LoginController extends Controller
         if (Auth::guard('admin')->check()) {
             return redirect()->route('admin.dashboard'); // Buat rute ini nanti
         }
+
         return Inertia::render('Admin/Auth/LoginPage');
     }
 
@@ -35,6 +36,7 @@ class LoginController extends Controller
         // Gunakan guard 'admin' untuk attempt
         if (Auth::guard('admin')->attempt($request->only('username', 'password'), $request->filled('remember'))) {
             $request->session()->regenerate();
+
             // Redirect ke dashboard admin setelah login berhasil
             return redirect()->intended(route('admin.dashboard')); // Buat rute ini nanti
         }

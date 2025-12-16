@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\ActivityLogger;
 use App\Http\Controllers\Controller;
 use App\Models\SpmbSetting;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
-use App\Helpers\ActivityLogger;
 use Illuminate\Support\Facades\Validator;
+use Inertia\Inertia;
 
 class SpmbContentController extends Controller
 {
@@ -88,26 +88,31 @@ class SpmbContentController extends Controller
                     if (isset($currentSectionDataFromRequest[$field])) {
                         if (in_array($field, ['events', 'documents', 'steps', 'items']) && is_array($currentSectionDataFromRequest[$field])) {
                             // Filter out empty items for array fields
-                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function($item) use ($field) {
+                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function ($item) use ($field) {
                                 if ($field === 'events') {
-                                    return !empty(trim($item['title'] ?? '')) || !empty(trim($item['date'] ?? ''));
+                                    return ! empty(trim($item['title'] ?? '')) || ! empty(trim($item['date'] ?? ''));
                                 } elseif ($field === 'documents') {
-                                    return !empty(trim($item['name'] ?? '')) || !empty(trim($item['description'] ?? ''));
+                                    return ! empty(trim($item['name'] ?? '')) || ! empty(trim($item['description'] ?? ''));
                                 } elseif ($field === 'steps') {
-                                    return !empty(trim($item['title'] ?? '')) || !empty(trim($item['description'] ?? ''));
+                                    return ! empty(trim($item['title'] ?? '')) || ! empty(trim($item['description'] ?? ''));
                                 } elseif ($field === 'items') {
-                                    return !empty(trim($item['question'] ?? '')) || !empty(trim($item['answer'] ?? ''));
+                                    return ! empty(trim($item['question'] ?? '')) || ! empty(trim($item['answer'] ?? ''));
                                 }
+
                                 return true;
                             }));
                             // Ensure empty arrays remain as arrays
-                            if(empty($dataForThisSection[$field])) $dataForThisSection[$field] = [];
+                            if (empty($dataForThisSection[$field])) {
+                                $dataForThisSection[$field] = [];
+                            }
                         } elseif ($field === 'requirements' && is_array($currentSectionDataFromRequest[$field])) {
                             // Filter out empty requirements
-                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function($requirement) {
-                                return !empty(trim($requirement ?? ''));
+                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function ($requirement) {
+                                return ! empty(trim($requirement ?? ''));
                             }));
-                            if(empty($dataForThisSection[$field])) $dataForThisSection[$field] = [];
+                            if (empty($dataForThisSection[$field])) {
+                                $dataForThisSection[$field] = [];
+                            }
                         } else {
                             $dataForThisSection[$field] = $currentSectionDataFromRequest[$field];
                         }
@@ -134,6 +139,7 @@ class SpmbContentController extends Controller
 
         if ($validator->fails()) {
             Log::warning('Validasi gagal untuk update SPMB:', $validator->errors()->toArray());
+
             return back()->withErrors($validator)->withInput();
         }
 
@@ -150,14 +156,15 @@ class SpmbContentController extends Controller
                 }
             }
 
-            ActivityLogger::log("Update Konten SPMB", "Semua section SPMB telah diperbarui.", $request);
+            ActivityLogger::log('Update Konten SPMB', 'Semua section SPMB telah diperbarui.', $request);
 
             return redirect()->route('admin.spmb.content.index')
-                             ->with('success', "Konten SPMB berhasil diperbarui!");
+                ->with('success', 'Konten SPMB berhasil diperbarui!');
 
         } catch (\Exception $e) {
-            Log::error("Error updating SPMB content: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return back()->withErrors(['general' => 'Gagal memperbarui konten: ' . $e->getMessage()])->withInput();
+            Log::error('Error updating SPMB content: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            return back()->withErrors(['general' => 'Gagal memperbarui konten: '.$e->getMessage()])->withInput();
         }
     }
 }

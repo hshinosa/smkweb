@@ -4,6 +4,7 @@ import { Head, usePage } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
 import Modal from '@/Components/Modal';
+import { TYPOGRAPHY } from '@/Utils/typography';
 import { Search, X, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, TrendingUp, AlertCircle, Info, Clock } from 'lucide-react'; // Tambah Clock
 
 import { Line } from 'react-chartjs-2';
@@ -21,7 +22,7 @@ const VisitorStatsChart = ({ chartData, loading, error, periodType }) => {
       <div className="w-full h-72 bg-red-50 border border-red-200 rounded-md flex flex-col items-center justify-center text-red-600 p-4 text-center">
         <AlertCircle className="w-10 h-10 text-red-400 mb-2" />
         <p className="font-semibold">Gagal memuat data chart.</p>
-        <p className="text-xs mt-1">{error}</p>
+        <p className={TYPOGRAPHY.smallText + " mt-1"}>{error}</p>
       </div>
     );
   }
@@ -245,10 +246,10 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                <p className="text-xs text-gray-500 mb-1">
+                <p className={TYPOGRAPHY.smallText + " mb-1"}>
                     {visitorStats.totalLoading ? 'Memuat...' : visitorStats.totalMessage}
                 </p>
-                {visitorStats.lastCached && <p className="text-xs text-gray-400 mb-4 italic">Cache: {visitorStats.lastCached}</p>}
+                {visitorStats.lastCached && <p className={TYPOGRAPHY.smallText + " mb-4 italic text-gray-400"}>Cache: {visitorStats.lastCached}</p>}
 
                 {/* Konten utama kartu: Total dan Chart */}
                 {/* Dibuat menjadi grid agar bisa responsif */}
@@ -258,21 +259,21 @@ export default function DashboardPage() {
                         {visitorStats.totalLoading && (
                             <div className="py-8">
                                 <div className="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
-                                <p className="text-xs text-gray-500 mt-2">Memuat total...</p>
+                                <p className={TYPOGRAPHY.smallText + " mt-2"}>Memuat total...</p>
                             </div>
                         )}
                         {!visitorStats.totalLoading && visitorStats.totalError && visitorStats.total === 'Error' && (
                             <div className="py-8 bg-red-50 p-3 rounded-md border border-red-200">
                                 <AlertCircle className="w-8 h-8 text-red-500 mx-auto lg:mx-0 mb-1" />
-                                <p className="text-xs text-red-600 font-semibold">Gagal memuat total.</p>
-                                <p className="text-xs text-red-500 mt-0.5">{visitorStats.totalError.substring(0,100)}</p>
+                                <p className={TYPOGRAPHY.smallText + " text-red-600 font-semibold"}>Gagal memuat total.</p>
+                                <p className={TYPOGRAPHY.smallText + " text-red-500 mt-0.5"}>{visitorStats.totalError.substring(0,100)}</p>
                             </div>
                         )}
                         {!visitorStats.totalLoading && visitorStats.total !== 'Error' && visitorStats.total !== null && (
                             <>
                                 <p className="text-4xl md:text-5xl font-bold text-primary">{typeof visitorStats.total === 'number' ? visitorStats.total.toLocaleString() : visitorStats.total}</p>
                                 <p className="text-sm text-gray-600 mt-1">Total Kunjungan</p>
-                                <p className="text-xs text-gray-500">Periode: {
+                                <p className={TYPOGRAPHY.smallText}>Periode: {
                                     visitorStats.period === '1d' ? '24 Jam Terakhir' :
                                     visitorStats.period === '7d' ? '7 Hari Terakhir' : `.`
                                 }</p>
@@ -289,7 +290,7 @@ export default function DashboardPage() {
                             periodType={visitorStats.periodType}
                         />
                         {!visitorStats.chartLoading && visitorStats.chartError && visitorStats.dailyChart && (
-                            <p className="text-xs text-center mt-2 text-yellow-600 bg-yellow-100 p-2 rounded-md">
+                            <p className={TYPOGRAPHY.smallText + " text-center mt-2 text-yellow-600 bg-yellow-100 p-2 rounded-md"}>
                                 <Info size={14} className="inline mr-1" /> {visitorStats.chartError}
                             </p>
                         )}
@@ -408,7 +409,7 @@ export default function DashboardPage() {
                     </div>
                     {totalActivityPagesModal > 1 && (
                         <div className="p-4 border-t flex justify-between items-center sticky bottom-0 bg-white z-10">
-                             <span className="text-xs text-gray-600">
+                             <span className={TYPOGRAPHY.smallText + " text-gray-600"}>
                                 Menampilkan {currentLogItemsInModal.length} dari {filteredActivityLogsInModal.length} hasil
                             </span>
                             <div className="flex items-center space-x-2">
@@ -418,7 +419,7 @@ export default function DashboardPage() {
                                     className="p-2 rounded-md border hover:bg-gray-100 disabled:opacity-50"
                                     aria-label="Halaman Sebelumnya"
                                 > <ChevronLeft size={18} /> </button>
-                                <span className="text-xs"> Halaman {currentActivityPageModal} dari {totalActivityPagesModal} </span>
+                                <span className={TYPOGRAPHY.smallText}> Halaman {currentActivityPageModal} dari {totalActivityPagesModal} </span>
                                 <button
                                     onClick={() => handleModalPageChange(currentActivityPageModal + 1)}
                                     disabled={currentActivityPageModal === totalActivityPagesModal}

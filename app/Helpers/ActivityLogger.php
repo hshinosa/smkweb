@@ -1,13 +1,14 @@
 <?php
+
 namespace App\Helpers;
 
 use App\Models\ActivityLog;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ActivityLogger
 {
-    public static function log(string $action, string $description = null, Request $request = null)
+    public static function log(string $action, ?string $description = null, ?Request $request = null)
     {
         ActivityLog::create([
             'admin_id' => Auth::guard('admin')->id(),

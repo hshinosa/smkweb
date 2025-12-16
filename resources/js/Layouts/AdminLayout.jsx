@@ -9,7 +9,7 @@ import {
 import Dropdown from '@/Components/Dropdown'; // Untuk dropdown profil desktop
 import { Transition } from '@headlessui/react'; // Import Transition
 
-const logoSekolah = '/images/logo-smkn15.png';
+const logoSekolah = '/images/logo-sman1baleendah.png';
 
 // Komponen SidebarItem (untuk item utama di sidebar desktop dan mobile)
 const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen, onClick, isMobile = false, level = 0, closeMobileMenu }) => {
@@ -194,14 +194,14 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
 
     return (
         <div className="min-h-screen flex bg-gray-100">
-            <Head title={`${headerTitle} - Admin SMKN 15 Bandung`} />
+            <Head title={`${headerTitle} - Admin SMAN 1 Baleendah`} />
 
             {/* Sidebar untuk Desktop */}
             <aside className="w-72 bg-white border-r border-gray-200 hidden lg:flex lg:flex-col fixed h-screen transform-gpu"> {/* Added transform-gpu for potentially smoother fixed positioning */}
                 <div className="p-4 border-b border-gray-200">
                     <Link href={route('admin.dashboard')} className="flex items-center px-2">
-                        <img src={logoSekolah} alt="Logo SMKN 15" className="h-10 w-auto" />
-                        <span className="ml-3 text-lg font-semibold text-gray-800">SMKN 15 Bandung</span>
+                        <img src={logoSekolah} alt="Logo SMAN 1 Baleendah" className="h-10 w-auto" />
+                        <span className="ml-3 text-lg font-semibold text-gray-800">SMAN 1 Baleendah</span>
                     </Link>
                 </div>
                 <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
@@ -270,8 +270,8 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                             <div className="relative flex flex-col w-72 max-w-[calc(100%-3rem)] bg-white h-full shadow-xl">
                                 <div className="p-4 border-b flex justify-between items-center">
                                     <Link href={route('admin.dashboard')} className="flex items-center" onClick={closeMobileMenu}>
-                                        <img src={logoSekolah} alt="Logo SMKN 15" className="h-8 w-auto" />
-                                        <span className="ml-2 text-md font-semibold text-gray-800">Admin Panel</span>
+                                        <img src={logoSekolah} alt="Logo SMAN 1 Baleendah" className="h-8 w-auto" />
+                                        <span className="ml-2 text-md font-semibold text-gray-800">SMAN 1 Baleendah</span>
                                     </Link>
                                     <button onClick={toggleMobileMenu} className="p-2 text-gray-500 hover:text-gray-700">
                                         <XIcon size={20} />

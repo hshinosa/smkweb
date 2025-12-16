@@ -15,7 +15,7 @@ class AcademicCalendarPublicController extends Controller
         // Get all calendar contents for display
         $calendarContents = AcademicCalendarContent::ordered()
             ->get()
-            ->map(function($item) {
+            ->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'title' => $item->title,
@@ -34,9 +34,9 @@ class AcademicCalendarPublicController extends Controller
         $latestCalendar = AcademicCalendarContent::where('is_active', true)
             ->orderBy('academic_year_start', 'desc')
             ->first();
-            
-        $currentAcademicYear = $latestCalendar 
-            ? $latestCalendar->academic_year_start . '/' . ($latestCalendar->academic_year_start + 1)
+
+        $currentAcademicYear = $latestCalendar
+            ? $latestCalendar->academic_year_start.'/'.($latestCalendar->academic_year_start + 1)
             : '2024/2025';
 
         return Inertia::render('AcademicCalendarPage', [

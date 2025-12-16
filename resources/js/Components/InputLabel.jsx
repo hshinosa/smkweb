@@ -1,3 +1,5 @@
+import { TYPOGRAPHY } from '@/Utils/typography';
+
 export default function InputLabel({
     value,
     className = '',
@@ -8,7 +10,7 @@ export default function InputLabel({
         <label
             {...props}
             className={
-                `block text-sm font-medium text-gray-700 ` +
+                `block ${TYPOGRAPHY.formLabel} ` +
                 className
             }
         >

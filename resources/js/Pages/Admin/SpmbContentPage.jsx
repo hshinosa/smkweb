@@ -8,6 +8,7 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import MiniTextEditor from '@/Components/MiniTextEditor';
 import { X, Plus, Info, Calendar, Users, FileText, ClipboardList, HelpCircle } from 'lucide-react';
+import { TYPOGRAPHY } from '@/Utils/typography';
 
 export default function SpmbContentPage() {
     const { currentSettings, success, errors: pageErrorsFromLaravel } = usePage().props;
@@ -205,7 +206,7 @@ export default function SpmbContentPage() {
                         <div>
                             <InputLabel value="Status Pendaftaran" />
                             <div className="mt-2 space-y-2">
-                                <label className="flex items-center">
+                                <label className="flex items-center text-sm font-medium text-gray-700">
                                     <input
                                         type="radio"
                                         name="registration_open"
@@ -219,7 +220,7 @@ export default function SpmbContentPage() {
                                     />
                                     Pendaftaran Dibuka
                                 </label>
-                                <label className="flex items-center">
+                                <label className="flex items-center text-sm font-medium text-gray-700">
                                     <input
                                         type="radio"
                                         name="registration_open"
@@ -257,7 +258,7 @@ export default function SpmbContentPage() {
                     <div className="space-y-8">
                         {/* Jalur Reguler */}
                         <div className="bg-gray-50 p-6 rounded-lg">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Jalur Reguler</h3>
+                            <h3 className={TYPOGRAPHY.cardTitle + " text-gray-900"}>Jalur Reguler</h3>
                             
                             <div className="space-y-4">
                                 <div>
@@ -330,7 +331,7 @@ export default function SpmbContentPage() {
 
                         {/* Jalur Prestasi */}
                         <div className="bg-gray-50 p-6 rounded-lg">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Jalur Prestasi</h3>
+                            <h3 className={TYPOGRAPHY.cardTitle + " text-gray-900"}>Jalur Prestasi</h3>
                             
                             <div className="space-y-4">
                                 <div>
@@ -714,7 +715,7 @@ export default function SpmbContentPage() {
                 <div className="bg-white rounded-lg shadow">
                     <div className="p-6 border-b border-gray-200">
                         <h1 className="text-2xl font-bold text-gray-900">Kelola Informasi SPMB</h1>
-                        <p className="text-gray-600 mt-2">
+                        <p className={TYPOGRAPHY.secondaryText + " mt-2"}>
                             Kelola semua konten terkait Sistem Penerimaan Mahasiswa Baru (SPMB) dalam satu halaman.
                         </p>
                     </div>
@@ -750,7 +751,7 @@ export default function SpmbContentPage() {
                             <h2 className="text-xl font-semibold text-gray-900 mb-2">
                                 {tabs.find(tab => tab.key === activeTab)?.label}
                             </h2>
-                            <p className="text-gray-600 text-sm">
+                            <p className={TYPOGRAPHY.secondaryText}>
                                 {tabs.find(tab => tab.key === activeTab)?.description}
                             </p>
                         </div>

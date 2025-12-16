@@ -1,0 +1,146 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sman1-baleendah-app
+    restart: unless-stopped
+    working_dir: /var/www
+    ports:
+      - "8001:8001"
+    volumes:
+      - app_public:/var/www/public
+      - ./storage:/var/www/storage
+      - ./bootstrap/cache:/var/www/bootstrap/cache
+      - ./.env:/var/www/.env
+    environment:
+      - APP_ENV=production
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_DATABASE=sman1_baleendah
+      - DB_USERNAME=sman1_user
+      - DB_PASSWORD=sman1_password_2024
+      - CACHE_STORE=file
+      - SESSION_DRIVER=database
+      - QUEUE_CONNECTION=database
+    depends_on:
+      - db
+    networks:
+      - sman1-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: sman1-baleendah-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - app_public:/var/www/public:ro
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/sites/:/etc/nginx/sites-available
+      - ./docker/nginx/ssl/:/etc/nginx/ssl
+    depends_on:
+      - app
+    networks:
+      - sman1-network
+
+  db:
+    image: mysql:8.0
+    container_name: sman1-baleendah-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: sman1_baleendah
+      MYSQL_ROOT_PASSWORD: root_password_2024
+      MYSQL_PASSWORD: sman1_password_2024
+      MYSQL_USER: sman1_user
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
+    ports:
+      - "3306:3306"
+    networks:
+      - sman1-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: sman1-baleendah-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - sman1-network
+
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sman1-baleendah-queue
+    restart: unless-stopped
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    working_dir: /var/www
+    volumes:
+      - ./storage:/var/www/storage
+      - ./bootstrap/cache:/var/www/bootstrap/cache
+      - ./.env:/var/www/.env
+    environment:
+      - APP_ENV=production
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_DATABASE=sman1_baleendah
+      - DB_USERNAME=sman1_user
+      - DB_PASSWORD=sman1_password_2024
+      - CACHE_STORE=file
+      - QUEUE_CONNECTION=database
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sman1-network
+  #     - db
+  #   networks:
+  #     - sman1-network
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sman1-baleendah-scheduler
+    restart: unless-stopped
+    command: /bin/sh -c "while true; do php artisan schedule:run; sleep 60; done"
+    working_dir: /var/www
+    volumes:
+      - ./storage:/var/www/storage
+      - ./bootstrap/cache:/var/www/bootstrap/cache
+      - ./.env:/var/www/.env
+    environment:
+      - APP_ENV=production
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_DATABASE=sman1_baleendah
+      - DB_USERNAME=sman1_user
+      - DB_PASSWORD=sman1_password_2024
+      - CACHE_STORE=file
+      - SESSION_DRIVER=database
+      - QUEUE_CONNECTION=database
+    depends_on:
+      - db
+    networks:
+      - sman1-network
+
+volumes:
+  db_data:
+    driver: local
+  app_public:
+    driver: local
+
+networks:
+  sman1-network:
+    driver: bridge

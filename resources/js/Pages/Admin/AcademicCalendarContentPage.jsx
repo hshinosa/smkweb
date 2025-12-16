@@ -265,7 +265,7 @@ export default function AcademicCalendarContentPage({ contents, filters }) {
                                 value={data.title}
                                 onChange={(e) => setData('title', e.target.value)}
                                 required
-                                placeholder="Contoh: Kalender Akademik SMK Negeri 15 Bandung"
+                                placeholder="Contoh: Kalender Akademik SMA Negeri 1 Baleendah"
                             />
                             <InputError message={errors.title} className="mt-2" />
                         </div>

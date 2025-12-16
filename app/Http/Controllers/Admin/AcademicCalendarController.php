@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\ActivityLogger;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicCalendarContent;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
-use App\Helpers\ActivityLogger;
+use Illuminate\Support\Facades\Validator;
+use Inertia\Inertia;
 
 class AcademicCalendarController extends Controller
 {
@@ -21,7 +21,7 @@ class AcademicCalendarController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('academic_year_start', 'like', "%{$search}%");
+                    ->orWhere('academic_year_start', 'like', "%{$search}%");
             });
         }
 
@@ -54,9 +54,9 @@ class AcademicCalendarController extends Controller
         // Handle file upload
         if ($request->hasFile('calendar_image')) {
             $file = $request->file('calendar_image');
-            $fileName = time() . '_' . $file->getClientOriginalName();
+            $fileName = time().'_'.$file->getClientOriginalName();
             $filePath = $file->storeAs('academic-calendar', $fileName, 'public');
-            $data['calendar_image_url'] = '/storage/' . $filePath;
+            $data['calendar_image_url'] = '/storage/'.$filePath;
         }
 
         $content = AcademicCalendarContent::create($data);
@@ -91,9 +91,9 @@ class AcademicCalendarController extends Controller
                 }
             }
             $file = $request->file('calendar_image');
-            $fileName = time() . '_' . $file->getClientOriginalName();
+            $fileName = time().'_'.$file->getClientOriginalName();
             $filePath = $file->storeAs('academic-calendar', $fileName, 'public');
-            $data['calendar_image_url'] = '/storage/' . $filePath;
+            $data['calendar_image_url'] = '/storage/'.$filePath;
         }
 
         $content->update($data);
@@ -106,13 +106,13 @@ class AcademicCalendarController extends Controller
     public function destroy(AcademicCalendarContent $content)
     {
         $title = $content->title;
-        
+
         // Delete associated image file if it exists and is stored locally
         if ($content->calendar_image_url && str_starts_with($content->calendar_image_url, '/storage/')) {
             $filePath = str_replace('/storage/', '', $content->calendar_image_url);
             Storage::disk('public')->delete($filePath);
         }
-        
+
         $content->delete();
 
         ActivityLogger::log('delete', "Menghapus konten kalender akademik: {$title}");

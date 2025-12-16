@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\ActivityLogger;
 use App\Http\Controllers\Controller;
 use App\Models\LandingPageSetting;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
-use App\Helpers\ActivityLogger;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Inertia\Inertia;
 
 class LandingPageContentController extends Controller
 {
@@ -72,12 +72,14 @@ class LandingPageContentController extends Controller
                 foreach ($fields as $field) {
                     if (isset($currentSectionDataFromRequest[$field])) {
                         if ($field === 'items' && $sectionKey === 'fakta_lp') {
-                             // Filter item fakta yang valid (label atau value diisi)
-                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function($item) {
-                                return !empty(trim($item['label'] ?? '')) || !empty(trim($item['value'] ?? ''));
+                            // Filter item fakta yang valid (label atau value diisi)
+                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function ($item) {
+                                return ! empty(trim($item['label'] ?? '')) || ! empty(trim($item['value'] ?? ''));
                             }));
-                             // Jika setelah filter hasilnya array kosong, pastikan tetap array kosong
-                            if(empty($dataForThisSection[$field])) $dataForThisSection[$field] = [];
+                            // Jika setelah filter hasilnya array kosong, pastikan tetap array kosong
+                            if (empty($dataForThisSection[$field])) {
+                                $dataForThisSection[$field] = [];
+                            }
                         } else {
                             $dataForThisSection[$field] = $currentSectionDataFromRequest[$field];
                         }
@@ -94,7 +96,6 @@ class LandingPageContentController extends Controller
         // Log::info('Data to validate: ', $inputData);
         // Log::info('Validation rules: ', $rules);
 
-
         $validator = Validator::make($inputData, $rules, [
             'fakta_lp.items.*.label.required_with' => 'Label fakta diperlukan jika angka diisi.',
             'fakta_lp.items.*.value.required_with' => 'Angka fakta diperlukan jika label diisi.',
@@ -102,9 +103,10 @@ class LandingPageContentController extends Controller
 
         if ($validator->fails()) {
             Log::warning('Validasi gagal untuk update Landing Page:', $validator->errors()->toArray());
+
             return back()->withErrors($validator)->withInput();
         }
-        
+
         // $validatedData = $validator->validated(); // Ini akan mengambil semua data yang tervalidasi
         // Kita akan menggunakan $finalDataToSave yang sudah difilter fieldnya
 
@@ -113,43 +115,43 @@ class LandingPageContentController extends Controller
                 // Handle file uploads for each section
                 if ($sectionKey === 'hero' && $request->hasFile('hero.background_image')) {
                     $file = $request->file('hero.background_image');
-                    $fileName = time() . '_hero_bg_' . $file->getClientOriginalName();
+                    $fileName = time().'_hero_bg_'.$file->getClientOriginalName();
                     $filePath = $file->storeAs('landing-page', $fileName, 'public');
-                    
+
                     // Delete old file if exists
                     $existingContent = LandingPageSetting::where('section_key', $sectionKey)->first();
                     if ($existingContent && isset($existingContent->content['background_image_url'])) {
                         $oldFilePath = str_replace('/storage/', '', $existingContent->content['background_image_url']);
                         Storage::disk('public')->delete($oldFilePath);
                     }
-                    
-                    $content['background_image_url'] = '/storage/' . $filePath;
+
+                    $content['background_image_url'] = '/storage/'.$filePath;
                 } elseif ($sectionKey === 'about_lp' && $request->hasFile('about_lp.image')) {
                     $file = $request->file('about_lp.image');
-                    $fileName = time() . '_about_' . $file->getClientOriginalName();
+                    $fileName = time().'_about_'.$file->getClientOriginalName();
                     $filePath = $file->storeAs('landing-page', $fileName, 'public');
-                    
+
                     // Delete old file if exists
                     $existingContent = LandingPageSetting::where('section_key', $sectionKey)->first();
                     if ($existingContent && isset($existingContent->content['image_url'])) {
                         $oldFilePath = str_replace('/storage/', '', $existingContent->content['image_url']);
                         Storage::disk('public')->delete($oldFilePath);
                     }
-                    
-                    $content['image_url'] = '/storage/' . $filePath;
+
+                    $content['image_url'] = '/storage/'.$filePath;
                 } elseif ($sectionKey === 'kepsek_welcome_lp' && $request->hasFile('kepsek_welcome_lp.kepsek_image')) {
                     $file = $request->file('kepsek_welcome_lp.kepsek_image');
-                    $fileName = time() . '_kepsek_' . $file->getClientOriginalName();
+                    $fileName = time().'_kepsek_'.$file->getClientOriginalName();
                     $filePath = $file->storeAs('landing-page', $fileName, 'public');
-                    
+
                     // Delete old file if exists
                     $existingContent = LandingPageSetting::where('section_key', $sectionKey)->first();
                     if ($existingContent && isset($existingContent->content['kepsek_image_url'])) {
                         $oldFilePath = str_replace('/storage/', '', $existingContent->content['kepsek_image_url']);
                         Storage::disk('public')->delete($oldFilePath);
                     }
-                    
-                    $content['kepsek_image_url'] = '/storage/' . $filePath;
+
+                    $content['kepsek_image_url'] = '/storage/'.$filePath;
                 }
 
                 // Pastikan content adalah array dan bukan null sebelum menyimpan
@@ -163,14 +165,15 @@ class LandingPageContentController extends Controller
                 }
             }
 
-            ActivityLogger::log("Update Konten Landing Page", "Semua section Landing Page telah diperbarui.", $request);
+            ActivityLogger::log('Update Konten Landing Page', 'Semua section Landing Page telah diperbarui.', $request);
 
             return redirect()->route('admin.landingpage.content.index')
-                             ->with('success', "Konten Landing Page berhasil diperbarui!");
+                ->with('success', 'Konten Landing Page berhasil diperbarui!');
 
         } catch (\Exception $e) {
-            Log::error("Error updating landing page content: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return back()->withErrors(['general' => 'Gagal memperbarui konten: ' . $e->getMessage()])->withInput();
+            Log::error('Error updating landing page content: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
+            return back()->withErrors(['general' => 'Gagal memperbarui konten: '.$e->getMessage()])->withInput();
         }
     }
 }

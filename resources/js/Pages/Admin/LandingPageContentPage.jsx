@@ -7,6 +7,7 @@ import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import MiniTextEditor from '@/Components/MiniTextEditor';
+import { TYPOGRAPHY } from '@/Utils/typography';
 import { X, Plus, Upload } from 'lucide-react';
 
 export default function LandingPageContentPage() {
@@ -229,7 +230,7 @@ export default function LandingPageContentPage() {
                                     }
                                 }}
                             />
-                            <p className="text-xs text-gray-500">
+                            <p className={TYPOGRAPHY.smallText}>
                                 Format yang didukung: JPEG, PNG, JPG, GIF, SVG. Maksimal 2MB.
                             </p>
                             {previewUrls.heroBackgroundImage && (
@@ -277,7 +278,7 @@ export default function LandingPageContentPage() {
                                     }
                                 }}
                             />
-                            <p className="text-xs text-gray-500">
+                            <p className={TYPOGRAPHY.smallText}>
                                 Format yang didukung: JPEG, PNG, JPG, GIF, SVG. Maksimal 2MB.
                             </p>
                             {previewUrls.aboutImage && (
@@ -339,7 +340,7 @@ export default function LandingPageContentPage() {
                                     }
                                 }}
                             />
-                            <p className="text-xs text-gray-500">
+                            <p className={TYPOGRAPHY.smallText}>
                                 Format yang didukung: JPEG, PNG, JPG, GIF, SVG. Maksimal 2MB.
                             </p>
                             {previewUrls.kepsekImage && (

@@ -3,6 +3,8 @@ import { Head, usePage } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import Modal from '@/Components/Modal';
+import { TYPOGRAPHY } from '@/Utils/typography';
+import { getNavigationData } from '@/Utils/navigationData';
 import { Calendar, X, ZoomIn, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
 
 export default function AcademicCalendarPage({ 
@@ -46,67 +48,48 @@ export default function AcademicCalendarPage({
     };
 
     // Standard navigation data used across the site
-    const logoSmkn15 = '/images/logo-smkn15.png';
-    const programKeahlianDataNav = [
-        { nama: "DKV", link: "/programkeahlian/dkv" },
-        { nama: "Perhotelan", link: "/programkeahlian/perhotelan" },
-        { nama: "Kuliner", link: "/programkeahlian/kuliner" },
-        { nama: "Pekerjaan Sosial", link: "/programkeahlian/pekerjaan-sosial" },
+    // Get navigation data from centralized source
+const navigationData = getNavigationData();
+
+    const programStudiDataNav = [
+        { nama: "MIPA", link: "/program-studi/mipa" },
+        { nama: "IPS", link: "/program-studi/ips" },
+        { nama: "Bahasa", link: "/program-studi/bahasa" },
     ];
-    const tentangKamiLinks = [
-        { title: "Profil Sekolah", href: "/profil-sekolah" },
-        { title: "Visi & Misi", href: "/visi-misi" },
-        { title: "Struktur Organisasi", href: "/struktur-organisasi" },
-        { title: "Fasilitas", href: "/fasilitas" },
-        { title: "Program Sekolah", href: "/program" },
-        { title: "Daftar Guru & TU", href: "/daftar-guru-tu" },
-        { title: "Hubungi Kami", href: "/hubungi-kami" },
-    ];
-    const manajemenSekolahSublinks = [
-        { title: "Kurikulum", href: "/manajemen/kurikulum" },
-        { title: "Kesiswaan", href: "/manajemen/kesiswaan" },
-        { title: "Hubungan Masyarakat dan Industri", href: "/manajemen/humas-industri" },
-        { title: "Sarana Prasarana", href: "/manajemen/sarpras" },
-    ];
-    const akademikInformasiLinks = [
-        { title: "Kalender Akademik", href: "/kalender-akademik" },
-        { title: "Berita dan Pengumuman", href: "/berita-pengumuman" },
-    ];
-    const googleMapsEmbedUrl = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.7320221071664!2d107.6164360758815!3d-6.922603993077097!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e62c87267923%3A0x7ef8aaa0fcd59ec9!2sSMKN%2015%20Kota%20Bandung!5e0!3m2!1sid!2sid!4v1746550004423!5m2!1sid!2sid";
-    const socialMediaLinks = [
-        { name: "Instagram", href: "https://www.instagram.com/smkn_15bandung", icon: Instagram, handle: "@smkn_15bandung" },
-        { name: "Facebook", href: "https://www.facebook.com/SMKN15Bandung", icon: Facebook, handle: "SMKN 15 Bandung" },
-        { name: "LinkedIn", href: "https://www.linkedin.com/school/smkn-15-bandung/", icon: Linkedin, handle: "SMKN 15 Bandung" },
-        { name: "X", href: "https://twitter.com/smkn15bandung", icon: Twitter, handle: "@smkn15bandung" },
-    ];    return (
+    
+
+    
+
+    
+    
+        return (
         <div className="bg-secondary text-gray-800 font-sans">
             <Head>
-                <title>Kalender Akademik - SMKN 15 Bandung</title>
-                <meta name="description" content="Kalender akademik resmi SMK Negeri 15 Bandung untuk tahun ajaran terkini. Berisi informasi jadwal penting semester, ujian, libur dan kegiatan sekolah." />
+                <title>Kalender Akademik - SMAN 1 Baleendah</title>
+<meta name="description" content="Kalender akademik resmi SMA Negeri 1 Baleendah untuk tahun ajaran terkini. Berisi informasi jadwal penting semester, ujian, libur dan kegiatan sekolah." />
             </Head>
             
             <Navbar 
-                logoSmkn15={logoSmkn15}
-                tentangKamiLinks={tentangKamiLinks}
-                manajemenSekolahSublinks={manajemenSekolahSublinks}
-                akademikInformasiLinks={akademikInformasiLinks}
-                programKeahlianDataNav={programKeahlianDataNav}
+                logoSman1={navigationData.logoSman1}
+                profilLinks={navigationData.profilLinks}
+                akademikLinks={navigationData.akademikLinks}
+                programStudiLinks={navigationData.programStudiLinks}
             />
 
             {/* Header Section */}
             <section className="pt-24 pb-12 bg-white">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary mb-4 text-center md:text-left">
+                    <h1 className={TYPOGRAPHY.pageTitle + " text-center md:text-left"}>
                         Kalender Akademik
                     </h1>
-                    <p className="text-sm sm:text-base leading-relaxed text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left">
+                    <p className={TYPOGRAPHY.bodyText + " text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left"}>
                         Tahun Ajaran {currentAcademicYear || "Terbaru"}
                     </p>
                 </div>
             </section>            {/* Flash Message */}
             {flash && flash.success && (
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    <div className="bg-blue-100 border border-primary text-primary px-4 py-3 rounded">
                         {flash.success}
                     </div>
                 </div>
@@ -144,7 +127,7 @@ export default function AcademicCalendarPage({
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         {selectedCalendar ? (
                             <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl max-w-5xl mx-auto border border-gray-200">
-                                <h2 className="text-2xl font-semibold text-center text-gray-800 mb-8">
+                                <h2 className={TYPOGRAPHY.subsectionHeading + " text-center text-gray-800 mb-8"}>
                                     Kalender Akademik {selectedCalendar.academic_year} Semester {selectedCalendar.semester_name}
                                 </h2>
                                 
@@ -157,7 +140,7 @@ export default function AcademicCalendarPage({
                                             onClick={() => openImageModal(selectedCalendar)}
                                         />
                                         
-                                        <p className="text-center text-xs text-gray-500 mt-4">
+                                        <p className={TYPOGRAPHY.secondaryText + " text-center mt-4"}>
                                             Klik pada gambar untuk memperbesar.
                                         </p>
                                     </div>
@@ -166,8 +149,8 @@ export default function AcademicCalendarPage({
                         ) : (
                             <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl max-w-5xl mx-auto border border-gray-200 text-center py-12">
                                 <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                                <h3 className="mt-2 text-lg font-medium text-gray-900">Tidak ada kalender akademik</h3>
-                                <p className="mt-1 text-base text-gray-500">
+                                <h3 className={TYPOGRAPHY.cardTitle + " mt-2 text-gray-900"}>Tidak ada kalender akademik</h3>
+                                <p className={TYPOGRAPHY.secondaryText + " mt-1"}>
                                     Kalender akademik belum tersedia saat ini.
                                 </p>
                             </div>
@@ -197,12 +180,12 @@ export default function AcademicCalendarPage({
             </Modal>
             
             <Footer 
-                logoSmkn15={logoSmkn15}
-                googleMapsEmbedUrl={googleMapsEmbedUrl}
-                tentangKamiLinks={tentangKamiLinks}
-                akademikInformasiLinks={akademikInformasiLinks}
-                programKeahlianDataNav={programKeahlianDataNav}
-                socialMediaLinks={socialMediaLinks}
+                logoSman1={navigationData.logoSman1}
+                googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
+                profilLinks={navigationData.profilLinks}
+                akademikLinks={navigationData.akademikLinks}
+                programStudiLinks={navigationData.programStudiLinks}
+                socialMediaLinks={navigationData.socialMediaLinks}
             />
         </div>
     );

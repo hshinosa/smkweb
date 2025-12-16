@@ -20,7 +20,7 @@ class AcademicCalendarContent extends Model
     public static function getDefaults(): array
     {
         return [
-            'title' => 'Kalender Akademik SMK Negeri 15 Bandung',
+            'title' => 'Kalender Akademik SMA Negeri 1 Baleendah',
             'calendar_image_url' => '/images/kalender-akademik-default.jpg',
             'semester' => 1, // 1 for odd/ganjil
             'academic_year_start' => 2024, // 2024/2025
@@ -30,25 +30,25 @@ class AcademicCalendarContent extends Model
 
     public function getAcademicYearAttribute()
     {
-        return $this->academic_year_start . '/' . ($this->academic_year_start + 1);
+        return $this->academic_year_start.'/'.($this->academic_year_start + 1);
     }
-    
+
     // Helper method to get semester name
     public function getSemesterNameAttribute()
     {
         return $this->semester == 1 ? 'Ganjil' : 'Genap';
     }
-    
+
     public function scopeOrdered($query)
     {
         $columns = \Schema::getColumnListing('academic_calendar_contents');
         if (in_array('academic_year_start', $columns)) {
             return $query->orderBy('academic_year_start', 'desc')
-                        ->orderBy('semester', 'asc')
-                        ->orderBy('sort_order', 'asc');
+                ->orderBy('semester', 'asc')
+                ->orderBy('sort_order', 'asc');
         } else {
             return $query->orderBy('id', 'desc')
-                        ->orderBy('sort_order', 'asc');
+                ->orderBy('sort_order', 'asc');
         }
     }
 }

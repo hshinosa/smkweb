@@ -79,7 +79,7 @@ const navigationData = getNavigationData();
             {/* Header Section */}
             <section className="pt-24 pb-12 bg-white">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 className={TYPOGRAPHY.pageTitle + " text-center md:text-left"}>
+                    <h1 className={`${TYPOGRAPHY.pageTitle} text-center md:text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300`}>
                         Kalender Akademik
                     </h1>
                     <p className={TYPOGRAPHY.bodyText + " text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left"}>

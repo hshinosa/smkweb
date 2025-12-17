@@ -1,479 +1,370 @@
-import React, { useState } from 'react';
-// Import reusable academic components
+import React from 'react';
+import { Head, Link } from '@inertiajs/react';
 import { 
-    AcademicLayout, 
-    AcademicHero, 
-    ContentSection, 
-    CallToAction 
-} from '@/Components/Academic';
-import ProgramStudiModal from '@/Components/ProgramStudiModal';
-// Import typography constants
+    BookOpen, 
+    Microscope, 
+    Globe, 
+    Languages, 
+    CheckCircle, 
+    Lightbulb, 
+    Users, 
+    Monitor,
+    Award,
+    TrendingUp,
+    Target
+} from 'lucide-react';
+
+// Import Components
+import Navbar from '@/Components/Navbar';
+import Footer from '@/Components/Footer';
+
+// Import utilities
 import { TYPOGRAPHY } from '@/Utils/typography';
-// Import academic data
-import { curriculumData, pageMetadata } from '@/Utils/academicData';
-// Import Lucide React icons
-import { Lightbulb, Users, Monitor } from 'lucide-react';
+import { getNavigationData } from '@/Utils/navigationData';
+import { pageMetadata } from '@/Utils/academicData';
+
+const navigationData = getNavigationData();
 
 export default function KurikulumPage() {
-    const [showProgramModal, setShowProgramModal] = useState(false);
-    const [selectedProgram, setSelectedProgram] = useState(null);
-
-    const openProgramModal = (programType) => {
-        const program = {
-            type: programType,
-            link: `/akademik/program-studi/${programType.toLowerCase()}`
-        };
-        setSelectedProgram(program);
-        setShowProgramModal(true);
-    };
-
-    const closeProgramModal = () => {
-        setShowProgramModal(false);
-        setSelectedProgram(null);
-    };
+    // Programs Data
+    const programs = [
+        {
+            title: "MIPA",
+            fullName: "Matematika & Ilmu Pengetahuan Alam",
+            icon: Microscope,
+            description: "Program unggulan bagi siswa yang berminat dalam sains, teknologi, dan matematika. Fasilitas laboratorium lengkap.",
+            link: "/akademik/program-studi/mipa",
+            type: "MIPA"
+        },
+        {
+            title: "IPS",
+            fullName: "Ilmu Pengetahuan Sosial",
+            icon: Globe,
+            description: "Mendalami fenomena sosial, ekonomi, dan sejarah. Membentuk karakter kritis dan berwawasan luas.",
+            link: "/akademik/program-studi/ips",
+            type: "IPS"
+        },
+        {
+            title: "Bahasa",
+            fullName: "Ilmu Bahasa & Budaya",
+            icon: BookOpen,
+            description: "Eksplorasi bahasa asing dan seni budaya. Mempersiapkan siswa kompeten dalam komunikasi global.",
+            link: "/akademik/program-studi/bahasa",
+            type: "BAHASA"
+        }
+    ];
 
     return (
-        <AcademicLayout>
-            <AcademicHero
-                title="Kurikulum"
-                description="Struktur kurikulum dan sistem pembelajaran yang komprehensif di SMA Negeri 1 Baleendah, dirancang untuk mempersiapkan siswa menghadapi tantangan pendidikan tinggi dan masa depan."
-                pageTitle={pageMetadata.kurikulum.title}
-                metaDescription={pageMetadata.kurikulum.description}
+        <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
+            <Head title={pageMetadata.kurikulum.title} description={pageMetadata.kurikulum.description} />
+
+            <Navbar
+                logoSman1={navigationData.logoSman1}
+                profilLinks={navigationData.profilLinks}
+                akademikLinks={navigationData.akademikLinks}
+                programStudiLinks={navigationData.programStudiLinks}
             />
 
-            <ContentSection 
-                backgroundColor="bg-secondary"
-            >
-                        <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
-                            <div className="text-center md:text-left mb-8">
-                                <h2 className={TYPOGRAPHY.sectionHeading}>
-                                    Kurikulum <span className="text-primary">Merdeka</span>
-                                </h2>
-                                <div className="h-1 w-32 bg-primary mt-2 mx-auto md:mx-0 mb-6"></div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-800 max-w-4xl mx-auto md:mx-0`}>
-                                    SMA Negeri 1 Baleendah menerapkan Kurikulum Merdeka yang memberikan fleksibilitas 
-                                    kepada siswa untuk memilih mata pelajaran sesuai dengan minat, bakat, dan aspirasi karier. 
-                                    Kurikulum ini dirancang untuk mengembangkan kompetensi siswa secara holistik dan mempersiapkan 
-                                    mereka menghadapi tantangan abad ke-21.
-                                </p>
+            {/* 1. HERO SECTION (Redefined) */}
+            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+                {/* Background Image */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        alt="Background Kurikulum" 
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/60"></div>
+                </div>
+
+                <div className="relative z-10 container mx-auto px-4 text-center text-white">
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
+                        Kurikulum & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Pembelajaran</span>
+                    </h1>
+                    <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
+                        Menerapkan Kurikulum Merdeka untuk menggali potensi unik setiap siswa.
+                    </p>
+                </div>
+            </section>
+
+            {/* 2. SECTION: INTRO KURIKULUM (The Concept) */}
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                            Kurikulum <span className="text-primary">Merdeka</span>
+                        </h2>
+                        <p className={`${TYPOGRAPHY.bodyText}`}>
+                            SMA Negeri 1 Baleendah menerapkan Kurikulum Merdeka yang memberikan fleksibilitas 
+                            kepada siswa untuk memilih mata pelajaran sesuai dengan minat, bakat, dan aspirasi karier.
+                        </p>
+                    </div>
+
+                    <div className="space-y-12">
+                        {/* Row 1: Fase E */}
+                        <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                            <div className="w-full md:w-1/2">
+                                <div className="relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3] group">
+                                    <img 
+                                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                                        alt="Siswa Belajar" 
+                                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80"></div>
+                                    <div className="absolute bottom-0 left-0 p-6 text-white">
+                                        <div className="bg-primary/90 backdrop-blur-sm px-4 py-1 rounded-full text-xs font-bold inline-block mb-2">
+                                            FASE E
+                                        </div>
+                                        <h3 className="text-2xl font-bold">Kelas X</h3>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div className="grid md:grid-cols-2 gap-8 mb-6">
-                                <div className="bg-primary text-white p-6 rounded-xl">
-                                    <h3 className={`${TYPOGRAPHY.subsectionHeading} text-white mb-4`}>Tahun Implementasi</h3>
-                                    <div className="text-3xl font-bold mb-2">{curriculumData.overview.implementationYear}</div>
-                                    <p className={`${TYPOGRAPHY.bodyText} text-blue-100`}>
-                                        Implementasi penuh Kurikulum Merdeka di semua tingkat kelas
-                                    </p>
+                            <div className="w-full md:w-1/2 space-y-4">
+                                <h3 className="text-3xl font-bold text-gray-900">Eksplorasi Minat & Bakat</h3>
+                                <div className="h-1 w-20 bg-primary rounded-full"></div>
+                                <p className="text-gray-600 leading-relaxed text-lg">
+                                    Pada fase ini, siswa difokuskan untuk mengenali potensi diri melalui pembelajaran mata pelajaran umum. 
+                                    Siswa didorong untuk mengeksplorasi berbagai bidang ilmu sebelum menentukan pilihan spesifik di fase berikutnya.
+                                </p>
+                                <ul className="space-y-3 pt-2">
+                                    <li className="flex items-center gap-3 text-gray-700">
+                                        <CheckCircle className="w-5 h-5 text-primary" fill="currentColor" />
+                                        <span>Penguatan fondasi literasi & numerasi</span>
+                                    </li>
+                                    <li className="flex items-center gap-3 text-gray-700">
+                                        <CheckCircle className="w-5 h-5 text-primary" fill="currentColor" />
+                                        <span>Proyek Penguatan Profil Pelajar Pancasila</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Row 2: Fase F */}
+                        <div className="flex flex-col md:flex-row-reverse items-center gap-8 md:gap-12">
+                            <div className="w-full md:w-1/2">
+                                <div className="relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3] group">
+                                    <img 
+                                        src="/images/panen-karya-sman1-baleendah.jpg" 
+                                        alt="Diskusi Kelompok" 
+                                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80"></div>
+                                    <div className="absolute bottom-0 left-0 p-6 text-white">
+                                        <div className="bg-accent-yellow/90 backdrop-blur-sm px-4 py-1 rounded-full text-xs font-bold text-gray-900 inline-block mb-2">
+                                            FASE F
+                                        </div>
+                                        <h3 className="text-2xl font-bold">Kelas XI - XII</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="w-full md:w-1/2 space-y-4">
+                                <h3 className="text-3xl font-bold text-gray-900">Pendalaman Materi & Penjurusan</h3>
+                                <div className="h-1 w-20 bg-accent-yellow rounded-full"></div>
+                                <p className="text-gray-600 leading-relaxed text-lg">
+                                    Siswa memilih mata pelajaran pilihan yang relevan dengan rencana studi lanjut atau karir. 
+                                    Pembelajaran lebih mendalam dan terfokus untuk mempersiapkan kompetensi spesifik.
+                                </p>
+                                <ul className="space-y-3 pt-2">
+                                    <li className="flex items-center gap-3 text-gray-700">
+                                        <CheckCircle className="w-5 h-5 text-accent-yellow" fill="currentColor" />
+                                        <span>Pemilihan mata pelajaran peminatan</span>
+                                    </li>
+                                    <li className="flex items-center gap-3 text-gray-700">
+                                        <CheckCircle className="w-5 h-5 text-accent-yellow" fill="currentColor" />
+                                        <span>Persiapan intensif menuju Perguruan Tinggi</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 3. SECTION: PROGRAM STUDI (Landing Page Style) */}
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                            Program <span className="text-primary">Akademik</span>
+                        </h2>
+                        <p className={TYPOGRAPHY.bodyText}>
+                            Pilihan program studi yang dirancang untuk mempersiapkan siswa menuju jenjang pendidikan tinggi dan karir masa depan.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {programs.map((program, idx) => (
+                            <div key={idx} className="group flex flex-col items-center">
+                                {/* Image Area - Floating above */}
+                                <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
+                                    <img 
+                                        src="/images/anak-sma-programstudi.png" 
+                                        alt={program.fullName}
+                                        className="h-full w-auto object-contain drop-shadow-xl transform group-hover:scale-105 transition-transform duration-500" 
+                                    />
                                 </div>
                                 
-                                <div className="bg-secondary p-6 rounded-xl">
-                                    <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-4`}>Fokus Utama</h3>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-primary rounded-full mr-3 flex-shrink-0"></div>
-                                            <span className={`${TYPOGRAPHY.bodyText} text-gray-700 font-medium`}>Profil Pelajar Pancasila</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-primary rounded-full mr-3 flex-shrink-0"></div>
-                                            <span className={`${TYPOGRAPHY.bodyText} text-gray-700 font-medium`}>Pembelajaran Berdiferensiasi</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-primary rounded-full mr-3 flex-shrink-0"></div>
-                                            <span className={`${TYPOGRAPHY.bodyText} text-gray-700 font-medium`}>Asesmen Autentik</span>
-                                        </div>
+                                {/* Content Section */}
+                                <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 relative -mt-12 pt-10 flex-1 flex flex-col z-10 w-full">
+                                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-primary mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
+                                        <program.icon size={24} />
                                     </div>
+                                    <h3 className={`${TYPOGRAPHY.cardTitle} mb-2`}>{program.fullName}</h3>
+                                    <p className={`${TYPOGRAPHY.smallText} mb-8 leading-relaxed flex-1`}>
+                                        {program.description}
+                                    </p>
+                                    <Link 
+                                        href={program.link}
+                                        className="w-full py-3 rounded-xl border-2 border-primary text-primary font-bold hover:bg-primary hover:text-white transition-all text-center block"
+                                    >
+                                        Lihat Mata Pelajaran
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* 4. SECTION: SISTEM PENILAIAN (Elegant Data) */}
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-12">
+                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>Sistem Penilaian</h2>
+                        <p className={`${TYPOGRAPHY.bodyText} max-w-2xl mx-auto`}>
+                            Standar penilaian kompetensi siswa berdasarkan capaian pembelajaran.
+                        </p>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                        <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+                            {/* Left: Description */}
+                            <div className="p-8 md:p-12 flex flex-col justify-center bg-slate-50">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-4">Skala Penilaian</h3>
+                                <p className="text-gray-600 leading-relaxed mb-6">
+                                    Penilaian dilakukan secara komprehensif mencakup aspek pengetahuan, keterampilan, dan sikap. 
+                                    Setiap predikat mencerminkan tingkat penguasaan kompetensi siswa.
+                                </p>
+                                <div className="flex items-center gap-2 text-primary font-medium">
+                                    <Award className="w-5 h-5" />
+                                    <span>Berbasis Kompetensi</span>
                                 </div>
                             </div>
 
-                            <div className="bg-gray-50 p-6 rounded-xl">
-                                <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-4 text-center`}>Keunggulan Kurikulum Merdeka</h3>
-                                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <div className="text-center">
-                                        <div className="bg-white p-4 rounded-lg shadow-sm mb-3">
-                                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <span className="text-primary font-bold">1</span>
-                                            </div>
-                                            <h4 className={`${TYPOGRAPHY.bodyText} font-semibold text-gray-800 mb-1`}>Fleksibilitas</h4>
-                                        </div>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-800 text-sm`}>
-                                            Pemilihan mata pelajaran sesuai minat dan bakat
-                                        </p>
+                            {/* Right: Data Points */}
+                            <div className="p-8 md:p-12 space-y-6 bg-white">
+                                <div className="flex items-center justify-between group">
+                                    <div>
+                                        <div className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors">Predikat A (Sangat Baik)</div>
+                                        <div className="text-sm text-gray-500">Penguasaan materi sangat mendalam</div>
                                     </div>
-                                    
-                                    <div className="text-center">
-                                        <div className="bg-white p-4 rounded-lg shadow-sm mb-3">
-                                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <span className="text-primary font-bold">2</span>
-                                            </div>
-                                            <h4 className={`${TYPOGRAPHY.bodyText} font-semibold text-gray-800 mb-1`}>Kolaborasi</h4>
-                                        </div>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-800 text-sm`}>
-                                            Pembelajaran berbasis proyek dan kerjasama
-                                        </p>
+                                    <div className="px-4 py-1 bg-blue-50 text-blue-600 font-bold rounded-full text-sm border border-blue-100">
+                                        90 - 100
                                     </div>
-                                    
-                                    <div className="text-center">
-                                        <div className="bg-white p-4 rounded-lg shadow-sm mb-3">
-                                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <span className="text-primary font-bold">3</span>
-                                            </div>
-                                            <h4 className={`${TYPOGRAPHY.bodyText} font-semibold text-gray-800 mb-1`}>Karakter</h4>
-                                        </div>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-800 text-sm`}>
-                                            Pengembangan profil pelajar Pancasila
-                                        </p>
+                                </div>
+
+                                <div className="flex items-center justify-between group">
+                                    <div>
+                                        <div className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors">Predikat B (Baik)</div>
+                                        <div className="text-sm text-gray-500">Penguasaan materi baik</div>
                                     </div>
-                                    
-                                    <div className="text-center">
-                                        <div className="bg-white p-4 rounded-lg shadow-sm mb-3">
-                                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                <span className="text-primary font-bold">4</span>
-                                            </div>
-                                            <h4 className={`${TYPOGRAPHY.bodyText} font-semibold text-gray-800 mb-1`}>Teknologi</h4>
-                                        </div>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-800 text-sm`}>
-                                            Integrasi teknologi dalam pembelajaran
-                                        </p>
+                                    <div className="px-4 py-1 bg-gray-50 text-gray-600 font-bold rounded-full text-sm border border-gray-200">
+                                        80 - 89
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between group">
+                                    <div>
+                                        <div className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors">Predikat C (Cukup)</div>
+                                        <div className="text-sm text-gray-500">Penguasaan materi cukup</div>
+                                    </div>
+                                    <div className="px-4 py-1 bg-gray-50 text-gray-600 font-bold rounded-full text-sm border border-gray-200">
+                                        75 - 79
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between group">
+                                    <div>
+                                        <div className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors">Predikat D (Kurang)</div>
+                                        <div className="text-sm text-gray-500">Perlu bimbingan intensif</div>
+                                    </div>
+                                    <div className="px-4 py-1 bg-gray-50 text-gray-600 font-bold rounded-full text-sm border border-gray-200">
+                                        &lt; 75
                                     </div>
                                 </div>
                             </div>
                         </div>
-            </ContentSection>
+                    </div>
+                </div>
+            </section>
 
-            <ContentSection 
-                title="Studi"
-                subtitle="Program"
-                description="Tiga program studi yang tersedia dengan fokus pembelajaran yang berbeda sesuai minat dan bakat siswa"
-                backgroundColor="bg-white"
-            >
-                        <div className="grid lg:grid-cols-3 gap-6">
-                            {/* MIPA Program */}
-                            <div 
-                                onClick={() => openProgramModal('MIPA')}
-                                className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 group"
-                            >
-                                <div className="mb-4 relative h-32 rounded-lg overflow-hidden">
-                                    {/* Gambar siswa sebagai background utama */}
-                                    <img 
-                                        src="/images/anak-sma.png" 
-                                        alt="Siswa SMAN 1 Baleendah"
-                                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                    {/* Overlay gradient untuk readability */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
-                                    {/* Subtle shine effect on hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
-                                </div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-800 mb-3 text-sm`}>
-                                    {curriculumData.programs.mipa.focus}
-                                </p>
-                                <div className="mb-3">
-                                    <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2 text-sm`}>Mata Pelajaran Inti:</h4>
-                                    <ul className="space-y-1">
-                                        {curriculumData.programs.mipa.coreSubjects.slice(0, 3).map((subject, index) => (
-                                            <li key={index} className="flex items-start">
-                                                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
-                                                <span className={`${TYPOGRAPHY.bodyText} text-gray-800 text-xs`}>{subject}</span>
-                                            </li>
-                                        ))}
-                                        {curriculumData.programs.mipa.coreSubjects.length > 3 && (
-                                            <li className="text-xs text-gray-500 italic">+{curriculumData.programs.mipa.coreSubjects.length - 3} mata pelajaran lainnya</li>
-                                        )}
-                                    </ul>
-                                </div>
-                                <div className="text-center mb-3">
-                                    <span className={`${TYPOGRAPHY.bodyText} text-primary font-semibold text-sm`}>
-                                        {curriculumData.programs.mipa.totalHours} Jam/Minggu
-                                    </span>
-                                </div>
-                                <div className="text-center">
-                                    <div className="bg-primary text-white py-2 px-4 rounded-lg group-hover:bg-primary-darker transition-colors duration-200 text-sm font-medium">
-                                        Lihat Detail Program
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* IPS Program */}
-                            <div 
-                                onClick={() => openProgramModal('IPS')}
-                                className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 group"
-                            >
-                                <div className="mb-4 relative h-32 rounded-lg overflow-hidden">
-                                    {/* Gambar siswa sebagai background utama */}
-                                    <img 
-                                        src="/images/anak-sma.png" 
-                                        alt="Siswa SMAN 1 Baleendah"
-                                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                    {/* Overlay gradient untuk readability */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
-                                    {/* Subtle shine effect on hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
-                                </div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-800 mb-3 text-sm`}>
-                                    {curriculumData.programs.ips.focus}
-                                </p>
-                                <div className="mb-3">
-                                    <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2 text-sm`}>Mata Pelajaran Inti:</h4>
-                                    <ul className="space-y-1">
-                                        {curriculumData.programs.ips.coreSubjects.slice(0, 3).map((subject, index) => (
-                                            <li key={index} className="flex items-start">
-                                                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
-                                                <span className={`${TYPOGRAPHY.bodyText} text-gray-800 text-xs`}>{subject}</span>
-                                            </li>
-                                        ))}
-                                        {curriculumData.programs.ips.coreSubjects.length > 3 && (
-                                            <li className="text-xs text-gray-500 italic">+{curriculumData.programs.ips.coreSubjects.length - 3} mata pelajaran lainnya</li>
-                                        )}
-                                    </ul>
-                                </div>
-                                <div className="text-center mb-3">
-                                    <span className={`${TYPOGRAPHY.bodyText} text-primary font-semibold text-sm`}>
-                                        {curriculumData.programs.ips.totalHours} Jam/Minggu
-                                    </span>
-                                </div>
-                                <div className="text-center">
-                                    <div className="bg-primary text-white py-2 px-4 rounded-lg group-hover:bg-primary-darker transition-colors duration-200 text-sm font-medium">
-                                        Lihat Detail Program
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Bahasa Program */}
-                            <div 
-                                onClick={() => openProgramModal('BAHASA')}
-                                className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 group"
-                            >
-                                <div className="mb-4 relative h-32 rounded-lg overflow-hidden">
-                                    {/* Gambar siswa sebagai background utama */}
-                                    <img 
-                                        src="/images/anak-sma.png" 
-                                        alt="Siswa SMAN 1 Baleendah"
-                                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                    {/* Overlay gradient untuk readability */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
-                                    {/* Subtle shine effect on hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
-                                </div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-800 mb-3 text-sm`}>
-                                    {curriculumData.programs.bahasa.focus}
-                                </p>
-                                <div className="mb-3">
-                                    <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2 text-sm`}>Mata Pelajaran Inti:</h4>
-                                    <ul className="space-y-1">
-                                        {curriculumData.programs.bahasa.coreSubjects.slice(0, 3).map((subject, index) => (
-                                            <li key={index} className="flex items-start">
-                                                <div className="w-1.5 h-1.5 bg-primary rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
-                                                <span className={`${TYPOGRAPHY.bodyText} text-gray-800 text-xs`}>{subject}</span>
-                                            </li>
-                                        ))}
-                                        {curriculumData.programs.bahasa.coreSubjects.length > 3 && (
-                                            <li className="text-xs text-gray-500 italic">+{curriculumData.programs.bahasa.coreSubjects.length - 3} mata pelajaran lainnya</li>
-                                        )}
-                                    </ul>
-                                </div>
-                                <div className="text-center mb-3">
-                                    <span className={`${TYPOGRAPHY.bodyText} text-primary font-semibold text-sm`}>
-                                        {curriculumData.programs.bahasa.totalHours} Jam/Minggu
-                                    </span>
-                                </div>
-                                <div className="text-center">
-                                    <div className="bg-primary text-white py-2 px-4 rounded-lg group-hover:bg-primary-darker transition-colors duration-200 text-sm font-medium">
-                                        Lihat Detail Program
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-            </ContentSection>
-
-            <ContentSection 
-                backgroundColor="bg-secondary"
-            >
-                        <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
-                            <div className="text-center md:text-left mb-6">
-                                <h2 className={TYPOGRAPHY.sectionHeading}>
-                                    Sistem <span className="text-primary">Penilaian</span>
-                                </h2>
-                                <div className="h-1 w-32 bg-primary mt-2 mx-auto md:mx-0 mb-6"></div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-600 max-w-2xl mx-auto md:mx-0`}>
-                                    {curriculumData.assessment.system} yang komprehensif dan berkeadilan untuk mengukur pencapaian kompetensi siswa
-                                </p>
-                            </div>
-
-                            <div className="grid lg:grid-cols-3 gap-8 mb-8">
-                                {curriculumData.assessment.components.map((component, index) => (
-                                    <div key={index} className="border-l-4 border-primary pl-6">
-                                        <div className="flex items-center mb-3">
-                                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mr-3">
-                                                <span className="text-white font-bold text-sm">{index + 1}</span>
-                                            </div>
-                                            <h3 className={`${TYPOGRAPHY.subsectionHeading}`}>{component}</h3>
+            {/* 5. SECTION: METODE & TUJUAN (Combined) */}
+            <section className="py-20 bg-gray-900 text-white">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid lg:grid-cols-2 gap-16">
+                        {/* Tujuan (Checkmark Cards) */}
+                        <div>
+                            <h2 className="text-3xl md:text-4xl font-bold font-serif mb-8 text-white">
+                                Tujuan Pembelajaran
+                            </h2>
+                            <div className="space-y-4">
+                                {[
+                                    "Mengembangkan kemampuan berpikir kritis dan kreatif",
+                                    "Membangun karakter berintegritas dan kepemimpinan",
+                                    "Menguasai literasi digital dan teknologi",
+                                    "Memiliki wawasan global dan kearifan lokal",
+                                    "Siap melanjutkan ke perguruan tinggi unggulan"
+                                ].map((goal, idx) => (
+                                    <div key={idx} className="flex items-center bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/10 hover:bg-white/20 transition-colors">
+                                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                            <CheckCircle className="w-5 h-5 text-white" fill="currentColor" />
                                         </div>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600`}>
-                                            {component === 'Pengetahuan' && 'Penilaian terhadap pemahaman konsep dan teori melalui ujian tertulis, lisan, dan penugasan.'}
-                                            {component === 'Keterampilan' && 'Evaluasi kemampuan praktis dan aplikasi pengetahuan melalui praktikum, proyek, dan portofolio.'}
-                                            {component === 'Sikap' && 'Observasi perilaku, kedisiplinan, dan karakter siswa dalam proses pembelajaran sehari-hari.'}
-                                        </p>
+                                        <span className="text-lg font-medium">{goal}</span>
                                     </div>
                                 ))}
                             </div>
+                        </div>
 
-                            <div className="bg-primary text-white p-6 rounded-xl">
-                                <h3 className={`${TYPOGRAPHY.subsectionHeading} text-white mb-4 text-center`}>Skala Penilaian</h3>
-                                <p className={`${TYPOGRAPHY.bodyText} text-blue-100 mb-4 text-center`}>
-                                    Menggunakan skala {curriculumData.assessment.scale} dengan kriteria:
-                                </p>
-                                <div className="grid md:grid-cols-4 gap-4">
-                                    <div className="bg-white bg-opacity-20 p-4 rounded-lg text-center">
-                                        <div className="font-bold text-xl mb-1">90-100</div>
-                                        <div className="text-sm">Sangat Baik</div>
+                        {/* Metode (Glassmorphism Cards) */}
+                        <div>
+                            <h2 className="text-3xl md:text-4xl font-bold font-serif mb-8 text-white">
+                                Metode Pembelajaran
+                            </h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-md hover:bg-white/10 transition-all group text-center">
+                                    <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                        <Lightbulb className="w-8 h-8 text-blue-300" fill="currentColor" />
                                     </div>
-                                    <div className="bg-white bg-opacity-20 p-4 rounded-lg text-center">
-                                        <div className="font-bold text-xl mb-1">80-89</div>
-                                        <div className="text-sm">Baik</div>
+                                    <h3 className="text-xl font-bold mb-2">Project Based</h3>
+                                    <p className="text-gray-400 text-sm">Pembelajaran berbasis proyek nyata untuk solusi kreatif.</p>
+                                </div>
+
+                                <div className="bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-md hover:bg-white/10 transition-all group text-center">
+                                    <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                        <Users className="w-8 h-8 text-purple-300" fill="currentColor" />
                                     </div>
-                                    <div className="bg-white bg-opacity-20 p-4 rounded-lg text-center">
-                                        <div className="font-bold text-xl mb-1">70-79</div>
-                                        <div className="text-sm">Cukup</div>
+                                    <h3 className="text-xl font-bold mb-2">Collaborative</h3>
+                                    <p className="text-gray-400 text-sm">Kerja sama tim untuk membangun soft skills.</p>
+                                </div>
+
+                                <div className="bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-md hover:bg-white/10 transition-all group text-center sm:col-span-2">
+                                    <div className="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                        <Monitor className="w-8 h-8 text-cyan-300" fill="currentColor" />
                                     </div>
-                                    <div className="bg-white bg-opacity-20 p-4 rounded-lg text-center">
-                                        <div className="font-bold text-xl mb-1">0-69</div>
-                                        <div className="text-sm">Perlu Perbaikan</div>
-                                    </div>
+                                    <h3 className="text-xl font-bold mb-2">Digital Integration</h3>
+                                    <p className="text-gray-400 text-sm">Pemanfaatan LMS dan teknologi terkini dalam KBM.</p>
                                 </div>
                             </div>
                         </div>
-            </ContentSection>
+                    </div>
+                </div>
+            </section>
 
-            <ContentSection 
-                title="Pembelajaran"
-                subtitle="Tujuan"
-                description="Mengembangkan potensi siswa secara optimal melalui pembelajaran yang bermakna dan berkelanjutan"
-                backgroundColor="bg-white"
-            >
-                        <div className="grid md:grid-cols-2 gap-8">
-                            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                                <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-6`}>Kompetensi Utama</h3>
-                                <ul className="space-y-4">
-                                    <li className="flex items-start">
-                                        <div className="w-3 h-3 bg-primary rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                        <span className={`${TYPOGRAPHY.bodyText} text-gray-600`}>
-                                            Mengembangkan kemampuan berpikir kritis, kreatif, dan inovatif
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start">
-                                        <div className="w-3 h-3 bg-primary rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                        <span className={`${TYPOGRAPHY.bodyText} text-gray-600`}>
-                                            Membangun karakter yang berintegritas dan berjiwa kepemimpinan
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start">
-                                        <div className="w-3 h-3 bg-primary rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                        <span className={`${TYPOGRAPHY.bodyText} text-gray-600`}>
-                                            Menguasai teknologi informasi dan komunikasi
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start">
-                                        <div className="w-3 h-3 bg-primary rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                        <span className={`${TYPOGRAPHY.bodyText} text-gray-600`}>
-                                            Memiliki kemampuan komunikasi yang efektif dalam berbagai bahasa
-                                        </span>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-                                <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-6`}>Persiapan Masa Depan</h3>
-                                <ul className="space-y-4">
-                                    <li className="flex items-start">
-                                        <div className="w-3 h-3 bg-primary rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                        <span className={`${TYPOGRAPHY.bodyText} text-gray-600`}>
-                                            Kesiapan melanjutkan pendidikan ke perguruan tinggi terbaik
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start">
-                                        <div className="w-3 h-3 bg-primary rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                        <span className={`${TYPOGRAPHY.bodyText} text-gray-600`}>
-                                            Kemampuan beradaptasi dengan perkembangan zaman
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start">
-                                        <div className="w-3 h-3 bg-primary rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                        <span className={`${TYPOGRAPHY.bodyText} text-gray-600`}>
-                                            Jiwa entrepreneurship dan kemandirian
-                                        </span>
-                                    </li>
-                                    <li className="flex items-start">
-                                        <div className="w-3 h-3 bg-primary rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                        <span className={`${TYPOGRAPHY.bodyText} text-gray-600`}>
-                                            Kepedulian terhadap lingkungan dan masyarakat
-                                        </span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        {/* Additional Learning Methods Section */}
-                        <div className="mt-12 bg-secondary p-8 rounded-xl border border-gray-100">
-                            <div className="text-center md:text-left mb-6">
-                                <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-4`}>Metode Pembelajaran</h3>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-600`}>
-                                    Pendekatan pembelajaran yang inovatif dan berpusat pada siswa
-                                </p>
-                            </div>
-                            <div className="grid md:grid-cols-3 gap-6">
-                                <div className="text-center">
-                                    <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                                        <Lightbulb className="w-8 h-8 text-primary" />
-                                    </div>
-                                    <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2`}>Project Based Learning</h4>
-                                    <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm`}>
-                                        Pembelajaran berbasis proyek yang mengintegrasikan teori dengan praktik nyata
-                                    </p>
-                                </div>
-                                <div className="text-center">
-                                    <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                                        <Users className="w-8 h-8 text-primary" />
-                                    </div>
-                                    <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2`}>Collaborative Learning</h4>
-                                    <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm`}>
-                                        Pembelajaran kolaboratif yang mengembangkan kemampuan kerjasama dan komunikasi
-                                    </p>
-                                </div>
-                                <div className="text-center">
-                                    <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                                        <Monitor className="w-8 h-8 text-primary" />
-                                    </div>
-                                    <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2`}>Digital Learning</h4>
-                                    <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm`}>
-                                        Pemanfaatan teknologi digital untuk pembelajaran yang interaktif dan menarik
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-            </ContentSection>
-
-            <CallToAction
-                title="Bergabunglah dengan SMAN 1 Baleendah"
-                description="Wujudkan impian pendidikan terbaik bersama kurikulum yang inovatif dan komprehensif"
-                primaryButton={{
-                    text: "Daftar Sekarang",
-                    href: "/informasi-spmb"
-                }}
-                secondaryButton={{
-                    text: "Pelajari Program Studi",
-                    href: "/akademik/program-studi/mipa"
-                }}
+            <Footer
+                logoSman1={navigationData.logoSman1}
+                googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
+                socialMediaLinks={navigationData.socialMediaLinks}
             />
-
-            {/* Program Studi Modal */}
-            <ProgramStudiModal 
-                show={showProgramModal}
-                onClose={closeProgramModal}
-                program={selectedProgram}
-            />
-        </AcademicLayout>
+        </div>
     );
 }

@@ -1,41 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import CountUp from 'react-countup';
-import { Users } from 'lucide-react';
+import { 
+    Users, 
+    Trophy, 
+    GraduationCap, 
+    ArrowRight, 
+    Microscope, 
+    Globe, 
+    BookOpen, 
+    Calendar,
+    MapPin,
+    Phone,
+    Mail
+} from 'lucide-react';
 
 // Import Components
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
-import ProgramStudiModal from '@/Components/ProgramStudiModal';
-import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
-// Data untuk Program Studi SMA
-const programStudiData = [
-    { 
-        nama: "MIPA (Matematika dan Ilmu Pengetahuan Alam)", 
-        type: "MIPA",
-        link: "/akademik/program-studi/mipa" 
-    },
-    { 
-        nama: "IPS (Ilmu Pengetahuan Sosial)", 
-        type: "IPS",
-        link: "/akademik/program-studi/ips" 
-    },
-    { 
-        nama: "Bahasa (Ilmu Bahasa dan Budaya)", 
-        type: "BAHASA",
-        link: "/akademik/program-studi/bahasa" 
-    },
-];
+import { TYPOGRAPHY } from '@/Utils/typography';
 
-
-
-// Get navigation data from centralized source
+// Data Navigation
 const navigationData = getNavigationData();
-
-
-
-
 
 export default function LandingPage({ 
     heroContent, 
@@ -43,51 +30,39 @@ export default function LandingPage({
     kepsekWelcomeLpContent, 
     faktaLpContent 
 }) {
-    const [showProgramModal, setShowProgramModal] = useState(false);
-    const [selectedProgram, setSelectedProgram] = useState(null);
-
-    const openProgramModal = (program) => {
-        setSelectedProgram(program);
-        setShowProgramModal(true);
-    };
-
-    const closeProgramModal = () => {
-        setShowProgramModal(false);
-        setSelectedProgram(null);
-    };
-    // Fallback data jika props tidak ada atau fieldnya kosong (pengamanan tambahan)
-    const currentHeroContent = {
-        title_line1: heroContent?.title_line1 || 'Selamat Datang di',
-        title_line2: heroContent?.title_line2 || 'SMA Negeri 1 Baleendah',
-        background_image_url: heroContent?.background_image_url || '/images/hero-bg-sman1-baleendah.jpg',
-    };
-
-    const currentAboutLpContent = {
-        title: aboutLpContent?.title || 'Tentang SMAN 1 Baleendah',
-        description_html: aboutLpContent?.description_html || '<p>Deskripsi default tentang sekolah kami. Kami berkomitmen untuk memberikan pendidikan akademik berkualitas...</p>',
-        image_url: aboutLpContent?.image_url || '/images/keluarga-besar-sman1-baleendah.png', // Ganti dengan placeholder yang sesuai
-    };
-
-    const currentKepsekWelcomeLpContent = {
-        title: kepsekWelcomeLpContent?.title || 'Sambutan Kepala Sekolah',
-        kepsek_name: kepsekWelcomeLpContent?.kepsek_name || 'H. Dudi Rohdiana, S.Pd., M.M.',
-        kepsek_title: kepsekWelcomeLpContent?.kepsek_title || 'Kepala SMA Negeri 1 Baleendah',
-        kepsek_image_url: kepsekWelcomeLpContent?.kepsek_image_url || '/images/kepala-sekolah.jpg',
-        welcome_text_html: kepsekWelcomeLpContent?.welcome_text_html || '<p>Assalamu\'alaikum Warahmatullahi Wabarakatuh...</p>',
-    };
-
-    const currentFaktaLpContent = {
-        items: faktaLpContent?.items && faktaLpContent.items.length > 0 ? faktaLpContent.items : [
-            { label: "Guru", value: 30 }, // Fallback jika items kosong
-            { label: "Siswa", value: 1500 },
-        ]
-    };
-
+    // Programs Data
+    const programs = [
+        {
+            title: "MIPA",
+            fullName: "Matematika & Ilmu Pengetahuan Alam",
+            icon: Microscope,
+            description: "Program unggulan bagi siswa yang berminat dalam sains, teknologi, dan matematika. Fasilitas laboratorium lengkap.",
+            link: "/akademik/program-studi/mipa",
+            type: "MIPA"
+        },
+        {
+            title: "IPS",
+            fullName: "Ilmu Pengetahuan Sosial",
+            icon: Globe,
+            description: "Mendalami fenomena sosial, ekonomi, dan sejarah. Membentuk karakter kritis dan berwawasan luas.",
+            link: "/akademik/program-studi/ips",
+            type: "IPS"
+        },
+        {
+            title: "Bahasa",
+            fullName: "Ilmu Bahasa & Budaya",
+            icon: BookOpen,
+            description: "Eksplorasi bahasa asing dan seni budaya. Mempersiapkan siswa kompeten dalam komunikasi global.",
+            link: "/akademik/program-studi/bahasa",
+            type: "BAHASA"
+        }
+    ];
 
     return (
-        <div className="bg-secondary text-gray-800 font-sans">
-            <Head title="SMAN 1 Baleendah - Unggul dalam Prestasi, Berkarakter, dan Berwawasan Global" /> {/* Judul lebih spesifik */}
+        <div className="bg-secondary min-h-screen font-sans text-gray-800">
+            <Head title="SMAN 1 Baleendah - Generasi Unggul & Berkarakter" />
 
+            {/* Navbar */}
             <Navbar
                 logoSman1={navigationData.logoSman1}
                 profilLinks={navigationData.profilLinks}
@@ -95,294 +70,451 @@ export default function LandingPage({
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-             {/* Hero Section */}
-            <div className="relative pt-16 bg-cover bg-center h-[50vh] flex items-center justify-center"
-                style={{ backgroundImage: `url('${currentHeroContent.background_image_url}')` }}>
-                <div className="absolute inset-0 bg-black opacity-50"></div>
-                <div className="relative z-10 text-center px-4">
-                    <h2 className={TYPOGRAPHY.heroSubtitle + " leading-tight"}>
-                        {currentHeroContent.title_line1}
-                    </h2>
-                    <h1 className={TYPOGRAPHY.heroTitle + " mt-2"}>
-                        {currentHeroContent.title_line2}
-                    </h1>
+            {/* HERO SECTION */}
+            <section className="relative pt-32 md:pt-40 overflow-hidden">
+                {/* Hero Background Image */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        alt="Background" 
+                        className="w-full h-full object-cover"
+                    />
                 </div>
-            </div>
+                {/* Overlay for readability */}
+                <div className="absolute inset-0 bg-black/60 z-0"></div>
 
-            {/* Pengumuman Penting Section */}
-            <section className="py-8 bg-gradient-to-r from-primary to-primary-darker text-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-6">
-                        <h2 className={TYPOGRAPHY.sectionHeading + " text-white mb-4 flex items-center justify-center gap-3"}>
-                            <Users className="w-8 h-8" />
-                            Pengumuman Penting
-                        </h2>
-                    </div>
-                    <div className="grid md:grid-cols-3 gap-4">
-                        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                            <h3 className={TYPOGRAPHY.cardTitle + " text-white mb-2"}>PPDB 2025/2026</h3>
-                            <p className={TYPOGRAPHY.bodyText + " text-white/90 text-sm mb-3"}>
-                                Pendaftaran siswa baru dibuka Februari 2025. Info lengkap syarat dan jadwal tersedia.
-                            </p>
-                            <Link href="/informasi-spmb" className="text-white/90 hover:text-white text-sm font-medium underline">
-                                Selengkapnya →
-                            </Link>
-                        </div>
-                        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                            <h3 className={TYPOGRAPHY.cardTitle + " text-white mb-2"}>Ujian Semester</h3>
-                            <p className={TYPOGRAPHY.bodyText + " text-white/90 text-sm mb-3"}>
-                                UTS Genap dimulai 10 Februari. Siswa diharapkan mempersiapkan diri dengan baik.
-                            </p>
-                            <Link href="/berita-pengumuman" className="text-white/90 hover:text-white text-sm font-medium underline">
-                                Selengkapnya →
-                            </Link>
-                        </div>
-                        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                            <h3 className={TYPOGRAPHY.cardTitle + " text-white mb-2"}>Prestasi OSN</h3>
-                            <p className={TYPOGRAPHY.bodyText + " text-white/90 text-sm mb-3"}>
-                                Siswa kelas XI meraih medali emas OSN Fisika tingkat Provinsi Jawa Barat.
-                            </p>
-                            <Link href="/berita-pengumuman" className="text-white/90 hover:text-white text-sm font-medium underline">
-                                Selengkapnya →
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                {/* Blue Rectangle behind Student */}
+                <div className="absolute top-0 left-1/2 h-full w-full md:w-[720px] bg-primary/80 z-0 hidden md:block"></div>
 
-            {/* Tentang SMAN 1 Baleendah Section */}
-            <section className="py-12 bg-white sm:py-16 lg:py-20">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">                        
-                        <div className="max-w-none">
-                            <h2 className={TYPOGRAPHY.sectionHeading}>
-                                {currentAboutLpContent.title}
-                            </h2>
-                            <div className="h-1 w-24 bg-primary mb-6"></div>
-                            <div className={TYPOGRAPHY.bodyText + " text-gray-800"} dangerouslySetInnerHTML={{ __html: currentAboutLpContent.description_html }} />
-                            
-                            {/* Academic Excellence Highlights */}
-                            <div className="mt-6 grid grid-cols-2 gap-4">
-                                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                    <div className="text-2xl font-bold text-primary">95%</div>
-                                    <div className="text-sm text-gray-700">Tingkat Kelulusan PTN</div>
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                        {/* Left Column: Text */}
+                        <div className="space-y-6 animate-fade-in-up">
+                            <h1 className={TYPOGRAPHY.heroTitle}>
+                                Selamat Datang di <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">SMAN 1 Baleendah</span>
+                            </h1>
+                            <p className={`${TYPOGRAPHY.heroText} max-w-lg`}>
+                                Sekolah penggerak prestasi dan inovasi masa depan. Kami berkomitmen mencetak lulusan yang cerdas, berakhlak mulia, dan siap bersaing di era global.
+                            </p>
+                            <div className="flex flex-wrap gap-4 pt-4">
+                                <Link 
+                                    href="/profil/sejarah" 
+                                    className="px-8 py-3.5 bg-accent-yellow text-gray-900 font-bold rounded-full shadow-lg hover:shadow-xl hover:bg-yellow-400 transition-all transform hover:-translate-y-1"
+                                >
+                                    Jelajahi Profil
+                                </Link>
+                                <Link 
+                                    href="/informasi-spmb" 
+                                    className="px-8 py-3.5 bg-white border-2 border-primary text-primary font-bold rounded-full hover:bg-blue-50 transition-all"
+                                >
+                                    Info PPDB
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Visual */}
+                        <div className="relative mx-auto max-w-lg md:max-w-none w-full h-[500px] lg:h-[600px] flex justify-center items-end">
+                            {/* Main Image */}
+                            <img 
+                                src="/images/anak-sma.png" 
+                                alt="Siswa Berprestasi SMAN 1 Baleendah" 
+                                className="relative z-10 h-full w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                            />
+
+                            {/* Floating Glass Cards */}
+                            {/* Card 1: Akreditasi */}
+                            <div className="absolute top-10 -left-6 md:-left-12 bg-white/70 backdrop-blur-md border border-white/40 p-4 rounded-xl shadow-lg flex items-center gap-3 animate-float-slow max-w-[200px]">
+                                <div className="p-2 bg-yellow-100 rounded-full text-yellow-600">
+                                    <Trophy size={24} fill="currentColor" />
                                 </div>
-                                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                    <div className="text-2xl font-bold text-primary">A</div>
-                                    <div className="text-sm text-gray-700">Akreditasi Sekolah</div>
+                                <div>
+                                    <p className="text-xs text-gray-500 font-medium">Akreditasi</p>
+                                    <p className="text-sm font-bold text-gray-900">A (Unggul)</p>
                                 </div>
                             </div>
-                            
-                            <Link href={route('profil.sekolah')} className="mt-6 inline-block bg-primary text-white hover:bg-primary-darker transition duration-300 px-6 py-2 rounded-md text-base sm:text-lg font-semibold no-underline">
-                                Lihat Selengkapnya
+
+                            {/* Card 2: Lulusan PTN */}
+                            <div className="absolute bottom-20 -right-4 md:-right-8 bg-white/70 backdrop-blur-md border border-white/40 p-4 rounded-xl shadow-lg flex items-center gap-3 animate-float-medium max-w-[220px]">
+                                <div className="p-2 bg-blue-100 rounded-full text-primary">
+                                    <GraduationCap size={24} fill="currentColor" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 font-medium">Lulusan ke PTN</p>
+                                    <p className="text-sm font-bold text-gray-900">90% Diterima</p>
+                                </div>
+                            </div>
+
+                            {/* Card 3: Siswa Aktif */}
+                            <div className="absolute bottom-8 left-4 md:-left-4 bg-white/70 backdrop-blur-md border border-white/40 p-4 rounded-xl shadow-lg flex items-center gap-3 animate-float-fast max-w-[200px]">
+                                <div className="p-2 bg-green-100 rounded-full text-green-600">
+                                    <Users size={24} fill="currentColor" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 font-medium">Siswa Aktif</p>
+                                    <p className="text-sm font-bold text-gray-900">1200+ Siswa</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ABOUT SECTION */}
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                        <div className="relative">
+                            <div className="aspect-video rounded-2xl overflow-hidden shadow-xl bg-gray-200">
+                                <img 
+                                    src="/images/hero-bg-sman1-baleendah.jpeg" 
+                                    alt="Gedung SMAN 1 Baleendah" 
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            {/* Decorative dots */}
+                            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-dots-pattern opacity-20 hidden md:block"></div>
+                        </div>
+                        <div>
+                            <h2 className={`${TYPOGRAPHY.sectionHeading} mb-6`}>
+                                Tentang <span className="text-primary">Kami</span>
+                            </h2>
+                            <p className={`${TYPOGRAPHY.bodyText} mb-6`}>
+                                SMAN 1 Baleendah berdiri sejak tahun 1975 dan telah menjadi salah satu sekolah rujukan di Jawa Barat. Dengan visi menjadi sekolah unggul dalam prestasi dan berwawasan lingkungan, kami terus berinovasi dalam pembelajaran berbasis teknologi dan penguatan karakter.
+                            </p>
+                            <p className={`${TYPOGRAPHY.bodyText} mb-8`}>
+                                Kami percaya bahwa setiap siswa memiliki potensi unik yang perlu dikembangkan melalui bimbingan yang tepat dan fasilitas yang memadai.
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3 bg-blue-50 rounded-lg text-primary">
+                                        <Users size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-2xl font-bold text-gray-900">60+</h4>
+                                        <p className="text-sm text-gray-600">Guru Bersertifikasi</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3 bg-yellow-50 rounded-lg text-yellow-600">
+                                        <Trophy size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-2xl font-bold text-gray-900">150+</h4>
+                                        <p className="text-sm text-gray-600">Prestasi Tahunan</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Link 
+                                href="/profil/sejarah" 
+                                className="inline-flex items-center mt-8 text-primary font-bold hover:text-primary-darker transition-colors"
+                            >
+                                Selengkapnya tentang kami <ArrowRight size={20} className="ml-2" />
                             </Link>
                         </div>
-                        <div className="mt-8 md:mt-0 flex justify-center">
-                            <img src={currentAboutLpContent.image_url} alt="Tentang SMAN 1 Baleendah" className="rounded-lg shadow-xl max-w-full md:max-w-2xl w-full h-auto object-cover aspect-video md:aspect-square"/> 
-                        </div>
                     </div>
                 </div>
             </section>
 
-
-
-            {/* Sambutan Kepala Sekolah Section */}
-            <section className="py-12 bg-secondary sm:py-16 lg:py-20">
+            {/* KEPSEK WELCOME SECTION */}
+            <section className="py-20 bg-secondary">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
-                        <div className="md:col-span-4">
-                            <h2 className={TYPOGRAPHY.subsectionHeading + " mb-1"}>
-                                {currentKepsekWelcomeLpContent.title}
-                            </h2>
-                            <h3 className={TYPOGRAPHY.sectionHeading + " text-primary mb-2"}>SMAN 1 Baleendah</h3>
-                            <div className="h-1 w-24 bg-primary mb-8"></div>
-                            <img src={currentKepsekWelcomeLpContent.kepsek_image_url} 
-                                 alt={currentKepsekWelcomeLpContent.kepsek_name} 
-                                 className="rounded-lg w-full max-w-xs mx-auto md:mx-0 shadow-lg"/>
-                            <div className="mt-4 text-center md:text-left">
-                                <p className={TYPOGRAPHY.bodyText + " font-semibold text-gray-800"}>{currentKepsekWelcomeLpContent.kepsek_name}</p>
-                                <p className={TYPOGRAPHY.bodyText + " text-gray-600 text-sm"}>{currentKepsekWelcomeLpContent.kepsek_title}</p>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+                        {/* Left Column: Title & Profile */}
+                        <div className="space-y-8">
+                            <div>
+                                <h2 className={`${TYPOGRAPHY.sectionHeading} mb-6`}>
+                                    Sambutan <span className="text-primary">Kepala Sekolah</span>
+                                </h2>
+                                <div className="flex flex-col items-center sm:items-start gap-6">
+                                    <div className="relative w-full max-w-md h-[34rem] flex-shrink-0">
+                                        <div className="absolute inset-0 bg-primary rounded-2xl rotate-6 opacity-20"></div>
+                                        <img 
+                                            src={kepsekWelcomeLpContent.kepsek_image_url} 
+                                            alt={kepsekWelcomeLpContent.kepsek_name} 
+                                            className="relative w-full h-full object-cover rounded-2xl shadow-lg border-4 border-white"
+                                        />
+                                    </div>
+                                    <div className="text-center sm:text-left w-full max-w-md">
+                                        <h3 className="text-xl font-bold text-gray-900">
+                                            {kepsekWelcomeLpContent.kepsek_name}
+                                        </h3>
+                                        <p className="text-primary font-medium mt-1">
+                                            {kepsekWelcomeLpContent.kepsek_title}
+                                        </p>
+                                        <div className="w-12 h-1 bg-accent-yellow mt-4 mx-auto sm:mx-0 rounded-full"></div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>                        
-                        <div className="md:col-span-8 max-w-none">                            
-                            <div className={TYPOGRAPHY.bodyText + " text-gray-800"} dangerouslySetInnerHTML={{ __html: currentKepsekWelcomeLpContent.welcome_text_html }} />
+                        </div>
+
+                        {/* Right Column: Welcome Text */}
+                        <div className="bg-white p-10 md:p-14 rounded-3xl shadow-sm border border-gray-100 relative h-full flex flex-col justify-center">
+                            {/* Quote Icon Decoration */}
+                            <div className="absolute top-6 right-8 text-gray-100">
+                                <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 7.55228 14.017 7V3H19.017C20.6739 3 22.017 4.34315 22.017 6V15C22.017 16.6569 20.6739 18 19.017 18H16.017V21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.91203 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 7.55228 5.0166 7V3H10.0166C11.6735 3 13.0166 4.34315 13.0166 6V15C13.0166 16.6569 11.6735 18 10.0166 18H7.0166V21H5.0166Z" />
+                                </svg>
+                            </div>
+                            
+                            <div 
+                                className="prose prose-lg prose-blue text-gray-600 leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: kepsekWelcomeLpContent.welcome_text_html }}
+                            />
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Program Studi Section */}
-            <section className="py-12 bg-secondary sm:py-16 lg:py-20">
+            {/* ACADEMIC PROGRAMS SECTION */}
+            <section className="py-20 bg-white">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                     <div className="text-center mb-10 md:mb-12">
-                        <h2 className={TYPOGRAPHY.sectionHeading + " mb-4"}>
-                            Program Studi <span className="text-primary">SMAN 1 Baleendah</span>
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                            Program <span className="text-primary">Akademik</span>
                         </h2>
-                        <div className="h-1 w-24 bg-primary mx-auto mb-4"></div>
-                        <p className={TYPOGRAPHY.bodyText + " text-gray-700 max-w-3xl mx-auto"}>
-                            Pilih program studi sesuai minat dan bakatmu untuk persiapan masuk perguruan tinggi
+                        <p className={TYPOGRAPHY.bodyText}>
+                            Pilihan program studi yang dirancang untuk mempersiapkan siswa menuju jenjang pendidikan tinggi dan karir masa depan.
                         </p>
                     </div>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                        {programStudiData.map((program, index) => (
-                            <div 
-                                key={index} 
-                                onClick={() => openProgramModal(program)}
-                                className="group cursor-pointer bg-white rounded-xl shadow-lg program-card-hover overflow-hidden"
-                            >
-                                <div className="w-full h-48 relative overflow-hidden rounded-t-xl">
-                                    {/* Gambar siswa sebagai background utama */}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {programs.map((program, idx) => (
+                            <div key={idx} className="group flex flex-col items-center">
+                                {/* Image Area - Floating above */}
+                                <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
                                     <img 
-                                        src="/images/anak-sma.png" 
-                                        alt="Siswa SMAN 1 Baleendah"
-                                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                                        src="/images/anak-sma-programstudi.png" 
+                                        alt={program.fullName}
+                                        className="h-full w-auto object-contain drop-shadow-xl transform group-hover:scale-105 transition-transform duration-500" 
                                     />
-                                    {/* Overlay gradient untuk readability */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
-                                    {/* Subtle shine effect on hover */}
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12 translate-x-full group-hover:translate-x-[-200%] transition-transform duration-1000"></div>
                                 </div>
-                                <div className="p-6">
-                                    <h4 className={TYPOGRAPHY.bodyText + " font-semibold text-gray-800 mb-2"}>
-                                        {program.type === "MIPA" ? "Matematika & IPA" : 
-                                         program.type === "IPS" ? "Ilmu Pengetahuan Sosial" : "Ilmu Bahasa & Budaya"}
-                                    </h4>
-                                    <p className={TYPOGRAPHY.bodyText + " text-gray-700 text-sm mb-4"}>
-                                        {program.type === "MIPA" ? "Program untuk siswa yang menyukai sains dan matematika. Cocok untuk jurusan teknik, kedokteran, dan sains." : 
-                                         program.type === "IPS" ? "Program untuk siswa yang tertarik dengan ilmu sosial, ekonomi, dan sejarah. Persiapan untuk fakultas sosial dan hukum." : 
-                                         "Program untuk siswa yang suka bahasa dan sastra. Cocok untuk jurusan bahasa, komunikasi, dan pendidikan."}
-                                    </p>
-                                    <div className="flex items-center justify-between">
-                                        <div className="text-primary font-medium text-sm group-hover:text-primary-darker transition-colors">
-                                            Lihat Detail →
-                                        </div>
-                                        <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                                            Klik untuk detail
-                                        </div>
+                                
+                                {/* Content Section */}
+                                <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 relative -mt-12 pt-10 flex-1 flex flex-col z-10 w-full">
+                                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-primary mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
+                                        <program.icon size={24} />
                                     </div>
+                                    <h3 className={`${TYPOGRAPHY.cardTitle} mb-2`}>{program.fullName}</h3>
+                                    <p className={`${TYPOGRAPHY.smallText} mb-8 leading-relaxed flex-1`}>
+                                        {program.description}
+                                    </p>
+                                    <Link 
+                                        href={program.link}
+                                        className="w-full py-3 rounded-xl border-2 border-primary text-primary font-bold hover:bg-primary hover:text-white transition-all text-center block"
+                                    >
+                                        Lihat Mata Pelajaran
+                                    </Link>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
-            </section>            {/* Fakta SMAN 1 Baleendah Section */}
-            {currentFaktaLpContent && currentFaktaLpContent.items && currentFaktaLpContent.items.length > 0 && (
-                <section className="py-12 sm:py-16 lg:py-20 bg-primary text-white">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-10">
-                            <h2 className={TYPOGRAPHY.sectionHeading + " text-white"}>Fakta SMAN 1 Baleendah</h2>
-                        </div>
-                        <div className="grid grid-cols-5 gap-4">
-                            {currentFaktaLpContent.items.map((fakta, index) => (
-                                <div key={index} className="text-center">
-                                    <p className="text-4xl lg:text-5xl font-bold">
-                                        <CountUp start={0} end={Number(fakta.value) || 0} duration={2.5} separator="." decimal="," enableScrollSpy scrollSpyOnce />
-                                    </p>
-                                    <p className="text-sm sm:text-base uppercase tracking-wider mt-1">
-                                        {fakta.label || 'Label Fakta'}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-            )}
+            </section>
 
-
-            {/* Berita & Pengumuman Terbaru Section */}
-            <section className="py-12 bg-white sm:py-16 lg:py-20">
+            {/* NEWS & ANNOUNCEMENTS */}
+            <section className="py-20 bg-slate-50">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-12">
-                        <div>
-                            <h2 className={TYPOGRAPHY.sectionHeading + " mb-1 text-center md:text-left"}>
-                                Berita & <span className="text-primary">Pengumuman Terbaru</span>
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-12">
+                        <div className="max-w-2xl">
+                            <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                                Berita <span className="text-primary">Smansa</span>
                             </h2>
-                            <div className="h-1 w-32 bg-primary mt-2 mx-auto md:mx-0 mb-4 md:mb-0"></div>
+                            <p className={TYPOGRAPHY.bodyText}>
+                                Informasi terbaru seputar kegiatan sekolah, prestasi siswa, dan pengumuman akademik.
+                            </p>
                         </div>
-                        <Link
-                            href="/berita-pengumuman"
-                            className={"bg-primary text-white hover:bg-primary-darker px-6 py-2 rounded-md transition duration-300 " + TYPOGRAPHY.buttonText}
-                        >
-                            Lihat Semua Berita
+                        <Link href="/berita-pengumuman" className="hidden md:flex items-center text-primary font-bold hover:underline mt-4 md:mt-0">
+                            Lihat Semua Berita <ArrowRight size={20} className="ml-2" />
                         </Link>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100">
-                            <div className="p-6">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">Pengumuman</span>
-                                    <span className="text-gray-500 text-sm">15 Jan 2025</span>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* News Card 1 */}
+                        <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-all">
+                            <div className="h-48 bg-gray-200 relative overflow-hidden">
+                                <img src="/images/hero-bg-sman1-baleendah.jpeg" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" alt="News 1" />
+                                <div className="absolute top-4 left-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">
+                                    Pengumuman
                                 </div>
-                                <h3 className={TYPOGRAPHY.cardTitle + " text-gray-800 mb-3 line-clamp-2"}>
-                                    Pendaftaran Siswa Baru 2025/2026
+                            </div>
+                            <div className="p-6">
+                                <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
+                                    <Calendar size={16} />
+                                    <span>12 Januari 2025</span>
+                                </div>
+                                <h3 className={`${TYPOGRAPHY.cardTitle} mb-3 line-clamp-2 hover:text-primary cursor-pointer`}>
+                                    Penerimaan Peserta Didik Baru (PPDB) Tahun Ajaran 2025/2026
                                 </h3>
-                                <p className={TYPOGRAPHY.bodyText + " text-gray-700 text-sm mb-4 line-clamp-3"}>
-                                    Pendaftaran siswa baru tahun ajaran 2025/2026 akan segera dibuka. Siapkan berkas dan pelajari persyaratannya.
-                                </p>
-                                <Link href="/berita-pengumuman" className="text-primary hover:text-primary-darker font-medium text-sm">
-                                    Baca Selengkapnya →
+                                <Link href="/berita-pengumuman" className="text-primary font-semibold text-sm hover:underline">
+                                    Baca Selengkapnya
                                 </Link>
                             </div>
                         </div>
-                        
-                        <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100">
-                            <div className="p-6">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">Prestasi</span>
-                                    <span className="text-gray-500 text-sm">10 Jan 2025</span>
+
+                        {/* News Card 2 */}
+                        <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-all">
+                            <div className="h-48 bg-gray-200 relative overflow-hidden">
+                                <img src="/images/anak-sma.png" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" alt="News 2" />
+                                <div className="absolute top-4 left-4 bg-accent-yellow text-gray-900 text-xs font-bold px-3 py-1 rounded-full">
+                                    Prestasi
                                 </div>
-                                <h3 className={TYPOGRAPHY.cardTitle + " text-gray-800 mb-3 line-clamp-2"}>
-                                    Juara OSN Fisika Tingkat Provinsi
+                            </div>
+                            <div className="p-6">
+                                <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
+                                    <Calendar size={16} />
+                                    <span>10 Januari 2025</span>
+                                </div>
+                                <h3 className={`${TYPOGRAPHY.cardTitle} mb-3 line-clamp-2 hover:text-primary cursor-pointer`}>
+                                    Tim Robotik SMAN 1 Baleendah Raih Medali Emas Nasional
                                 </h3>
-                                <p className={TYPOGRAPHY.bodyText + " text-gray-700 text-sm mb-4 line-clamp-3"}>
-                                    Ahmad Rizki siswa kelas XI MIPA berhasil meraih medali emas OSN Fisika tingkat Provinsi Jawa Barat 2025.
-                                </p>
-                                <Link href="/berita-pengumuman" className="text-primary hover:text-primary-darker font-medium text-sm">
-                                    Baca Selengkapnya →
+                                <Link href="/berita-pengumuman" className="text-primary font-semibold text-sm hover:underline">
+                                    Baca Selengkapnya
                                 </Link>
                             </div>
                         </div>
-                        
-                        <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-100">
-                            <div className="p-6">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">Akademik</span>
-                                    <span className="text-gray-500 text-sm">8 Jan 2025</span>
+
+                        {/* News Card 3 */}
+                        <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-all">
+                            <div className="h-48 bg-gray-200 relative overflow-hidden">
+                                <img src="/images/hero-bg-sman1-baleendah.jpeg" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" alt="News 3" />
+                                <div className="absolute top-4 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                    Kegiatan
                                 </div>
-                                <h3 className={TYPOGRAPHY.cardTitle + " text-gray-800 mb-3 line-clamp-2"}>
-                                    Bimbingan UTBK untuk Kelas XII
+                            </div>
+                            <div className="p-6">
+                                <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
+                                    <Calendar size={16} />
+                                    <span>05 Januari 2025</span>
+                                </div>
+                                <h3 className={`${TYPOGRAPHY.cardTitle} mb-3 line-clamp-2 hover:text-primary cursor-pointer`}>
+                                    Workshop Kewirausahaan untuk Siswa Kelas XII
                                 </h3>
-                                <p className={TYPOGRAPHY.bodyText + " text-gray-700 text-sm mb-4 line-clamp-3"}>
-                                    Sekolah mengadakan bimbingan khusus UTBK-SNBT untuk siswa kelas XII. Gratis untuk semua siswa.
-                                </p>
-                                <Link href="/berita-pengumuman" className="text-primary hover:text-primary-darker font-medium text-sm">
-                                    Baca Selengkapnya →
+                                <Link href="/berita-pengumuman" className="text-primary font-semibold text-sm hover:underline">
+                                    Baca Selengkapnya
                                 </Link>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="mt-8 text-center md:hidden">
+                        <Link href="/berita-pengumuman" className="inline-flex items-center text-primary font-bold hover:underline">
+                            Lihat Semua Berita <ArrowRight size={20} className="ml-2" />
+                        </Link>
                     </div>
                 </div>
             </section>
 
-            {/* Call to Action Section */}
-            <section className="py-16 bg-gradient-to-r from-primary to-primary-darker text-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h2 className={TYPOGRAPHY.sectionHeading + " text-white mb-4"}>
-                        Daftar di SMAN 1 Baleendah
+            {/* GALLERY SECTION */}
+            <section className="py-20 bg-white overflow-hidden">
+                <style>{`
+                    @keyframes scroll {
+                        0% { transform: translateX(0); }
+                        100% { transform: translateX(-50%); }
+                    }
+                    @keyframes scroll-reverse {
+                        0% { transform: translateX(-50%); }
+                        100% { transform: translateX(0); }
+                    }
+                    .animate-scroll {
+                        animation: scroll 30s linear infinite;
+                    }
+                    .animate-scroll-reverse {
+                        animation: scroll-reverse 30s linear infinite;
+                    }
+                    .pause-hover:hover .animate-scroll,
+                    .pause-hover:hover .animate-scroll-reverse {
+                        animation-play-state: paused;
+                    }
+                `}</style>
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+                    <div className="text-center max-w-3xl mx-auto">
+                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                            Galeri <span className="text-primary">Sekolah</span>
+                        </h2>
+                        <p className={TYPOGRAPHY.bodyText}>
+                            Momen-momen seru dan kegiatan inspiratif siswa-siswi SMAN 1 Baleendah.
+                        </p>
+                    </div>
+                </div>
+                
+                <div className="flex flex-col gap-6 pause-hover">
+                    {/* Row 1 - Scroll Left */}
+                    <div className="flex gap-6 animate-scroll w-max">
+                        {/* Duplicate images to create seamless loop (Original set) */}
+                        {[1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4].map((item, idx) => (
+                            <div key={`row1-${idx}`} className="w-64 h-64 md:w-80 md:h-80 flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all relative group">
+                                <img 
+                                    src={[
+                                        "/images/panen-karya-sman1-baleendah.jpg",
+                                        "/images/hero-bg-sman1-baleendah.jpeg",
+                                        "/images/keluarga-besar-sman1-baleendah.png",
+                                        "/images/hero-bg-sman1-baleendah.jpeg"
+                                    ][(item - 1)]} 
+                                    alt={`Gallery ${item}`} 
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                />
+                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Row 2 - Scroll Right (Reverse) */}
+                    <div className="flex gap-6 animate-scroll-reverse w-max">
+                        {/* Duplicate images to create seamless loop */}
+                        {[3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2].map((item, idx) => (
+                            <div key={`row2-${idx}`} className="w-64 h-64 md:w-80 md:h-80 flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all relative group">
+                                <img 
+                                    src={[
+                                        "/images/panen-karya-sman1-baleendah.jpg",
+                                        "/images/hero-bg-sman1-baleendah.jpeg",
+                                        "/images/keluarga-besar-sman1-baleendah.png",
+                                        "/images/hero-bg-sman1-baleendah.jpeg"
+                                    ][(item - 1)]} 
+                                    alt={`Gallery ${item}`} 
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                />
+                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-12 text-center">
+                    <Link 
+                        href="/galeri" 
+                        className="inline-flex items-center px-8 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-full hover:bg-gray-50 hover:text-primary transition-all shadow-sm"
+                    >
+                        Lihat Galeri Lainnya <ArrowRight size={20} className="ml-2" />
+                    </Link>
+                </div>
+            </section>
+
+            {/* CTA SECTION */}
+            <section className="py-20 bg-primary relative overflow-hidden">
+                {/* Decorative Circles */}
+                <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
+
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                        Siap Menjadi Bagian dari <br/> Keluarga Besar SMAN 1 Baleendah?
                     </h2>
-                    <p className={TYPOGRAPHY.bodyText + " text-white/90 max-w-2xl mx-auto mb-8"}>
-                        Raih prestasi terbaikmu bersama kami. Sekolah dengan fasilitas lengkap dan guru berpengalaman.
+                    <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
+                        Dapatkan informasi lengkap mengenai pendaftaran peserta didik baru, jadwal, dan persyaratan yang dibutuhkan.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link 
                             href="/informasi-spmb" 
-                            className="bg-white text-primary hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold transition-colors duration-300"
+                            className="px-8 py-4 bg-accent-yellow text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-lg"
                         >
                             Daftar Sekarang
                         </Link>
                         <Link 
                             href="/kontak" 
-                            className="border-2 border-white text-white hover:bg-white hover:text-primary px-8 py-3 rounded-lg font-semibold transition-colors duration-300"
+                            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary transition-colors"
                         >
                             Hubungi Kami
                         </Link>
@@ -390,13 +522,7 @@ export default function LandingPage({
                 </div>
             </section>
 
-            {/* Program Studi Modal */}
-            <ProgramStudiModal 
-                show={showProgramModal}
-                onClose={closeProgramModal}
-                program={selectedProgram}
-            />
-
+            {/* Footer */}
             <Footer
                 logoSman1={navigationData.logoSman1}
                 googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}

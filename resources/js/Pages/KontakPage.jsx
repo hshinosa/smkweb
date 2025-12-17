@@ -1,29 +1,63 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
+import { 
+    MapPin, 
+    Phone, 
+    Mail, 
+    Clock, 
+    Send, 
+    ChevronDown, 
+    ChevronUp,
+    Instagram,
+    Youtube,
+    Facebook,
+    Twitter
+} from 'lucide-react';
+
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
-import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
 
-// Get navigation data from centralized source
 const navigationData = getNavigationData();
 
+// --- MOCK DATA ---
+const faqs = [
+    {
+        question: "Kapan Pendaftaran PPDB dibuka?",
+        answer: "Pendaftaran PPDB biasanya dibuka pada bulan Juni setiap tahunnya. Jadwal resmi akan diumumkan melalui website ini dan media sosial resmi sekolah."
+    },
+    {
+        question: "Apa saja syarat pindahan ke SMAN 1 Baleendah?",
+        answer: "Syarat pindahan meliputi surat keterangan pindah dari sekolah asal, rapor lengkap, surat kelakuan baik, dan ketersediaan kuota di kelas yang dituju. Silakan hubungi bagian Tata Usaha untuk detail lebih lanjut."
+    },
+    {
+        question: "Berapa biaya SPP per bulan?",
+        answer: "SMAN 1 Baleendah adalah sekolah negeri yang tidak memungut biaya SPP bulanan (gratis) sesuai dengan kebijakan pemerintah provinsi Jawa Barat."
+    },
+    {
+        question: "Apakah ada program beasiswa?",
+        answer: "Ya, tersedia berbagai program beasiswa seperti PIP (Program Indonesia Pintar) dan beasiswa prestasi untuk siswa yang memenuhi kriteria."
+    }
+];
 
-
-
-
-
-
-
-
-
-
+const socialLinks = [
+    { name: 'Instagram', icon: Instagram, color: 'bg-pink-600', href: '#' },
+    { name: 'YouTube', icon: Youtube, color: 'bg-red-600', href: '#' },
+    { name: 'Facebook', icon: Facebook, color: 'bg-blue-600', href: '#' },
+    { name: 'Twitter', icon: Twitter, color: 'bg-sky-500', href: '#' },
+];
 
 export default function KontakPage() {
+    const [openFaqIndex, setOpenFaqIndex] = useState(null);
+
+    const toggleFaq = (index) => {
+        setOpenFaqIndex(openFaqIndex === index ? null : index);
+    };
+
     return (
-        <div className="bg-secondary text-gray-800 font-sans">
-            <Head title="Kontak - SMAN 1 Baleendah" />
+        <div className="bg-white font-sans text-gray-800">
+            <Head title="Kontak Kami - SMAN 1 Baleendah" />
             
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -32,256 +66,247 @@ export default function KontakPage() {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            {/* Header Section */}
-            <section className="pt-24 pb-12 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center md:text-left">
-                        <h1 className={TYPOGRAPHY.pageTitle}>
-                            Kontak Kami
-                        </h1>
-                        <div className="h-1 w-24 bg-primary mt-2 mx-auto md:mx-0 mb-4"></div>
-                        <p className={TYPOGRAPHY.bodyText + " text-gray-600 max-w-3xl mx-auto md:mx-0"}>
-                            Hubungi SMA Negeri 1 Baleendah untuk informasi lebih lanjut mengenai pendaftaran, 
-                            program akademik, atau pertanyaan lainnya. Kami siap membantu Anda.
-                        </p>
+            <main className="pt-20">
+                {/* 1. HERO SECTION (Replaced to match Berita style) */}
+                <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden pt-20">
+                    {/* Background Image */}
+                    <div className="absolute inset-0 z-0">
+                        <img 
+                            src="/images/hero-bg-sman1-baleendah.jpeg" 
+                            alt="Siswa SMAN 1 Baleendah" 
+                            className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"></div>
                     </div>
-                </div>
-            </section>
 
-            {/* Content Section */}
-            <section className="py-16 bg-secondary">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid lg:grid-cols-2 gap-12">
-                        {/* Informasi Kontak */}
-                        <div>
-                            <h2 className={TYPOGRAPHY.sectionHeading}>
-                                Informasi <span className="text-primary">Kontak</span>
-                            </h2>
-                            <div className="h-1 w-24 bg-primary mb-8"></div>
-                                
-                                {/* Alamat */}
-                                <div className="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-100 hover:shadow-lg transition-shadow">
-                                    <div className="flex items-start space-x-4">
-                                        <div className="bg-primary/10 text-primary rounded-lg p-3 flex-shrink-0">
-                                            <MapPin className="w-6 h-6" />
+                    <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                        
+                        <h1 className={`${TYPOGRAPHY.heroTitle} mb-6 max-w-4xl mx-auto`}>
+                            Kunjungi <br/>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                                SMAN 1 Baleendah
+                            </span>
+                        </h1>
+                        
+                        <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto mb-10 opacity-90`}>
+                            Kami menantikan kehadiran Anda. Silakan hubungi kami untuk informasi lebih lanjut atau jadwalkan kunjungan ke sekolah kami.
+                        </p>
+
+                        {/* Social Icons Row */}
+                        <div className="flex gap-4 justify-center">
+                            {socialLinks.map((social, idx) => (
+                                <a 
+                                    key={idx}
+                                    href={social.href}
+                                    className={`${social.color} w-12 h-12 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg`}
+                                    title={social.name}
+                                >
+                                    <social.icon className="w-6 h-6" />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* 2. SECTION: CONTACT INFO & MAP (Integrated) */}
+                <section className="relative py-20 bg-gray-50">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="relative rounded-3xl overflow-hidden shadow-xl h-[600px] border border-gray-200">
+                            {/* Background Map (Static Placeholder for now, ideally interactive) */}
+                            <iframe
+                                src={navigationData.googleMapsEmbedUrl}
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                allowFullScreen=""
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                title="Peta Lokasi SMAN 1 Baleendah"
+                            ></iframe>
+
+                            {/* Floating Card (Overlay) */}
+                            <div className="absolute top-1/2 left-4 lg:left-12 transform -translate-y-1/2 w-[90%] max-w-md bg-white/95 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-white/50">
+                                <h3 className={`${TYPOGRAPHY.sectionHeading} text-2xl mb-6 border-b border-gray-100 pb-4`}>
+                                    Informasi Kontak
+                                </h3>
+                                <div className="space-y-6">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 text-primary">
+                                            <MapPin className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <h3 className={TYPOGRAPHY.cardTitle + " text-gray-900 mb-2"}>Alamat Sekolah</h3>
-                                            <p className={TYPOGRAPHY.secondaryText + " text-gray-600 leading-relaxed"}>
-                                                Jl. Raya Baleendah No. 456<br />
-                                                Kelurahan Baleendah, Kecamatan Baleendah<br />
-                                                Kabupaten Bandung, Jawa Barat 40375
+                                            <p className="font-bold text-gray-900">Alamat</p>
+                                            <p className="text-gray-600 text-sm leading-relaxed">
+                                                Jl. R.A.A. Wiranatakusumah No. 30, Baleendah, Bandung, Jawa Barat 40375
                                             </p>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Telepon */}
-                                <div className="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-100 hover:shadow-lg transition-shadow">
-                                    <div className="flex items-start space-x-4">
-                                        <div className="bg-primary/10 text-primary rounded-lg p-3 flex-shrink-0">
-                                            <Phone className="w-6 h-6" />
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 text-primary">
+                                            <Phone className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <h3 className={TYPOGRAPHY.cardTitle + " text-gray-900 mb-2"}>Telepon</h3>
-                                            <div className={TYPOGRAPHY.secondaryText + " text-gray-600 space-y-1"}>
-                                                <p><span className="font-medium">Kantor:</span> (022) 7654321</p>
-                                                <p><span className="font-medium">Fax:</span> (022) 7654322</p>
-                                                <p><span className="font-medium">WhatsApp:</span> +62 812-3456-7890</p>
-                                            </div>
+                                            <p className="font-bold text-gray-900">Telepon</p>
+                                            <p className="text-gray-600 text-sm">(022) 5940268</p>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Email */}
-                                <div className="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-100 hover:shadow-lg transition-shadow">
-                                    <div className="flex items-start space-x-4">
-                                        <div className="bg-primary/10 text-primary rounded-lg p-3 flex-shrink-0">
-                                            <Mail className="w-6 h-6" />
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 text-primary">
+                                            <Mail className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <h3 className={TYPOGRAPHY.cardTitle + " text-gray-900 mb-2"}>Email</h3>
-                                            <div className={TYPOGRAPHY.secondaryText + " text-gray-600 space-y-1"}>
-                                                <p><span className="font-medium">Umum:</span> info@sman1baleendah.sch.id</p>
-                                                <p><span className="font-medium">Akademik:</span> akademik@sman1baleendah.sch.id</p>
-                                                <p><span className="font-medium">PPDB:</span> ppdb@sman1baleendah.sch.id</p>
-                                            </div>
+                                            <p className="font-bold text-gray-900">Email</p>
+                                            <p className="text-gray-600 text-sm">info@sman1baleendah.sch.id</p>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Jam Operasional */}
-                                <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100 hover:shadow-lg transition-shadow">
-                                    <div className="flex items-start space-x-4">
-                                        <div className="bg-primary/10 text-primary rounded-lg p-3 flex-shrink-0">
-                                            <Clock className="w-6 h-6" />
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 text-primary">
+                                            <Clock className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <h3 className={TYPOGRAPHY.cardTitle + " text-gray-900 mb-2"}>Jam Operasional</h3>
-                                            <div className={TYPOGRAPHY.secondaryText + " text-gray-600 space-y-1"}>
-                                                <p><span className="font-medium">Senin - Jumat:</span> 07:00 - 16:00 WIB</p>
-                                                <p><span className="font-medium">Sabtu:</span> 07:00 - 12:00 WIB</p>
-                                                <p><span className="font-medium">Minggu:</span> Tutup</p>
-                                            </div>
+                                            <p className="font-bold text-gray-900">Jam Operasional</p>
+                                            <p className="text-gray-600 text-sm">Senin - Jumat, 07:00 - 16:00 WIB</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </section>
 
-                        {/* Form Kontak */}
-                        <div>
-                            <h2 className={TYPOGRAPHY.sectionHeading}>
-                                Kirim <span className="text-primary">Pesan</span>
-                            </h2>
-                            <div className="h-1 w-24 bg-primary mb-8"></div>
+                {/* 3. SECTION: MESSAGE FORM & FAQ (Combined) */}
+                <section className="py-20 bg-white">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
                             
-                            <div className="bg-white rounded-lg shadow-md p-8 border border-gray-100">
-                                <form className="space-y-6">
-                                        <div className="grid md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className={TYPOGRAPHY.formLabel}>
-                                                    Nama Lengkap *
-                                                </label>
-                                                <input 
-                                                    type="text" 
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                                    placeholder="Masukkan nama lengkap"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className={TYPOGRAPHY.formLabel}>
-                                                    Email *
-                                                </label>
-                                                <input 
-                                                    type="email" 
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                                    placeholder="Masukkan email"
-                                                />
-                                            </div>
-                                        </div>
+                            {/* Left Column: Message Form */}
+                            <div>
+                                <div className="mb-8">
+                                    <h2 className={TYPOGRAPHY.sectionHeading}>Kirim <span className="text-primary">Pesan</span></h2>
+                                    <p className={`${TYPOGRAPHY.bodyText} mt-4`}>
+                                        Punya pertanyaan? Isi formulir di bawah ini dan tim kami akan segera menghubungi Anda.
+                                    </p>
+                                </div>
 
-                                        <div className="grid md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className={TYPOGRAPHY.formLabel}>
-                                                    Nomor Telepon
-                                                </label>
-                                                <input 
-                                                    type="tel" 
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                                    placeholder="Masukkan nomor telepon"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className={TYPOGRAPHY.formLabel}>
-                                                    Kategori Pesan
-                                                </label>
-                                                <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-                                                    <option value="">Pilih kategori</option>
-                                                    <option value="ppdb">PPDB</option>
-                                                    <option value="akademik">Akademik</option>
-                                                    <option value="umum">Informasi Umum</option>
-                                                    <option value="kerjasama">Kerjasama</option>
-                                                    <option value="lainnya">Lainnya</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className={TYPOGRAPHY.formLabel}>
-                                                Subjek *
-                                            </label>
+                                <form className="space-y-6 text-left">
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="relative">
                                             <input 
                                                 type="text" 
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                                placeholder="Masukkan subjek pesan"
+                                                id="name"
+                                                className="peer w-full px-4 py-3 bg-gray-50 border-0 border-b-2 border-gray-200 focus:border-primary focus:ring-0 rounded-t-lg transition-colors placeholder-transparent"
+                                                placeholder="Nama Lengkap"
                                             />
-                                        </div>
-
-                                        <div>
-                                            <label className={TYPOGRAPHY.formLabel}>
-                                                Pesan *
+                                            <label 
+                                                htmlFor="name"
+                                                className="absolute left-4 -top-2.5 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-primary"
+                                            >
+                                                Nama Lengkap
                                             </label>
-                                            <textarea 
-                                                rows="6"
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                                placeholder="Tulis pesan Anda di sini..."
-                                            ></textarea>
                                         </div>
+                                        <div className="relative">
+                                            <input 
+                                                type="email" 
+                                                id="email"
+                                                className="peer w-full px-4 py-3 bg-gray-50 border-0 border-b-2 border-gray-200 focus:border-primary focus:ring-0 rounded-t-lg transition-colors placeholder-transparent"
+                                                placeholder="Email"
+                                            />
+                                            <label 
+                                                htmlFor="email"
+                                                className="absolute left-4 -top-2.5 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-primary"
+                                            >
+                                                Email
+                                            </label>
+                                        </div>
+                                    </div>
 
-                                        <button 
-                                            type="submit"
-                                            className={"w-full bg-primary text-white py-3 px-6 rounded-lg hover:bg-primary-darker transition-colors flex items-center justify-center " + TYPOGRAPHY.buttonText}
+                                    <div className="relative">
+                                        <input 
+                                            type="text" 
+                                            id="subject"
+                                            className="peer w-full px-4 py-3 bg-gray-50 border-0 border-b-2 border-gray-200 focus:border-primary focus:ring-0 rounded-t-lg transition-colors placeholder-transparent"
+                                            placeholder="Subjek"
+                                        />
+                                        <label 
+                                            htmlFor="subject"
+                                            className="absolute left-4 -top-2.5 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-primary"
                                         >
-                                            <Send className="w-5 h-5 mr-2" />
-                                            Kirim Pesan
-                                        </button>
+                                            Subjek
+                                        </label>
+                                    </div>
+
+                                    <div className="relative">
+                                        <textarea 
+                                            id="message"
+                                            rows="5"
+                                            className="peer w-full px-4 py-3 bg-gray-50 border-0 border-b-2 border-gray-200 focus:border-primary focus:ring-0 rounded-t-lg transition-colors placeholder-transparent resize-none"
+                                            placeholder="Pesan Anda"
+                                        ></textarea>
+                                        <label 
+                                            htmlFor="message"
+                                            className="absolute left-4 -top-2.5 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-xs peer-focus:text-primary"
+                                        >
+                                            Pesan Anda
+                                        </label>
+                                    </div>
+
+                                    <button 
+                                        type="submit"
+                                        className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary-darker transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                                    >
+                                        <Send className="w-5 h-5" />
+                                        Kirim Pesan Sekarang
+                                    </button>
                                 </form>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Peta Lokasi */}
-                    <div className="mt-20">
-                        <div className="text-center mb-12">
-                            <h2 className={TYPOGRAPHY.sectionHeading}>
-                                Lokasi <span className="text-primary">Sekolah</span>
-                            </h2>
-                            <div className="h-1 w-24 bg-primary mx-auto mb-4"></div>
-                            <p className={TYPOGRAPHY.bodyText + " text-gray-600 max-w-2xl mx-auto"}>
-                                Temukan lokasi SMA Negeri 1 Baleendah yang strategis dan mudah diakses
-                            </p>
-                        </div>
-                        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-100">
-                            <div className="aspect-video rounded-lg overflow-hidden">
-                                <iframe
-                                    src={navigationData.googleMapsEmbedUrl}
-                                    width="100%"
-                                    height="100%"
-                                    style={{ border: 0 }}
-                                    allowFullScreen=""
-                                    loading="lazy"
-                                    referrerPolicy="no-referrer-when-downgrade"
-                                    title="Peta Lokasi SMAN 1 Baleendah"
-                                ></iframe>
+                            {/* Right Column: FAQ */}
+                            <div>
+                                <div className="mb-8">
+                                    <h2 className={TYPOGRAPHY.sectionHeading}>Pertanyaan <span className="text-primary">Umum (FAQ)</span></h2>
+                                    <p className={`${TYPOGRAPHY.bodyText} mt-4`}>
+                                        Jawaban atas pertanyaan yang sering diajukan oleh calon siswa dan orang tua.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {faqs.map((faq, index) => (
+                                        <div 
+                                            key={index} 
+                                            className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md"
+                                        >
+                                            <button
+                                                onClick={() => toggleFaq(index)}
+                                                className="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none"
+                                            >
+                                                <span className="font-bold text-gray-900 font-serif text-lg">{faq.question}</span>
+                                                {openFaqIndex === index ? (
+                                                    <ChevronUp className="w-5 h-5 text-primary" />
+                                                ) : (
+                                                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                                                )}
+                                            </button>
+                                            <div 
+                                                className={`px-6 overflow-hidden transition-all duration-300 ease-in-out ${
+                                                    openFaqIndex === index ? 'max-h-40 pb-6 opacity-100' : 'max-h-0 opacity-0'
+                                                }`}
+                                            >
+                                                <p className="text-gray-600 leading-relaxed">
+                                                    {faq.answer}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
-            {/* Media Sosial Section */}
-            <section className="py-16 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center">
-                        <h2 className={TYPOGRAPHY.sectionHeading}>
-                            Terhubung dengan <span className="text-primary">Kami</span>
-                        </h2>
-                        <div className="h-1 w-24 bg-primary mx-auto mb-6"></div>
-                        <p className={TYPOGRAPHY.bodyText + " text-gray-600 mb-10 max-w-2xl mx-auto"}>
-                            Ikuti media sosial kami untuk mendapatkan update terbaru tentang kegiatan sekolah, 
-                            prestasi siswa, dan informasi penting lainnya.
-                        </p>
-                        <div className="flex justify-center flex-wrap gap-4">
-                            {navigationData.socialMediaLinks.map((social) => {
-                                const IconComponent = social.icon;
-                                return (
-                                    <a 
-                                        key={social.name}
-                                        href={social.href}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="group bg-gray-50 hover:bg-primary text-gray-700 hover:text-white rounded-lg p-4 shadow-md hover:shadow-lg transition-all duration-300 flex items-center space-x-3 min-w-[140px]"
-                                        title={`Ikuti kami di ${social.name}`}
-                                    >
-                                        {IconComponent && <IconComponent className="w-5 h-5 flex-shrink-0" />}
-                                        <span className="font-medium">{social.name}</span>
-                                    </a>
-                                );
-                            })}
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            </main>
 
             <Footer
                 logoSman1={navigationData.logoSman1}

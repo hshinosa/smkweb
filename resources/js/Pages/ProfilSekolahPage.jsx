@@ -4,40 +4,63 @@ import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 
 // Import Components
-import Navbar from '@/Components/Navbar'; // Sesuaikan path jika perlu
-import Footer from '@/Components/Footer'; // Sesuaikan path jika perlu
-// Import ikon dari lucide-react (contoh, tambahkan sesuai kebutuhan)
-import { Building, Target, Eye, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
+import Navbar from '@/Components/Navbar';
+import Footer from '@/Components/Footer';
+import { Check, Star, Target, MapPin, Building, Trophy, Users } from 'lucide-react';
 // Import typography constants
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 
-// Path ke aset gambar Anda (sama seperti LandingPage)
 // Get navigation data from centralized source
 const navigationData = getNavigationData();
 
-// Ganti dengan path gambar yang sesuai dari desain
-const sejarahImage = '/images/keluarga-besar-sman1-baleendah.png'; // Ganti dengan path gambar aula/sejarah yang benar
+const timelineEvents = [
+    {
+        year: "1975",
+        title: "Awal Pendirian",
+        description: "Berdiri sebagai sekolah filial (kelas jauh) untuk memenuhi kebutuhan pendidikan di wilayah Baleendah.",
+        side: "left"
+    },
+    {
+        year: "1980",
+        title: "Penegerian",
+        description: "Resmi berdiri sendiri sebagai SMAN 1 Baleendah dengan SK Menteri Pendidikan, menandai era baru kemandirian.",
+        side: "right"
+    },
+    {
+        year: "2010",
+        title: "Pengembangan Fasilitas",
+        description: "Revitalisasi gedung utama dan pembangunan Masjid sekolah sebagai pusat pembentukan karakter siswa.",
+        side: "left"
+    },
+    {
+        year: "Sekarang",
+        title: "Era Prestasi",
+        description: "Menjadi Sekolah Penggerak dan meraih predikat Sekolah Adiwiyata Tingkat Provinsi/Nasional.",
+        side: "right"
+    }
+];
 
-// Data Navigasi & Footer (konsisten dengan struktur navbar baru)
+const facilities = [
+    { name: "Lab Komputer", image: "/images/panen-karya-sman1-baleendah.jpg" },
+    { name: "Perpustakaan", image: "/images/hero-bg-sman1-baleendah.jpeg" }, // Placeholder reused
+    { name: "Masjid Sekolah", image: "/images/keluarga-besar-sman1-baleendah.png" }, // Placeholder reused
+    { name: "Lapangan Olahraga", image: "/images/hero-bg-sman1-baleendah.jpeg" }, // Placeholder reused
+    { name: "Ruang Kelas Modern", image: "/images/panen-karya-sman1-baleendah.jpg" } // Placeholder reused
+];
 
-// Data Visi & Misi (Contoh)
-const visi = "Menjadi lembaga pendidikan vokasi unggulan yang menghasilkan lulusan berkarakter mulia, kompeten di bidangnya, adaptif terhadap perubahan, dan berdaya saing global.";
-const misi = [
-    "Menyelenggarakan pendidikan yang berkualitas dengan kurikulum yang relevan dengan kebutuhan industri.",
-    "Mengembangkan potensi peserta didik secara optimal melalui pembelajaran berbasis proyek dan pengalaman kerja nyata.",
-    "Membentuk karakter peserta didik yang beriman, bertaqwa, berakhlak mulia, mandiri, dan bertanggung jawab.",
-    "Menjalin kemitraan strategis dengan dunia usaha dan dunia industri (DUDI) untuk penyelarasan kurikulum, magang, dan penyerapan lulusan.",
-    "Meningkatkan kompetensi pendidik dan tenaga kependidikan secara berkelanjutan.",
-    "Mengembangkan sarana prasarana pendidikan yang modern dan representatif.",
-    "Menciptakan lingkungan belajar yang kondusif, aman, nyaman, dan menyenangkan.",
+const misiPoints = [
+    "Melaksanakan pembelajaran berbasis teknologi dan inovasi.",
+    "Menanamkan nilai karakter dan budi pekerti luhur.",
+    "Mengembangkan potensi akademik dan non-akademik siswa.",
+    "Menciptakan lingkungan sekolah yang ramah dan berwawasan lingkungan.",
+    "Menjalin kerjasama dengan berbagai institusi pendidikan tinggi."
 ];
 
 export default function ProfilSekolahPage({ auth }) {
-
     return (
-        <div className="bg-secondary text-gray-800 font-sans">
-            <Head title="Profil & Sejarah - SMAN 1 Baleendah" description="Pelajari sejarah dan profil SMA Negeri 1 Baleendah sebagai sekolah menengah atas unggulan di Baleendah dengan program studi MIPA, IPS, dan Bahasa yang berkualitas." />
+        <div className="bg-white font-sans text-gray-800">
+            <Head title="Profil & Sejarah - SMAN 1 Baleendah" description="Mengenal lebih dekat sejarah, visi, misi, dan fasilitas SMAN 1 Baleendah." />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -46,70 +69,96 @@ export default function ProfilSekolahPage({ auth }) {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            {/* Header Section */}
-            <section className="pt-24 pb-12 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 className={TYPOGRAPHY.pageTitle + " text-center md:text-left"}>
-                        Profil dan Sejarah SMA Negeri 1 Baleendah
-                    </h1>                    <p className={TYPOGRAPHY.bodyText + " text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left"}>
-                        Menelusuri jejak langkah SMA Negeri 1 Baleendah sebagai institusi pendidikan menengah atas yang terus berkembang dan berkontribusi untuk kemajuan pendidikan di Baleendah.
-                    </p>
+            {/* SECTION A: HERO BANNER */}
+            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+                {/* Background Image */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        alt="Gedung SMAN 1 Baleendah" 
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/60"></div>
+                </div>
+
+                {/* Content */}
+                <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-4 drop-shadow-lg`}>
+                        Mengenal <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">SMAN 1 Baleendah</span>
+                    </h1>
                 </div>
             </section>
 
-            {/* Sejarah & Summary Section */}
-            <section className="py-12 bg-secondary sm:py-16 lg:py-20">
+            {/* SECTION B: HISTORY TIMELINE */}
+            <section className="py-20 bg-gray-50 relative overflow-hidden">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div className="text-center mb-16">
+                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                            Jejak Langkah <span className="text-primary">Kami</span>
+                        </h2>
+                    </div>
+
+                    <div className="relative max-w-4xl mx-auto">
+                        {/* Center Line */}
+                        <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gray-200 rounded-full hidden md:block"></div>
+
+                        <div className="space-y-12">
+                            {timelineEvents.map((event, idx) => (
+                                <div key={idx} className={`flex flex-col md:flex-row items-center justify-between ${event.side === 'right' ? 'md:flex-row-reverse' : ''}`}>
+                                    {/* Content Side */}
+                                    <div className="w-full md:w-5/12 mb-8 md:mb-0">
+                                        <div className={`bg-white p-6 rounded-2xl shadow-lg border-l-4 border-primary hover:shadow-xl transition-shadow duration-300 ${event.side === 'right' ? 'md:text-right md:border-l-0 md:border-r-4' : ''}`}>
+                                            <span className="inline-block px-3 py-1 bg-blue-50 text-primary font-bold rounded-full text-sm mb-3">
+                                                {event.year}
+                                            </span>
+                                            <h3 className={`${TYPOGRAPHY.cardTitle} mb-2 text-gray-900`}>
+                                                {event.title}
+                                            </h3>
+                                            <p className={TYPOGRAPHY.bodyText}>
+                                                {event.description}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Center Dot */}
+                                    <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-accent-yellow rounded-full border-4 border-white shadow-md hidden md:block"></div>
+
+                                    {/* Empty Side for Spacing */}
+                                    <div className="w-full md:w-5/12 hidden md:block"></div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* SECTION D: FACILITIES GALLERY */}
+            <section className="py-20 bg-secondary">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">                        {/* Kolom Teks Sejarah */}
-                        <div className="md:col-span-2 prose prose-sm max-w-none text-gray-700">
-                            <h2 className={TYPOGRAPHY.sectionHeading + " mb-4"}>
-                                Profil Sekolah <span className="text-primary">SMAN 1 Baleendah</span>
-                            </h2>
-                            <div className="h-1 w-24 bg-primary mb-8"></div>
+                    <div className="text-center mb-16">
+                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                            Lingkungan Belajar <span className="text-primary">Modern</span>
+                        </h2>
+                        <p className={`${TYPOGRAPHY.bodyText} max-w-2xl mx-auto`}>
+                            Fasilitas lengkap yang mendukung pengembangan akademik dan karakter siswa.
+                        </p>
+                    </div>
 
-                            <h3 className={TYPOGRAPHY.subsectionHeading + " mt-6 mb-2"}>Visi dan Misi</h3>
-                            <p className={TYPOGRAPHY.bodyText}>
-                                <strong>SMA Negeri 1 Baleendah</strong> berkomitmen untuk menjadi lembaga pendidikan menengah atas yang unggul dalam prestasi akademik, berkarakter kuat, dan berwawasan global. Sekolah ini mengutamakan pengembangan potensi siswa secara holistik melalui pendidikan yang berkualitas dan berorientasi pada pencapaian prestasi akademik yang tinggi.
-                            </p>
-
-                            <h3 className={TYPOGRAPHY.subsectionHeading + " mt-6 mb-2"}>Program Studi Unggulan</h3>
-                            <p className={TYPOGRAPHY.bodyText}>
-                                SMAN 1 Baleendah menyediakan tiga program studi utama yang dirancang untuk mempersiapkan siswa menghadapi tantangan pendidikan tinggi dan masa depan yang cerah:
-                            </p>
-                            <ul className={"list-disc list-inside mt-2 space-y-1 " + TYPOGRAPHY.bodyText}>
-                                <li><strong>MIPA (Matematika dan Ilmu Pengetahuan Alam)</strong> - Fokus pada pengembangan kemampuan analitis dan pemahaman mendalam tentang sains dan matematika</li>
-                                <li><strong>IPS (Ilmu Pengetahuan Sosial)</strong> - Mengembangkan pemahaman tentang dinamika sosial, ekonomi, dan budaya masyarakat</li>
-                                <li><strong>Bahasa (Ilmu Bahasa dan Budaya)</strong> - Memperdalam kemampuan berbahasa dan apresiasi terhadap sastra serta budaya</li>
-                            </ul>
-
-                            <h3 className={TYPOGRAPHY.subsectionHeading + " mt-6 mb-2"}>Fasilitas dan Lingkungan Belajar</h3>
-                            <p className={TYPOGRAPHY.bodyText}>
-                                Sekolah ini dilengkapi dengan fasilitas pembelajaran modern yang mendukung proses belajar mengajar yang efektif. Lingkungan sekolah yang kondusif dan tenaga pengajar yang berkualitas menciptakan atmosfer akademik yang mendorong siswa untuk berprestasi dan mengembangkan karakter yang kuat.
-                            </p>
-                        </div>
-
-                        {/* Kolom Gambar dan Summary */}
-                        <div className="md:col-span-1">
-                            <img
-                                src={sejarahImage} // Pastikan path ini benar
-                                alt="Suasana kegiatan belajar mengajar di SMA Negeri 1 Baleendah"
-                                className="w-full rounded-lg shadow-xl mb-8 aspect-video object-cover"
-                            />
-                            <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-100">
-                                <h3 className={TYPOGRAPHY.subsectionHeading + " mb-3 flex items-center"}>
-                                    <Building size={24} className="mr-2 text-primary" />
-                                    SMA Negeri 1 Baleendah
-                                </h3>                                <p className={TYPOGRAPHY.bodyText + " text-gray-600"}>
-                                    SMAN 1 Baleendah adalah sekolah menengah atas unggulan di Kabupaten Bandung yang memiliki reputasi baik dalam bidang pendidikan akademik. Sekolah ini berfokus pada pengembangan prestasi akademik siswa dan pembentukan karakter yang kuat untuk mempersiapkan mereka menghadapi jenjang pendidikan tinggi.
-                                </p>
-                                <h4 className="text-md font-semibold text-gray-700 mb-2">Program Studi Unggulan:</h4>
-                                <ul className={"list-disc list-inside text-gray-600 space-y-1 " + TYPOGRAPHY.bodyText}>
-                                    <li>MIPA (Matematika dan Ilmu Pengetahuan Alam)</li>
-                                    <li>IPS (Ilmu Pengetahuan Sosial)</li>
-                                    <li>Bahasa (Ilmu Bahasa dan Budaya)</li>
-                                </ul>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {facilities.map((facility, idx) => (
+                            <div key={idx} className="group relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3] cursor-pointer">
+                                <img 
+                                    src={facility.image} 
+                                    alt={facility.name} 
+                                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 transition-opacity"></div>
+                                <div className="absolute bottom-0 left-0 right-0 p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                                    <h3 className="text-xl font-bold text-white mb-1">{facility.name}</h3>
+                                    <div className="h-1 w-12 bg-accent-yellow rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+                                </div>
                             </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </section>
@@ -117,9 +166,6 @@ export default function ProfilSekolahPage({ auth }) {
             <Footer
                 logoSman1={navigationData.logoSman1}
                 googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
-                profilLinks={navigationData.profilLinks}
-                akademikLinks={navigationData.akademikLinks}
-                programStudiLinks={navigationData.programStudiLinks}
                 socialMediaLinks={navigationData.socialMediaLinks}
             />
         </div>

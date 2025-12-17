@@ -1,31 +1,29 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
+import { 
+    BookOpen, 
+    Globe, 
+    Languages, 
+    Users, 
+    Mic, 
+    PenTool, 
+    GraduationCap, 
+    Quote,
+    Briefcase,
+    Newspaper
+} from 'lucide-react';
+
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
-// Import Lucide React icons
-import { BookOpen, Globe, Mic, PenTool, GraduationCap, Award, Users, Languages } from 'lucide-react';
 
-// Import data navigasi
-// Get navigation data from centralized source
 const navigationData = getNavigationData();
-
-
-
-
-
-
-
-
-
-
-
 
 export default function ProgramBahasaPage() {
     return (
-        <div className="bg-secondary text-gray-800 font-sans">
-            <Head title="Program Bahasa - SMAN 1 Baleendah" />
+        <div className="bg-white font-sans text-gray-800">
+            <Head title="Program Bahasa - SMAN 1 Baleendah" description="Program Studi Bahasa dan Budaya SMAN 1 Baleendah" />
             
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -34,513 +32,281 @@ export default function ProgramBahasaPage() {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            {/* Header Section */}
-            <section className="pt-24 pb-12 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center md:text-left">
-                        <h1 className={TYPOGRAPHY.pageTitle}>
-                            Program Bahasa
-                        </h1>
-                        <div className="h-1 w-24 bg-primary mt-2 mx-auto md:mx-0 mb-4"></div>
-                        <p className={TYPOGRAPHY.bodyText + " text-gray-800 max-w-3xl mx-auto md:mx-0"}>
-                            Program Ilmu Bahasa dan Budaya yang mengembangkan kemampuan komunikasi, 
-                            apresiasi sastra, dan pemahaman budaya untuk mempersiapkan siswa memasuki 
-                            perguruan tinggi terbaik di bidang sastra, linguistik, komunikasi, dan pendidikan.
+            {/* 1. HERO SECTION (Immersive) */}
+            <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden pt-20">
+                {/* Background Image */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        alt="Program Bahasa SMAN 1 Baleendah" 
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"></div>
+                </div>
+
+                <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm mb-6 animate-fade-in-up">
+                        <span className="text-white font-bold text-sm tracking-wide uppercase">Terakreditasi A (Unggul)</span>
+                    </div>
+                    
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-6 max-w-4xl mx-auto`}>
+                        Bahasa & <br/>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-300">
+                            Ilmu Budaya
+                        </span>
+                    </h1>
+                    
+                    <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
+                        Membuka jendela dunia melalui penguasaan bahasa asing, literasi sastra, dan pemahaman lintas budaya yang mendalam.
+                    </p>
+                </div>
+            </section>
+
+            {/* 2. CORE SUBJECTS (Glass Cards) */}
+            <section className="py-24 bg-slate-50 relative overflow-hidden">
+                {/* Decorative Elements */}
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
+                <div className="absolute -top-40 -right-40 w-96 h-96 bg-yellow-100 rounded-full blur-3xl opacity-50"></div>
+                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-50"></div>
+
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                            Mata Pelajaran <span className="text-primary">Inti</span>
+                        </h2>
+                        <p className={TYPOGRAPHY.bodyText}>
+                            Kurikulum yang dirancang untuk mengasah kemampuan komunikasi, analisis kritis, dan kreativitas.
                         </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {/* Sastra Indonesia */}
+                        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 transition-all duration-300">
+                            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300">
+                                <BookOpen className="w-8 h-8 text-red-600 transition-colors" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 font-serif">Sastra Indonesia</h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                                Analisis karya sastra klasik & modern, penulisan kreatif, dan jurnalistik.
+                            </p>
+                        </div>
+
+                        {/* Bahasa Inggris */}
+                        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 transition-all duration-300">
+                            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300">
+                                <Globe className="w-8 h-8 text-blue-600 transition-colors" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 font-serif">Bahasa Inggris</h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                                Komunikasi global, literatur dunia, public speaking, dan debat bahasa Inggris.
+                            </p>
+                        </div>
+
+                        {/* Bahasa Asing Lain */}
+                        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 transition-all duration-300">
+                            <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300">
+                                <Languages className="w-8 h-8 text-purple-600 transition-colors" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 font-serif">Bahasa Asing</h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                                Penguasaan bahasa ketiga (Jepang/Jerman/Perancis) untuk daya saing internasional.
+                            </p>
+                        </div>
+
+                        {/* Antropologi */}
+                        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 transition-all duration-300">
+                            <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300">
+                                <Users className="w-8 h-8 text-orange-600 transition-colors" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 font-serif">Antropologi</h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                                Memahami keragaman budaya, struktur masyarakat, dan perilaku manusia.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* Program Overview Section */}
-            <section className="py-12 bg-secondary sm:py-16 lg:py-20">
+            {/* 3. FACILITIES (Photo Gallery) */}
+            <section className="py-24 bg-white">
+                <style>{`
+                    @keyframes scroll-vertical {
+                        0% { transform: translateY(0); }
+                        100% { transform: translateY(-50%); }
+                    }
+                    .animate-scroll-vertical {
+                        animation: scroll-vertical 20s linear infinite;
+                    }
+                    .pause-hover:hover .animate-scroll-vertical {
+                        animation-play-state: paused;
+                    }
+                `}</style>
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
-                            <div className="text-center md:text-left mb-8">
-                                <h2 className={TYPOGRAPHY.sectionHeading}>
-                                    Program <span className="text-primary">Bahasa</span>
-                                </h2>
-                                <div className="h-1 w-32 bg-primary mt-2 mx-auto md:mx-0 mb-6"></div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-800 max-w-4xl mx-auto md:mx-0`}>
-                                    Program Ilmu Bahasa dan Budaya di SMAN 1 Baleendah dirancang untuk mengembangkan 
-                                    kemampuan komunikasi, apresiasi sastra, dan pemahaman budaya melalui pembelajaran 
-                                    bahasa Indonesia, bahasa asing, dan studi budaya. Program ini mempersiapkan siswa 
-                                    untuk melanjutkan pendidikan ke perguruan tinggi terbaik di bidang sastra, linguistik, 
-                                    komunikasi, dan pendidikan.
-                                </p>
-                            </div>
-                            
-                            <div className="grid md:grid-cols-2 gap-8 mb-6">
-                                <div className="bg-primary text-white p-6 rounded-xl">
-                                    <h3 className={`${TYPOGRAPHY.subsectionHeading} text-white mb-4`}>Fokus Pembelajaran</h3>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-blue-200 rounded-full mr-3 flex-shrink-0"></div>
-                                            <span className={`${TYPOGRAPHY.bodyText} text-blue-100 font-medium`}>Komunikasi Multibahasa</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-blue-200 rounded-full mr-3 flex-shrink-0"></div>
-                                            <span className={`${TYPOGRAPHY.bodyText} text-blue-100 font-medium`}>Apresiasi Sastra</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-blue-200 rounded-full mr-3 flex-shrink-0"></div>
-                                            <span className={`${TYPOGRAPHY.bodyText} text-blue-100 font-medium`}>Studi Budaya</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="bg-secondary p-6 rounded-xl">
-                                    <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-4`}>Keunggulan Program</h3>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-primary rounded-full mr-3 flex-shrink-0"></div>
-                                            <span className={`${TYPOGRAPHY.bodyText} text-gray-700 font-medium`}>Laboratorium Bahasa</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-primary rounded-full mr-3 flex-shrink-0"></div>
-                                            <span className={`${TYPOGRAPHY.bodyText} text-gray-700 font-medium`}>Sertifikasi Internasional</span>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className="w-3 h-3 bg-primary rounded-full mr-3 flex-shrink-0"></div>
-                                            <span className={`${TYPOGRAPHY.bodyText} text-gray-700 font-medium`}>Pertukaran Budaya</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-gray-50 p-6 rounded-xl">
-                                <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-4 text-center`}>Persiapan Masa Depan</h3>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-800 text-center max-w-3xl mx-auto`}>
-                                    Dengan pendekatan pembelajaran yang mengintegrasikan teori bahasa dengan praktik komunikasi, 
-                                    siswa akan mengembangkan kemampuan literasi, creative writing, public speaking, dan 
-                                    cross-cultural communication yang dibutuhkan untuk sukses di era globalisasi.
-                                </p>
-                            </div>
-                        </div>
-                </div>
-            </section>
-
-            {/* Core Subjects Section */}
-            <section className="py-12 bg-white sm:py-16 lg:py-20">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center md:text-left mb-8">
-                            <h2 className={TYPOGRAPHY.sectionHeading}>
-                                Mata Pelajaran <span className="text-primary">Inti</span>
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-12">
+                        <div className="max-w-2xl">
+                            <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                                Fasilitas <span className="text-primary">Penunjang</span>
                             </h2>
-                            <div className="h-1 w-32 bg-primary mt-2 mx-auto md:mx-0 mb-4"></div>
-                            <p className={`${TYPOGRAPHY.bodyText} text-gray-600 max-w-2xl mx-auto md:mx-0`}>
-                                Kurikulum yang dirancang khusus untuk mengembangkan kemampuan bahasa dan apresiasi budaya
+                            <p className={TYPOGRAPHY.bodyText}>
+                                Lingkungan belajar yang mendukung pengembangan kemampuan bahasa dan ekspresi seni.
                             </p>
                         </div>
+                    </div>
 
-                        <div className="grid lg:grid-cols-2 gap-6">
-                            {/* Bahasa Indonesia */}
-                            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                                <div className="flex items-center mb-4">
-                                    <div className="bg-blue-100 rounded-full w-14 h-14 flex items-center justify-center mr-4">
-                                        <BookOpen className="w-7 h-7 text-primary" />
-                                    </div>
-                                    <div>
-                                        <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-1`}>Bahasa Indonesia</h3>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-primary font-semibold text-sm`}>4 Jam/Minggu</p>
-                                    </div>
-                                </div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-600 mb-3`}>
-                                    Sastra Indonesia, linguistik, kritik sastra, creative writing, 
-                                    dan jurnalistik.
-                                </p>
-                                <div className="bg-gray-50 p-3 rounded-lg">
-                                    <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2 text-sm`}>Cakupan Materi:</h4>
-                                    <ul className="text-xs text-gray-600 space-y-1">
-                                        <li>• Sastra & Linguistik</li>
-                                        <li>• Creative Writing</li>
-                                        <li>• Kritik Sastra</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            {/* Bahasa Inggris */}
-                            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                                <div className="flex items-center mb-4">
-                                    <div className="bg-blue-100 rounded-full w-14 h-14 flex items-center justify-center mr-4">
-                                        <Globe className="w-7 h-7 text-primary" />
-                                    </div>
-                                    <div>
-                                        <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-1`}>Bahasa Inggris</h3>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-primary font-semibold text-sm`}>4 Jam/Minggu</p>
-                                    </div>
-                                </div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-600 mb-3`}>
-                                    Grammar lanjutan, literature, academic writing, public speaking, 
-                                    dan TOEFL preparation.
-                                </p>
-                                <div className="bg-gray-50 p-3 rounded-lg">
-                                    <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2 text-sm`}>Cakupan Materi:</h4>
-                                    <ul className="text-xs text-gray-600 space-y-1">
-                                        <li>• Grammar & Literature</li>
-                                        <li>• Academic Writing</li>
-                                        <li>• TOEFL Preparation</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            {/* Bahasa Asing Pilihan */}
-                            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                                <div className="flex items-center mb-4">
-                                    <div className="bg-blue-100 rounded-full w-14 h-14 flex items-center justify-center mr-4">
-                                        <Languages className="w-7 h-7 text-primary" />
-                                    </div>
-                                    <div>
-                                        <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-1`}>Bahasa Asing Pilihan</h3>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-primary font-semibold text-sm`}>4 Jam/Minggu</p>
-                                    </div>
-                                </div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-600 mb-3`}>
-                                    Pilihan: Bahasa Arab, Jepang, atau Mandarin dengan fokus 
-                                    komunikasi praktis.
-                                </p>
-                                <div className="bg-gray-50 p-3 rounded-lg">
-                                    <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2 text-sm`}>Pilihan Bahasa:</h4>
-                                    <ul className="text-xs text-gray-600 space-y-1">
-                                        <li>• Bahasa Arab</li>
-                                        <li>• Bahasa Jepang</li>
-                                        <li>• Bahasa Mandarin</li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            {/* Antropologi */}
-                            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                                <div className="flex items-center mb-4">
-                                    <div className="bg-blue-100 rounded-full w-14 h-14 flex items-center justify-center mr-4">
-                                        <Users className="w-7 h-7 text-primary" />
-                                    </div>
-                                    <div>
-                                        <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-1`}>Antropologi</h3>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-primary font-semibold text-sm`}>4 Jam/Minggu</p>
-                                    </div>
-                                </div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-600 mb-3`}>
-                                    Studi budaya, etnografi, antropologi linguistik, dan 
-                                    penelitian budaya lokal.
-                                </p>
-                                <div className="bg-gray-50 p-3 rounded-lg">
-                                    <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2 text-sm`}>Cakupan Materi:</h4>
-                                    <ul className="text-xs text-gray-600 space-y-1">
-                                        <li>• Studi Budaya</li>
-                                        <li>• Etnografi</li>
-                                        <li>• Penelitian Budaya</li>
-                                    </ul>
-                                </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[500px]">
+                        {/* Left Column: Main Static Item */}
+                        <div className="lg:col-span-2 relative rounded-3xl overflow-hidden group shadow-lg h-full">
+                            <img 
+                                src="/images/hero-bg-sman1-baleendah.jpeg" 
+                                alt="Laboratorium Bahasa" 
+                                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90"></div>
+                            <div className="absolute bottom-0 left-0 p-8">
+                                <span className="px-3 py-1 bg-primary text-white text-xs font-bold rounded-full mb-3 inline-block">Utama</span>
+                                <h3 className="text-2xl font-bold text-white font-serif">Laboratorium Bahasa Multimedia</h3>
+                                <p className="text-gray-300 mt-2 max-w-md">Dilengkapi perangkat audio-visual modern untuk latihan listening dan speaking yang efektif.</p>
                             </div>
                         </div>
+
+                        {/* Right Column: Vertical Marquee */}
+                        <div className="lg:col-span-1 relative rounded-3xl overflow-hidden bg-gray-100 h-full pause-hover">
+                            <div className="absolute inset-0 overflow-hidden">
+                                <div className="animate-scroll-vertical flex flex-col gap-4 p-4">
+                                    {/* Duplicated items for seamless loop */}
+                                    {[1, 2, 3, 4, 1, 2, 3, 4].map((item, idx) => (
+                                        <div key={idx} className="relative rounded-2xl overflow-hidden shadow-md h-48 flex-shrink-0 group/item">
+                                            <img 
+                                                src={idx % 2 === 0 ? "/images/hero-bg-sman1-baleendah.jpeg" : "/images/anak-sma.png"} 
+                                                alt={`Facility ${item}`} 
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/20 group-hover/item:bg-black/0 transition-colors"></div>
+                                            <div className="absolute bottom-0 left-0 p-4 bg-gradient-to-t from-black/60 to-transparent w-full">
+                                                <p className="text-white font-bold text-sm">
+                                                    {idx % 2 === 0 ? "Perpustakaan Lengkap" : "Ruang Seni & Teater"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            {/* Gradient overlays to mask edges */}
+                            <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-white/20 to-transparent z-10 pointer-events-none"></div>
+                            <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-white/20 to-transparent z-10 pointer-events-none"></div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            {/* Facilities Section */}
-            <section className="py-12 bg-secondary sm:py-16 lg:py-20">
+            {/* 4. ALUMNI & PROSPEK (Split View) */}
+            <section className="py-24 bg-slate-50">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
-                            <div className="text-center md:text-left mb-8">
-                                <h2 className={TYPOGRAPHY.sectionHeading}>
-                                    Fasilitas <span className="text-primary">Pembelajaran</span>
-                                </h2>
-                                <div className="h-1 w-32 bg-primary mt-2 mx-auto md:mx-0 mb-6"></div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-600 max-w-2xl mx-auto md:mx-0`}>
-                                    Fasilitas pembelajaran modern yang mendukung pengembangan kemampuan bahasa dan budaya
-                                </p>
-                            </div>
-                            
-                            <div className="grid md:grid-cols-3 gap-6">
-                                <div className="text-center">
-                                    <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                                        <Mic className="w-8 h-8 text-primary" />
-                                    </div>
-                                    <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-3`}>Laboratorium Bahasa</h3>
-                                    <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm mb-3`}>
-                                        Fasilitas audio-visual modern untuk pembelajaran bahasa asing 
-                                        dan pronunciation dengan teknologi terkini.
-                                    </p>
-                                    <div className="bg-gray-50 p-3 rounded-lg">
-                                        <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2 text-xs`}>Fasilitas:</h4>
-                                        <ul className="text-xs text-gray-600 space-y-1">
-                                            <li>• Audio-Visual System</li>
-                                            <li>• Language Software</li>
-                                            <li>• Recording Studio</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div className="text-center">
-                                    <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                                        <BookOpen className="w-8 h-8 text-primary" />
-                                    </div>
-                                    <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-3`}>Perpustakaan Sastra</h3>
-                                    <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm mb-3`}>
-                                        Koleksi karya sastra Indonesia dan dunia, jurnal linguistik, 
-                                        dan majalah budaya yang lengkap.
-                                    </p>
-                                    <div className="bg-gray-50 p-3 rounded-lg">
-                                        <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2 text-xs`}>Koleksi:</h4>
-                                        <ul className="text-xs text-gray-600 space-y-1">
-                                            <li>• Karya Sastra Klasik</li>
-                                            <li>• Jurnal Linguistik</li>
-                                            <li>• Majalah Budaya</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <div className="text-center">
-                                    <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                                        <PenTool className="w-8 h-8 text-primary" />
-                                    </div>
-                                    <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-3`}>Studio Kreatif</h3>
-                                    <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm mb-3`}>
-                                        Ruang untuk kegiatan teater, storytelling, dan produksi 
-                                        konten kreatif multibahasa.
-                                    </p>
-                                    <div className="bg-gray-50 p-3 rounded-lg">
-                                        <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-2 text-xs`}>Kegiatan:</h4>
-                                        <ul className="text-xs text-gray-600 space-y-1">
-                                            <li>• Teater & Drama</li>
-                                            <li>• Creative Writing</li>
-                                            <li>• Content Production</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                </div>
-            </section>
-
-            {/* Success Stories & Alumni Achievements */}
-            <section className="py-12 bg-white sm:py-16 lg:py-20">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center md:text-left mb-12">
-                            <h2 className={TYPOGRAPHY.sectionHeading}>
-                                Prestasi dan <span className="text-primary">Alumni</span>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                        
+                        {/* Left Column: Career Paths */}
+                        <div>
+                            <h2 className={`${TYPOGRAPHY.sectionHeading} mb-6`}>
+                                Membuka Jalan Menuju <br/>
+                                <span className="text-primary">Karir Global</span>
                             </h2>
-                            <div className="h-1 w-32 bg-primary mt-2 mx-auto md:mx-0 mb-6"></div>
-                            <p className={`${TYPOGRAPHY.bodyText} text-gray-600 max-w-2xl mx-auto md:mx-0`}>
-                                Kebanggaan kami terhadap pencapaian alumni dan prestasi siswa Program Bahasa
+                            <p className={`${TYPOGRAPHY.bodyText} mb-10`}>
+                                Lulusan Program Bahasa memiliki keunggulan komunikasi dan adaptabilitas budaya yang tinggi, membuka peluang karir di kancah internasional.
                             </p>
-                        </div>
 
-                        {/* Achievement Statistics */}
-                        <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
-                            <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-6 text-center`}>Prestasi Program Bahasa</h3>
-                            <div className="grid md:grid-cols-4 gap-6">
-                                <div className="text-center border-r border-gray-200 last:border-r-0">
-                                    <div className="mb-3">
-                                        <div className="text-4xl font-bold text-primary mb-1">90%</div>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm font-medium`}>Tingkat Kelulusan PTN</p>
+                            <div className="space-y-6">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm transition-all duration-300">
+                                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
+                                        <Globe className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900 text-lg">Hubungan Internasional</h4>
+                                        <p className="text-sm text-gray-600">Diplomat, Staff Kedutaan, NGO Internasional, Penerjemah.</p>
                                     </div>
                                 </div>
-                                <div className="text-center border-r border-gray-200 last:border-r-0">
-                                    <div className="mb-3">
-                                        <div className="text-4xl font-bold text-primary mb-1">18+</div>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm font-medium`}>Prestasi Sastra & Bahasa</p>
+
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm transition-all duration-300">
+                                    <div className="p-3 bg-pink-50 text-pink-600 rounded-lg">
+                                        <Newspaper className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900 text-lg">Media & Komunikasi</h4>
+                                        <p className="text-sm text-gray-600">Jurnalis, Public Relations, Content Creator, Broadcaster.</p>
                                     </div>
                                 </div>
-                                <div className="text-center border-r border-gray-200 last:border-r-0">
-                                    <div className="mb-3">
-                                        <div className="text-4xl font-bold text-primary mb-1">200+</div>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm font-medium`}>Alumni di PTN Favorit</p>
+
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm transition-all duration-300">
+                                    <div className="p-3 bg-teal-50 text-teal-600 rounded-lg">
+                                        <GraduationCap className="w-6 h-6" />
                                     </div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="mb-3">
-                                        <div className="text-4xl font-bold text-primary mb-1">35+</div>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm font-medium`}>Sertifikat Bahasa Internasional</p>
+                                    <div>
+                                        <h4 className="font-bold text-gray-900 text-lg">Pendidikan & Budaya</h4>
+                                        <p className="text-sm text-gray-600">Dosen, Guru Bahasa, Penulis, Editor, Peneliti Budaya.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Alumni Success Stories */}
-                        <div className="bg-gray-50 rounded-xl p-8">
-                            <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-6 text-center`}>Testimoni Alumni</h3>
-                            <div className="grid md:grid-cols-2 gap-8">
-                                <div className="bg-white rounded-lg p-6 border border-gray-200">
-                                    <div className="flex items-center mb-4">
-                                        <div className="bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center text-gray-600 font-bold text-lg">
-                                            DP
-                                        </div>
-                                        <div className="ml-4">
-                                            <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-1`}>Dina Puspita, S.S., M.Hum.</h4>
-                                            <p className={`${TYPOGRAPHY.bodyText} text-gray-500 text-sm`}>Alumni 2019 - Dosen Sastra</p>
-                                        </div>
-                                    </div>
-                                    <p className={`${TYPOGRAPHY.bodyText} text-gray-600 mb-4 text-sm leading-relaxed`}>
-                                        "Program Bahasa di SMAN 1 Baleendah mengasah kemampuan literasi dan apresiasi sastra saya. 
-                                        Pembelajaran multibahasa dan studi budaya membantu saya lolos SBMPTN Sastra Indonesia UI 
-                                        dan kini menjadi dosen di universitas terkemuka."
-                                    </p>
-                                    <div className="text-xs text-gray-500 border-t pt-3">
-                                        <span className="font-medium">Pendidikan:</span> Sastra Indonesia UI → Dosen
-                                    </div>
+                        {/* Right Column: Alumni Spotlight (Landing Page Style) */}
+                        <div className="relative mt-12 lg:mt-0">
+                            <div className="group relative flex flex-col h-full max-w-md mx-auto">
+                                {/* Image Area - Floating above */}
+                                <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
+                                    <img 
+                                        src="/images/anak-sma.png" 
+                                        alt="Alumni Sukses"
+                                        className="h-full w-auto object-contain drop-shadow-xl transition-transform duration-500" 
+                                    />
                                 </div>
                                 
-                                <div className="bg-white rounded-lg p-6 border border-gray-200">
-                                    <div className="flex items-center mb-4">
-                                        <div className="bg-gray-100 rounded-full w-12 h-12 flex items-center justify-center text-gray-600 font-bold text-lg">
-                                            RH
-                                        </div>
-                                        <div className="ml-4">
-                                            <h4 className={`${TYPOGRAPHY.bodyText} font-semibold mb-1`}>Rizki Hakim, S.I.Kom., M.A.</h4>
-                                            <p className={`${TYPOGRAPHY.bodyText} text-gray-500 text-sm`}>Alumni 2018 - Jurnalis</p>
-                                        </div>
+                                {/* Content Section */}
+                                <div className="bg-white rounded-3xl p-8 shadow-xl transition-all duration-300 border border-gray-100 relative -mt-12 pt-10 flex-1 flex flex-col z-10 w-full text-center">
+                                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white transition-transform duration-300">
+                                        <Quote size={20} fill="currentColor" />
                                     </div>
-                                    <p className={`${TYPOGRAPHY.bodyText} text-gray-600 mb-4 text-sm leading-relaxed`}>
-                                        "Kemampuan menulis dan komunikasi yang diasah di program Bahasa sangat membantu 
-                                        karier jurnalistik saya. Sekarang saya bekerja sebagai jurnalis internasional 
-                                        dan sedang menyelesaikan S2 Komunikasi di luar negeri."
-                                    </p>
-                                    <div className="text-xs text-gray-500 border-t pt-3">
-                                        <span className="font-medium">Pendidikan:</span> Ilmu Komunikasi UNPAD → Jurnalis
+                                    
+                                    <blockquote className="text-gray-600 italic text-lg mb-6 leading-relaxed">
+                                        "Kemampuan bahasa asing yang saya asah di SMAN 1 Baleendah membuka peluang beasiswa ke luar negeri dan karir di perusahaan multinasional."
+                                    </blockquote>
+                                    
+                                    <div className="border-t border-gray-100 pt-6">
+                                        <h3 className="font-bold text-gray-900 text-xl font-serif">Sarah Amalia</h3>
+                                        <p className="text-primary font-medium text-sm">Alumni 2019 • Hubungan Internasional UGM</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                    </div>
                 </div>
             </section>
 
-            {/* Career Prospects Section */}
-            <section className="py-12 bg-secondary sm:py-16 lg:py-20">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-                            <div className="text-center md:text-left mb-8">
-                                <h2 className={TYPOGRAPHY.sectionHeading}>
-                                    Prospek Karir dan <span className="text-primary">Perguruan Tinggi</span>
-                                </h2>
-                                <div className="h-1 w-32 bg-primary mt-2 mx-auto md:mx-0 mb-6"></div>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-600 max-w-2xl mx-auto md:mx-0`}>
-                                    Peluang karir yang luas dan akses ke perguruan tinggi terbaik di Indonesia
-                                </p>
-                            </div>
-                            
-                            <div className="grid lg:grid-cols-3 gap-6">
-                                <div className="bg-white p-6 rounded-lg border border-gray-200">
-                                    <div className="border-l-4 border-primary pl-4 mb-4">
-                                        <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-2`}>Sastra & Linguistik</h3>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm`}>
-                                            Profesi di bidang sastra dan bahasa
-                                        </p>
-                                    </div>
-                                    <ul className={`${TYPOGRAPHY.bodyText} text-gray-700 space-y-2 mb-4 text-sm`}>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Penulis & Sastrawan</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Editor & Penyunting</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Peneliti Bahasa</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Penerjemah</span>
-                                        </li>
-                                    </ul>
-                                    <div className="bg-gray-50 p-3 rounded-lg border-t">
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-700 font-medium text-xs mb-1`}>Perguruan Tinggi Tujuan:</p>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-xs`}>UI, UGM, UNPAD, UPI, UNDIP</p>
-                                    </div>
-                                </div>
+            {/* 5. CTA SECTION (Consistent with Landing Page) */}
+            <section className="py-20 bg-primary relative overflow-hidden">
+                {/* Decorative Circles */}
+                <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
 
-                                <div className="bg-white p-6 rounded-lg border border-gray-200">
-                                    <div className="border-l-4 border-primary pl-4 mb-4">
-                                        <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-2`}>Komunikasi & Media</h3>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm`}>
-                                            Profesi di bidang komunikasi dan media
-                                        </p>
-                                    </div>
-                                    <ul className={`${TYPOGRAPHY.bodyText} text-gray-700 space-y-2 mb-4 text-sm`}>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Jurnalis & Reporter</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Public Relations</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Content Creator</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Broadcaster</span>
-                                        </li>
-                                    </ul>
-                                    <div className="bg-gray-50 p-3 rounded-lg border-t">
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-700 font-medium text-xs mb-1`}>Perguruan Tinggi Tujuan:</p>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-xs`}>UI, UGM, UNPAD, UNDIP, UNAIR</p>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white p-6 rounded-lg border border-gray-200">
-                                    <div className="border-l-4 border-primary pl-4 mb-4">
-                                        <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-2`}>Pendidikan & Diplomasi</h3>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-sm`}>
-                                            Profesi di bidang pendidikan dan diplomasi
-                                        </p>
-                                    </div>
-                                    <ul className={`${TYPOGRAPHY.bodyText} text-gray-700 space-y-2 mb-4 text-sm`}>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Guru & Dosen</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Diplomat</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Pengembang Kurikulum</span>
-                                        </li>
-                                        <li className="flex items-start">
-                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                            <span>Cultural Attaché</span>
-                                        </li>
-                                    </ul>
-                                    <div className="bg-gray-50 p-3 rounded-lg border-t">
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-700 font-medium text-xs mb-1`}>Perguruan Tinggi Tujuan:</p>
-                                        <p className={`${TYPOGRAPHY.bodyText} text-gray-600 text-xs`}>UPI, UNJ, UM, UNNES, UI</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                </div>
-            </section>
-
-            {/* Call to Action Section */}
-            <section className="py-12 bg-primary sm:py-16 lg:py-20">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center">
-                        <h2 className={`${TYPOGRAPHY.sectionHeading} text-white mb-6`}>
-                            Bergabunglah dengan Program Bahasa
-                        </h2>
-                        <p className={`${TYPOGRAPHY.bodyText} text-blue-100 mb-8 text-lg max-w-2xl mx-auto`}>
-                            Wujudkan impian menjadi sastrawan, jurnalis, atau diplomat masa depan. 
-                            Dapatkan informasi lengkap tentang pendaftaran dan persyaratan.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Link 
-                                href="/informasi-spmb"
-                                className="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200"
-                            >
-                                Informasi SPMB
-                            </Link>
-                            <Link 
-                                href="/kontak"
-                                className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors duration-200"
-                            >
-                                Hubungi Kami
-                            </Link>
-                        </div>
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                        Siap Menjadi Bagian dari <br/> Keluarga Besar SMAN 1 Baleendah?
+                    </h2>
+                    <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
+                        Dapatkan informasi lengkap mengenai pendaftaran peserta didik baru, jadwal, dan persyaratan yang dibutuhkan.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Link 
+                            href="/informasi-spmb" 
+                            className="px-8 py-4 bg-accent-yellow text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-lg"
+                        >
+                            Daftar Sekarang
+                        </Link>
+                        <Link 
+                            href="/kontak" 
+                            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary transition-colors"
+                        >
+                            Hubungi Kami
+                        </Link>
                     </div>
                 </div>
             </section>
@@ -548,9 +314,6 @@ export default function ProgramBahasaPage() {
             <Footer
                 logoSman1={navigationData.logoSman1}
                 googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
-                profilLinks={navigationData.profilLinks}
-                akademikLinks={navigationData.akademikLinks}
-                programStudiLinks={navigationData.programStudiLinks}
                 socialMediaLinks={navigationData.socialMediaLinks}
             />
         </div>

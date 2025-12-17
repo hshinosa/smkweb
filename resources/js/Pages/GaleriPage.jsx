@@ -1,12 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, X, ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Search, ChevronLeft, ChevronRight, X, Play } from 'lucide-react';
 
 // Import Components
-import { AcademicLayout, AcademicHero } from '@/Components/Academic';
+import Navbar from '@/Components/Navbar';
+import Footer from '@/Components/Footer';
+import Modal from '@/Components/Modal';
 
 // Import utilities
 import { TYPOGRAPHY } from '@/Utils/typography';
+import { getNavigationData } from '@/Utils/navigationData';
 import { mockGalleryData, galleryCategories, filterGalleryByCategory } from '@/Utils/galleryData';
+
+const navigationData = getNavigationData();
 
 export default function GaleriPage() {
     const [selectedCategory, setSelectedCategory] = useState('Semua');
@@ -14,6 +20,10 @@ export default function GaleriPage() {
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 6;
 
     // Filter dan search gallery data
     const filteredData = useMemo(() => {
@@ -36,11 +46,38 @@ export default function GaleriPage() {
         return data;
     }, [selectedCategory, searchQuery]);
 
+    // Reset pagination when filter/search changes
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedCategory, searchQuery]);
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+    const paginatedData = filteredData.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
     const openLightbox = (item, index) => {
         setCurrentItem(item);
         setCurrentIndex(index);
         setLightboxOpen(true);
         document.body.style.overflow = 'hidden';
+    };
+
+    const closeLightbox = () => {
+        setLightboxOpen(false);
+        setCurrentItem(null);
+        document.body.style.overflow = 'unset';
+    };
+
+    const navigateLightbox = (direction) => {
+        const newIndex = direction === 'next' 
+            ? (currentIndex + 1) % filteredData.length
+            : (currentIndex - 1 + filteredData.length) % filteredData.length;
+        
+        setCurrentIndex(newIndex);
+        setCurrentItem(filteredData[newIndex]);
     };
 
     // Keyboard navigation for lightbox
@@ -65,234 +102,247 @@ export default function GaleriPage() {
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [lightboxOpen, filteredData.length]);
 
-    const closeLightbox = () => {
-        setLightboxOpen(false);
-        setCurrentItem(null);
-        document.body.style.overflow = 'unset';
-    };
-
-    const navigateLightbox = (direction) => {
-        const newIndex = direction === 'next' 
-            ? (currentIndex + 1) % filteredData.length
-            : (currentIndex - 1 + filteredData.length) % filteredData.length;
-        
-        setCurrentIndex(newIndex);
-        setCurrentItem(filteredData[newIndex]);
-    };
-
     const GalleryItem = ({ item, index }) => (
         <div 
-            className="group cursor-pointer bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+            className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer"
             onClick={() => openLightbox(item, index)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openLightbox(item, index);
-                }
-            }}
-            aria-label={`Lihat ${item.title}`}
         >
-            <div className="relative aspect-video overflow-hidden">
+            {/* Image Wrapper */}
+            <div className="relative aspect-[4/3] overflow-hidden">
                 <img 
                     src={item.thumbnail} 
                     alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
                     loading="lazy"
                 />
+                {/* Overlay Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                {/* Video Indicator */}
                 {item.type === 'video' && (
-                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                        <Play className="w-12 h-12 text-white" fill="white" />
+                    <div className="absolute inset-0 m-auto w-16 h-16 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-full border border-white/50 group-hover:bg-accent-yellow group-hover:border-accent-yellow transition-colors duration-300">
+                        <Play className="w-6 h-6 text-white group-hover:text-white ml-1" fill="currentColor" />
                     </div>
                 )}
-                <div className="absolute top-2 right-2">
-                    <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
+            </div>
+
+            {/* Content Body */}
+            <div className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-primary font-bold uppercase tracking-wider text-xs bg-blue-50 px-2 py-1 rounded-md">
                         {item.category}
                     </span>
+                    <span className={`${TYPOGRAPHY.metaText}`}>
+                        {new Date(item.date).toLocaleDateString('id-ID', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        })}
+                    </span>
                 </div>
-            </div>
-            <div className="p-4">
-                <h3 className={`${TYPOGRAPHY.cardTitle} line-clamp-2`}>
+                <h3 className={`${TYPOGRAPHY.cardTitle} mb-2 line-clamp-2 group-hover:text-primary transition-colors`}>
                     {item.title}
                 </h3>
-                <p className={`${TYPOGRAPHY.secondaryText} line-clamp-2 mb-2`}>
+                <p className="text-sm text-gray-600 line-clamp-2 font-sans">
                     {item.description}
-                </p>
-                <p className={`${TYPOGRAPHY.smallText}`}>
-                    {new Date(item.date).toLocaleDateString('id-ID', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    })}
                 </p>
             </div>
         </div>
     );
 
-    const Lightbox = () => {
-        if (!lightboxOpen || !currentItem) return null;
+    return (
+        <div className="bg-secondary min-h-screen font-sans text-gray-800 flex flex-col">
+            <Head title="Galeri - SMAN 1 Baleendah" description="Galeri kehidupan sekolah SMAN 1 Baleendah." />
 
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-2 sm:p-4">
-                <div className="relative max-w-4xl max-h-full w-full">
-                    {/* Close button */}
-                    <button
-                        onClick={closeLightbox}
-                        className="absolute top-4 right-4 z-10 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
+            <Navbar
+                logoSman1={navigationData.logoSman1}
+                profilLinks={navigationData.profilLinks}
+                akademikLinks={navigationData.akademikLinks}
+                programStudiLinks={navigationData.programStudiLinks}
+            />
 
-                    {/* Navigation buttons */}
-                    {filteredData.length > 1 && (
+            {/* HERO SECTION */}
+            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+                {/* Background Image */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        alt="Background Galeri Sekolah" 
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/60"></div>
+                </div>
+
+                <div className="relative z-10 container mx-auto px-4 text-center text-white">
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
+                        Galeri <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Kehidupan Sekolah</span>
+                    </h1>
+                    <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
+                        Momen berharga, prestasi, dan kreativitas siswa SMAN 1 Baleendah.
+                    </p>
+                </div>
+            </section>
+
+            {/* MAIN CONTENT */}
+            <section className="py-12 flex-grow">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    
+                    {/* FILTER & SEARCH */}
+                    <div className="flex flex-col lg:flex-row justify-between items-center mb-12 gap-6">
+                        {/* Categories */}
+                        <div className="flex flex-wrap justify-center gap-3">
+                            {galleryCategories.map((cat) => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+                                        selectedCategory === cat 
+                                        ? "bg-primary text-white shadow-md border-primary" 
+                                        : "bg-white text-gray-600 hover:text-primary border border-gray-200 hover:border-primary"
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Search */}
+                        <div className="relative w-full max-w-xs">
+                            <input
+                                type="text"
+                                placeholder="Cari foto atau video..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none shadow-sm text-sm"
+                            />
+                            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
+                        </div>
+                    </div>
+
+                    {/* GALLERY GRID */}
+                    {filteredData.length > 0 ? (
                         <>
-                            <button
-                                onClick={() => navigateLightbox('prev')}
-                                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors"
-                            >
-                                <ChevronLeft className="w-6 h-6" />
-                            </button>
-                            <button
-                                onClick={() => navigateLightbox('next')}
-                                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors"
-                            >
-                                <ChevronRight className="w-6 h-6" />
-                            </button>
-                        </>
-                    )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {paginatedData.map((item, index) => {
+                                    const globalIndex = (currentPage - 1) * itemsPerPage + index;
+                                    return (
+                                        <GalleryItem key={item.id} item={item} index={globalIndex} />
+                                    );
+                                })}
+                            </div>
 
-                    {/* Content */}
-                    <div className="bg-white rounded-lg overflow-hidden">
-                        <div className="relative">
+                            {/* Pagination Controls */}
+                            {totalPages > 1 && (
+                                <div className="flex justify-center items-center mt-12 gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        className="p-2 rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronLeft className="w-5 h-5 text-gray-600" />
+                                    </button>
+                                    
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                        <button
+                                            key={page}
+                                            onClick={() => setCurrentPage(page)}
+                                            className={`w-10 h-10 rounded-full font-bold text-sm transition-all duration-300 ${
+                                                currentPage === page
+                                                ? "bg-primary text-white shadow-md transform scale-110"
+                                                : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages}
+                                        className="p-2 rounded-full border border-gray-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <ChevronRight className="w-5 h-5 text-gray-600" />
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="text-center py-20">
+                            <div className="inline-block p-4 rounded-full bg-white mb-4 shadow-sm">
+                                <Search size={32} className="text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900">Tidak ada galeri ditemukan</h3>
+                            <p className="text-gray-500">Coba kata kunci lain atau ubah filter kategori.</p>
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            <Footer
+                logoSman1={navigationData.logoSman1}
+                googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
+                socialMediaLinks={navigationData.socialMediaLinks}
+            />
+
+            {/* LIGHTBOX */}
+            {lightboxOpen && currentItem && (
+                <div className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="relative w-full max-w-6xl max-h-[90vh] flex flex-col">
+                        
+                        {/* Close Button */}
+                        <button
+                            onClick={closeLightbox}
+                            className="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors"
+                        >
+                            <X className="w-8 h-8" />
+                        </button>
+
+                        {/* Content Container */}
+                        <div className="flex-grow flex items-center justify-center overflow-hidden rounded-lg bg-black">
                             {currentItem.type === 'photo' ? (
                                 <img 
                                     src={currentItem.url} 
                                     alt={currentItem.title}
-                                    className="w-full max-h-96 object-contain"
+                                    className="max-w-full max-h-[70vh] object-contain"
                                 />
                             ) : (
                                 <video 
                                     src={currentItem.url}
                                     controls
-                                    className="w-full max-h-96"
+                                    className="max-w-full max-h-[70vh] w-full"
                                     autoPlay
                                 >
                                     Your browser does not support the video tag.
                                 </video>
                             )}
                         </div>
-                        <div className="p-4 sm:p-6">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="bg-primary text-white text-sm px-3 py-1 rounded-full">
-                                    {currentItem.category}
-                                </span>
-                                <span className={`${TYPOGRAPHY.smallText}`}>
-                                    {new Date(currentItem.date).toLocaleDateString('id-ID', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}
-                                </span>
-                            </div>
-                            <h2 className={`${TYPOGRAPHY.subsectionHeading} mb-2`}>
-                                {currentItem.title}
-                            </h2>
-                            <p className={`${TYPOGRAPHY.bodyText} mb-4`}>
-                                {currentItem.description}
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                                {currentItem.tags.map((tag, index) => (
-                                    <span key={index} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
-                                        #{tag}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    };
 
-    return (
-        <AcademicLayout>
-            <AcademicHero
-                title="Galeri"
-                description="Dokumentasi visual kegiatan, prestasi, dan momen berharga di SMAN 1 Baleendah. Lihat koleksi foto dan video yang menampilkan kehidupan sekolah yang dinamis dan beragam."
-                pageTitle="Galeri - SMAN 1 Baleendah"
-                metaDescription="Galeri foto dan video kegiatan sekolah SMAN 1 Baleendah. Dokumentasi visual prestasi, kegiatan akademik, olahraga, seni budaya, dan momen bersejarah sekolah."
-            />
-
-                {/* Filter and Search Section */}
-                <section className="py-8 bg-gray-50">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                            {/* Search */}
-                            <div className="relative w-full lg:w-96">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                                <input
-                                    type="text"
-                                    placeholder="Cari foto atau video..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                />
-                            </div>
-
-                            {/* Category Filter */}
-                            <div className="flex flex-wrap gap-2">
-                                {galleryCategories.map((category) => (
-                                    <button
-                                        key={category}
-                                        onClick={() => setSelectedCategory(category)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                                            selectedCategory === category
-                                                ? 'bg-primary text-white'
-                                                : 'bg-white text-gray-700 hover:bg-gray-100'
-                                        }`}
-                                    >
-                                        {category}
-                                    </button>
-                                ))}
-                            </div>
+                        {/* Caption / Info */}
+                        <div className="mt-4 text-white text-center">
+                            <h2 className="text-xl font-bold font-serif mb-1">{currentItem.title}</h2>
+                            <p className="text-white/70 text-sm">{currentItem.description}</p>
                         </div>
 
-                        {/* Results count */}
-                        <div className="mt-4">
-                            <p className={`${TYPOGRAPHY.secondaryText}`}>
-                                Menampilkan {filteredData.length} dari {mockGalleryData.length} item
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Gallery Grid */}
-                <section className="py-12">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        {filteredData.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                                {filteredData.map((item, index) => (
-                                    <GalleryItem key={item.id} item={item} index={index} />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12">
-                                <div className="text-gray-400 mb-4">
-                                    <Filter className="w-16 h-16 mx-auto" />
-                                </div>
-                                <h3 className={`${TYPOGRAPHY.subsectionHeading} text-gray-600 mb-2`}>
-                                    Tidak ada hasil ditemukan
-                                </h3>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-500`}>
-                                    Coba ubah kata kunci pencarian atau pilih kategori lain
-                                </p>
-                            </div>
+                        {/* Navigation Arrows */}
+                        {filteredData.length > 1 && (
+                            <>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); navigateLightbox('prev'); }}
+                                    className="absolute left-0 top-1/2 -translate-y-1/2 -ml-12 p-2 text-white/50 hover:text-white transition-colors"
+                                >
+                                    <ChevronLeft className="w-10 h-10" />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); navigateLightbox('next'); }}
+                                    className="absolute right-0 top-1/2 -translate-y-1/2 -mr-12 p-2 text-white/50 hover:text-white transition-colors"
+                                >
+                                    <ChevronRight className="w-10 h-10" />
+                                </button>
+                            </>
                         )}
                     </div>
-                </section>
-
-            <Lightbox />
-        </AcademicLayout>
+                </div>
+            )}
+        </div>
     );
 }

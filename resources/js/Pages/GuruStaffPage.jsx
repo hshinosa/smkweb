@@ -1,82 +1,109 @@
-import React, { useState, useMemo } from 'react';
-import { Search, Filter, User, MapPin, Phone, Mail, Users, GraduationCap } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Head } from '@inertiajs/react';
+import { Search, MapPin, GraduationCap, X, Phone, Mail, User } from 'lucide-react';
 
 // Import Components
-import { AcademicLayout, AcademicHero } from '@/Components/Academic';
+import Navbar from '@/Components/Navbar';
+import Footer from '@/Components/Footer';
+import Modal from '@/Components/Modal';
 
 // Import utilities
 import { TYPOGRAPHY } from '@/Utils/typography';
-import { 
-    mockTeacherData, 
-    teacherDepartments, 
-    teacherStatuses, 
-    teacherTypes,
-    filterTeachersByDepartment,
-    filterTeachersByStatus,
-    filterTeachersByType,
-    searchTeachers,
-    getTeacherPhoto
-} from '@/Utils/teacherData';
+import { getNavigationData } from '@/Utils/navigationData';
+import { mockTeacherData, getTeacherPhoto } from '@/Utils/teacherData';
+
+const navigationData = getNavigationData();
+
+// --- CONSTANTS & CONFIGURATION ---
+const MGMP_GROUPS = [
+    { id: 'pimpinan', title: 'Pimpinan & Manajemen', departments: ['Manajemen', 'Kepala Sekolah', 'Wakil Kepala Sekolah'] },
+    { id: 'mipa', title: 'MIPA', departments: ['MIPA', 'Matematika', 'Fisika', 'Kimia', 'Biologi'] },
+    { id: 'ips', title: 'IPS', departments: ['IPS', 'Sejarah', 'Geografi', 'Ekonomi', 'Sosiologi'] },
+    { id: 'bahasa', title: 'Bahasa & Budaya', departments: ['Bahasa', 'Bahasa Indonesia', 'Bahasa Inggris', 'Bahasa Sunda', 'Bahasa Asing'] },
+    { id: 'vokasi', title: 'Vokasi & Teknologi', departments: ['Teknologi Informasi', 'TIK', 'Prakarya', 'Informatika'] },
+    { id: 'penjas', title: 'Penjasorkes & Seni', departments: ['Olahraga', 'Seni', 'Seni Budaya', 'Penjasorkes'] },
+    { id: 'agama', title: 'Pendidikan Agama & PKN', departments: ['Agama', 'Pendidikan Agama', 'PKN', 'PPKn'] },
+    { id: 'staff', title: 'Tata Usaha & Staff', departments: ['Administrasi', 'Tata Usaha', 'Bimbingan Konseling', 'BK'] },
+];
+
+// Helper to determine group for a teacher
+const getTeacherGroup = (teacher) => {
+    // Check if teacher has a specific department that matches our groups
+    for (const group of MGMP_GROUPS) {
+        if (group.departments.includes(teacher.department)) {
+            return group.id;
+        }
+        // Also check position if department is generic or missing
+        if (teacher.position) {
+             const pos = teacher.position.toLowerCase();
+             if (group.departments.some(d => pos.includes(d.toLowerCase()))) {
+                 return group.id;
+             }
+        }
+    }
+    // Default to Staff if type is staff, otherwise 'Lainnya' or put in Staff
+    if (teacher.type === 'staff') return 'staff';
+    return 'staff'; // Fallback
+};
 
 export default function GuruStaffPage() {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedDepartment, setSelectedDepartment] = useState('Semua');
-    const [selectedStatus, setSelectedStatus] = useState('Semua');
-    const [selectedType, setSelectedType] = useState('Semua');
+    const [activeGroup, setActiveGroup] = useState(MGMP_GROUPS[0].id);
     const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
-    // Filter dan search teacher data
-    const filteredData = useMemo(() => {
-        let data = mockTeacherData;
+    // Grouping Logic
+    const groupedTeachers = useMemo(() => {
+        const groups = {};
         
-        // Filter by department
-        if (selectedDepartment !== 'Semua') {
-            data = data.filter(teacher => teacher.department === selectedDepartment);
-        }
-        
-        // Filter by status
-        if (selectedStatus !== 'Semua') {
-            data = data.filter(teacher => teacher.status === selectedStatus);
-        }
-        
-        // Filter by type
-        if (selectedType !== 'Semua') {
-            data = data.filter(teacher => teacher.type === selectedType);
-        }
-        
-        // Search
-        if (searchQuery.trim()) {
-            data = data.filter(teacher => 
-                teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                teacher.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (teacher.subject && teacher.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                teacher.department.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-        }
-        
-        return data;
-    }, [selectedDepartment, selectedStatus, selectedType, searchQuery]);
+        // Initialize groups
+        MGMP_GROUPS.forEach(g => {
+            groups[g.id] = [];
+        });
 
+        // Distribute teachers
+        mockTeacherData.forEach(teacher => {
+            // Filter by search query first
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                const match = 
+                    teacher.name.toLowerCase().includes(query) ||
+                    teacher.position.toLowerCase().includes(query) ||
+                    (teacher.subject && teacher.subject.toLowerCase().includes(query));
+                if (!match) return;
+            }
+
+            const groupId = getTeacherGroup(teacher);
+            if (groups[groupId]) {
+                groups[groupId].push(teacher);
+            }
+        });
+
+        return groups;
+    }, [searchQuery]);
+
+    // Scroll Spy & Navigation Logic
+    const scrollToSection = (id) => {
+        const element = document.getElementById(id);
+        if (element) {
+            const offset = 100; // Adjust for sticky header
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+            
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+            });
+            setActiveGroup(id);
+        }
+    };
+
+    // Modal Handlers
     const openModal = (teacher) => {
         setSelectedTeacher(teacher);
         setModalOpen(true);
         document.body.style.overflow = 'hidden';
     };
-
-    // Keyboard navigation for modal
-    React.useEffect(() => {
-        if (!modalOpen) return;
-
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-        return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [modalOpen]);
 
     const closeModal = () => {
         setModalOpen(false);
@@ -84,63 +111,85 @@ export default function GuruStaffPage() {
         document.body.style.overflow = 'unset';
     };
 
+    // --- SUB-COMPONENTS ---
+
+    const SidebarNav = () => (
+        <div className="hidden lg:block w-1/4 pr-8">
+            <div className="sticky top-24 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <h3 className="font-bold text-gray-900 mb-4 px-4 text-lg font-serif">Kategori</h3>
+                <ul className="space-y-1">
+                    {MGMP_GROUPS.map((group) => (
+                        <li key={group.id}>
+                            <button
+                                onClick={() => scrollToSection(group.id)}
+                                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 border-l-4 ${
+                                    activeGroup === group.id
+                                    ? "border-accent-yellow bg-blue-50 text-primary font-bold"
+                                    : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                }`}
+                            >
+                                {group.title}
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    );
+
+    const MobileNav = () => (
+        <div className="lg:hidden sticky top-20 z-30 bg-white shadow-sm border-b border-gray-200 mb-8 -mx-4 px-4 py-3 overflow-x-auto flex gap-2 no-scrollbar">
+            {MGMP_GROUPS.map((group) => (
+                <button
+                    key={group.id}
+                    onClick={() => scrollToSection(group.id)}
+                    className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                        activeGroup === group.id
+                        ? "bg-primary text-white shadow-md"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                >
+                    {group.title}
+                </button>
+            ))}
+        </div>
+    );
+
     const TeacherCard = ({ teacher }) => (
         <div 
-            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer group focus:ring-2 focus:ring-primary focus:outline-none"
+            className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer border border-gray-100 flex flex-col h-full"
             onClick={() => openModal(teacher)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openModal(teacher);
-                }
-            }}
-            aria-label={`Lihat detail ${teacher.name}`}
         >
-            <div className="relative">
-                <div className="aspect-square overflow-hidden">
-                    <img 
-                        src={getTeacherPhoto(teacher)} 
-                        alt={teacher.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                    />
-                </div>
-                <div className="absolute top-2 right-2">
-                    <span className={`text-xs px-2 py-1 rounded-full text-white ${
-                        teacher.type === 'teacher' ? 'bg-primary' : 'bg-green-600'
-                    }`}>
-                        {teacher.type === 'teacher' ? 'Guru' : 'Staff'}
-                    </span>
-                </div>
-                <div className="absolute top-2 left-2">
-                    <span className={`text-xs px-2 py-1 rounded-full text-white ${
-                        teacher.status === 'PNS' ? 'bg-blue-600' : 
-                        teacher.status === 'Honorer' ? 'bg-orange-600' :
-                        teacher.status === 'GTT' ? 'bg-purple-600' : 'bg-pink-600'
-                    }`}>
-                        {teacher.status}
-                    </span>
-                </div>
+            <div className="relative aspect-square overflow-hidden bg-gray-100">
+                <img 
+                    src={getTeacherPhoto(teacher)} 
+                    alt={teacher.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </div>
-            <div className="p-4">
-                <h3 className={`${TYPOGRAPHY.cardTitle} line-clamp-2 mb-1`}>
+            
+            <div className="p-5 flex flex-col flex-grow">
+                <h3 className={`${TYPOGRAPHY.cardTitle} text-lg mb-1 group-hover:text-primary transition-colors line-clamp-2`}>
                     {teacher.name}
                 </h3>
-                <p className={`${TYPOGRAPHY.secondaryText} line-clamp-1 mb-2`}>
+                <p className="text-sm text-primary font-medium mb-3 line-clamp-1">
                     {teacher.position}
                 </p>
-                <div className="flex items-center text-gray-500 text-sm mb-1">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    <span className="line-clamp-1">{teacher.department}</span>
-                </div>
-                {teacher.subject && (
-                    <div className="flex items-center text-gray-500 text-sm">
-                        <GraduationCap className="w-4 h-4 mr-1" />
-                        <span className="line-clamp-1">{teacher.subject}</span>
+                
+                <div className="mt-auto space-y-2 pt-3 border-t border-gray-100">
+                    <div className="flex items-center text-gray-500 text-xs">
+                        <MapPin className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                        <span className="line-clamp-1">{teacher.department}</span>
                     </div>
-                )}
+                    {teacher.subject && (
+                        <div className="flex items-center text-gray-500 text-xs">
+                            <GraduationCap className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                            <span className="line-clamp-1">{teacher.subject}</span>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -149,112 +198,65 @@ export default function GuruStaffPage() {
         if (!modalOpen || !selectedTeacher) return null;
 
         return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
-                <div className="bg-white rounded-lg max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
-                    <div className="relative">
-                        {/* Header with photo */}
-                        <div className="bg-gradient-to-r from-primary to-primary-darker p-6 text-white">
-                            <button
-                                onClick={closeModal}
-                                className="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                            <div className="flex flex-col sm:flex-row items-center gap-6">
-                                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg flex-shrink-0">
-                                    <img 
-                                        src={getTeacherPhoto(selectedTeacher)} 
-                                        alt={selectedTeacher.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <div className="text-center sm:text-left">
-                                    <h2 className="text-2xl font-bold mb-2">{selectedTeacher.name}</h2>
-                                    <p className="text-lg opacity-90 mb-2">{selectedTeacher.position}</p>
-                                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                                        <span className={`text-xs px-3 py-1 rounded-full ${
-                                            selectedTeacher.type === 'teacher' ? 'bg-white text-primary' : 'bg-green-100 text-green-800'
-                                        }`}>
-                                            {selectedTeacher.type === 'teacher' ? 'Guru' : 'Staff'}
-                                        </span>
-                                        <span className={`text-xs px-3 py-1 rounded-full ${
-                                            selectedTeacher.status === 'PNS' ? 'bg-blue-100 text-blue-800' : 
-                                            selectedTeacher.status === 'Honorer' ? 'bg-orange-100 text-orange-800' :
-                                            selectedTeacher.status === 'GTT' ? 'bg-purple-100 text-purple-800' : 'bg-pink-100 text-pink-800'
-                                        }`}>
-                                            {selectedTeacher.status}
-                                        </span>
-                                    </div>
-                                </div>
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                    {/* Header */}
+                    <div className="relative h-32 bg-primary flex-shrink-0">
+                        <button 
+                            onClick={closeModal}
+                            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                        <div className="absolute -bottom-16 left-8 p-1 bg-white rounded-full shadow-lg">
+                            <img 
+                                src={getTeacherPhoto(selectedTeacher)} 
+                                alt={selectedTeacher.name}
+                                className="w-32 h-32 rounded-full object-cover border-4 border-white"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className="pt-20 px-8 pb-8 overflow-y-auto">
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900 font-serif mb-1">{selectedTeacher.name}</h2>
+                            <p className="text-primary font-medium text-lg">{selectedTeacher.position}</p>
+                            <div className="flex gap-2 mt-3">
+                                <span className="px-3 py-1 bg-blue-50 text-primary text-xs font-bold rounded-full">
+                                    {selectedTeacher.status}
+                                </span>
+                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">
+                                    {selectedTeacher.department}
+                                </span>
                             </div>
                         </div>
 
-                        {/* Content */}
-                        <div className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Personal Information */}
-                                <div>
-                                    <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-4 flex items-center`}>
-                                        <User className="w-5 h-5 mr-2 text-primary" />
-                                        Informasi Personal
-                                    </h3>
-                                    <div className="space-y-3">
-                                        <div>
-                                            <label className={`${TYPOGRAPHY.formLabel} block`}>NIP</label>
-                                            <p className={`${TYPOGRAPHY.bodyText} mb-0`}>
-                                                {selectedTeacher.nip || 'Tidak tersedia'}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <label className={`${TYPOGRAPHY.formLabel} block`}>Jenis Kelamin</label>
-                                            <p className={`${TYPOGRAPHY.bodyText} mb-0`}>
-                                                {selectedTeacher.gender}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <label className={`${TYPOGRAPHY.formLabel} block`}>Agama</label>
-                                            <p className={`${TYPOGRAPHY.bodyText} mb-0`}>
-                                                {selectedTeacher.religion}
-                                            </p>
-                                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2">Informasi Akademik</h3>
+                                <div className="space-y-3">
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider">NIP</p>
+                                        <p className="text-gray-800 font-medium">{selectedTeacher.nip || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider">Mata Pelajaran</p>
+                                        <p className="text-gray-800 font-medium">{selectedTeacher.subject || '-'}</p>
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Professional Information */}
-                                <div>
-                                    <h3 className={`${TYPOGRAPHY.subsectionHeading} mb-4 flex items-center`}>
-                                        <GraduationCap className="w-5 h-5 mr-2 text-primary" />
-                                        Informasi Profesional
-                                    </h3>
-                                    <div className="space-y-3">
-                                        <div>
-                                            <label className={`${TYPOGRAPHY.formLabel} block`}>Jabatan</label>
-                                            <p className={`${TYPOGRAPHY.bodyText} mb-0`}>
-                                                {selectedTeacher.position}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <label className={`${TYPOGRAPHY.formLabel} block`}>Departemen</label>
-                                            <p className={`${TYPOGRAPHY.bodyText} mb-0`}>
-                                                {selectedTeacher.department}
-                                            </p>
-                                        </div>
-                                        {selectedTeacher.subject && (
-                                            <div>
-                                                <label className={`${TYPOGRAPHY.formLabel} block`}>Mata Pelajaran</label>
-                                                <p className={`${TYPOGRAPHY.bodyText} mb-0`}>
-                                                    {selectedTeacher.subject}
-                                                </p>
-                                            </div>
-                                        )}
-                                        <div>
-                                            <label className={`${TYPOGRAPHY.formLabel} block`}>Status Kepegawaian</label>
-                                            <p className={`${TYPOGRAPHY.bodyText} mb-0`}>
-                                                {selectedTeacher.status}
-                                            </p>
-                                        </div>
+                            <div className="space-y-4">
+                                <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2">Kontak & Lainnya</h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center text-gray-600">
+                                        <Mail className="w-4 h-4 mr-3 text-gray-400" />
+                                        <span className="text-sm">{selectedTeacher.email || 'Email tidak tersedia'}</span>
+                                    </div>
+                                    <div className="flex items-center text-gray-600">
+                                        <User className="w-4 h-4 mr-3 text-gray-400" />
+                                        <span className="text-sm">{selectedTeacher.gender}</span>
                                     </div>
                                 </div>
                             </div>
@@ -266,99 +268,106 @@ export default function GuruStaffPage() {
     };
 
     return (
-        <AcademicLayout>
-            <AcademicHero
-                title="Guru & Staff"
-                description="Tenaga pendidik dan kependidikan yang berdedikasi untuk kemajuan pendidikan di SMAN 1 Baleendah. Temui para guru dan staff yang berkomitmen memberikan pendidikan berkualitas tinggi."
-                pageTitle="Guru & Staff - SMAN 1 Baleendah"
-                metaDescription="Profil lengkap guru dan staff SMAN 1 Baleendah. Tenaga pendidik profesional dan berpengalaman yang mendukung proses pembelajaran berkualitas tinggi."
+        <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
+            <Head title="Guru & Staff - SMAN 1 Baleendah" description="Profil Guru dan Staff Pengajar SMAN 1 Baleendah." />
+
+            <Navbar
+                logoSman1={navigationData.logoSman1}
+                profilLinks={navigationData.profilLinks}
+                akademikLinks={navigationData.akademikLinks}
+                programStudiLinks={navigationData.programStudiLinks}
             />
 
-                {/* Filter and Search Section */}
-                <section className="py-8 bg-gray-50">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                            {/* Search */}
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                                <input
-                                    type="text"
-                                    placeholder="Cari nama atau jabatan..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                />
-                            </div>
+            {/* HERO SECTION */}
+            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+                {/* Background Image */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        alt="Background Guru & Staff" 
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/60"></div>
+                </div>
 
-                            {/* Department Filter */}
-                            <select
-                                value={selectedDepartment}
-                                onChange={(e) => setSelectedDepartment(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                            >
-                                {teacherDepartments.map((dept) => (
-                                    <option key={dept} value={dept}>{dept}</option>
-                                ))}
-                            </select>
+                <div className="relative z-10 container mx-auto px-4 text-center text-white">
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
+                        Guru & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Staff</span>
+                    </h1>
+                    <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
+                        Tenaga pendidik dan kependidikan yang berdedikasi untuk kemajuan pendidikan di SMAN 1 Baleendah.
+                    </p>
+                </div>
+            </section>
 
-                            {/* Status Filter */}
-                            <select
-                                value={selectedStatus}
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                            >
-                                {teacherStatuses.map((status) => (
-                                    <option key={status} value={status}>{status}</option>
-                                ))}
-                            </select>
-
-                            {/* Type Filter */}
-                            <select
-                                value={selectedType}
-                                onChange={(e) => setSelectedType(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                            >
-                                <option value="Semua">Semua Tipe</option>
-                                <option value="teacher">Guru</option>
-                                <option value="staff">Staff</option>
-                            </select>
-                        </div>
-
-                        {/* Results count */}
-                        <div className="mt-4">
-                            <p className={`${TYPOGRAPHY.secondaryText}`}>
-                                Menampilkan {filteredData.length} dari {mockTeacherData.length} orang
-                            </p>
-                        </div>
+            {/* MAIN CONTENT */}
+            <section className="py-16 bg-gray-50 flex-grow">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    
+                    {/* Search Bar */}
+                    <div className="max-w-xl mx-auto mb-12 relative">
+                        <input
+                            type="text"
+                            placeholder="Cari nama guru, mata pelajaran, atau jabatan..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-12 pr-4 py-4 rounded-full border-0 shadow-md focus:ring-2 focus:ring-primary text-gray-700"
+                        />
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     </div>
-                </section>
 
-                {/* Teachers Grid */}
-                <section className="py-12">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        {filteredData.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                                {filteredData.map((teacher) => (
-                                    <TeacherCard key={teacher.id} teacher={teacher} />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12">
-                                <div className="text-gray-400 mb-4">
-                                    <Users className="w-16 h-16 mx-auto" />
+                    <div className="flex flex-col lg:flex-row">
+                        {/* Sidebar Navigation (Desktop) */}
+                        <SidebarNav />
+
+                        {/* Mobile Navigation (Tabs) */}
+                        <MobileNav />
+
+                        {/* Content Area */}
+                        <div className="w-full lg:w-3/4 space-y-16">
+                            {MGMP_GROUPS.map((group) => {
+                                const teachersInGroup = groupedTeachers[group.id];
+                                if (teachersInGroup.length === 0) return null;
+
+                                return (
+                                    <div key={group.id} id={group.id} className="scroll-mt-32">
+                                        <div className="mb-8 border-b border-gray-200 pb-4">
+                                            <h2 className={`${TYPOGRAPHY.sectionHeading} text-2xl md:text-3xl`}>
+                                                {group.title}
+                                            </h2>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {teachersInGroup.map((teacher) => (
+                                                <TeacherCard key={teacher.id} teacher={teacher} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Empty State */}
+                            {Object.values(groupedTeachers).every(g => g.length === 0) && (
+                                <div className="text-center py-20">
+                                    <div className="inline-block p-4 rounded-full bg-white mb-4 shadow-sm">
+                                        <Search size={32} className="text-gray-400" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900">Tidak ada data ditemukan</h3>
+                                    <p className="text-gray-500">Coba kata kunci lain.</p>
                                 </div>
-                                <h3 className={`${TYPOGRAPHY.subsectionHeading} text-gray-600 mb-2`}>
-                                    Tidak ada hasil ditemukan
-                                </h3>
-                                <p className={`${TYPOGRAPHY.bodyText} text-gray-500`}>
-                                    Coba ubah kata kunci pencarian atau pilih filter lain
-                                </p>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
-                </section>
+                </div>
+            </section>
+
+            <Footer
+                logoSman1={navigationData.logoSman1}
+                googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
+                socialMediaLinks={navigationData.socialMediaLinks}
+            />
 
             <TeacherDetailModal />
-        </AcademicLayout>
+        </div>
     );
 }

@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
-import { MapPin, Phone, Mail, Link2 } from 'lucide-react';
+import { MapPin, Phone, Mail, Link2, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
 import { getNavigationData } from '@/Utils/navigationData';
 
 export default function Footer({
     logoSman1,
     googleMapsEmbedUrl,
-    socialMediaLinks
+    socialMediaLinks,
+    showMap = true
 }) {
     // Get navigation data from centralized source
     const navigationData = getNavigationData();
@@ -15,36 +16,106 @@ export default function Footer({
     const finalLogoSman1 = logoSman1 || navigationData.logoSman1;
     const finalGoogleMapsEmbedUrl = googleMapsEmbedUrl || navigationData.googleMapsEmbedUrl;
     const finalSocialMediaLinks = socialMediaLinks || navigationData.socialMediaLinks;
-    const profilLinks = navigationData.profilLinks;
-    const akademikLinks = navigationData.akademikLinks;
-    const programStudiLinks = navigationData.programStudiLinks;
+
+    // Combined Quick Links
+    const quickLinks = [
+        { title: "Profil Sekolah", href: "/profil/sejarah" },
+        { title: "Info PPDB", href: "/informasi-spmb" },
+        { title: "Program Studi", href: "/akademik/program-studi/mipa" },
+        { title: "Berita & Pengumuman", href: "/berita-pengumuman" },
+        { title: "Kontak Kami", href: "/kontak" },
+    ];
 
     return (
-        <footer className="bg-gray-50 border-t border-gray-200">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <footer className="bg-primary text-white">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
                     
-                    {/* School Information & Map */}
-                    <div className="lg:col-span-1 lg:pr-4">
-                        <div className="flex items-center mb-4">
+                    {/* Column 1: Brand */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
                             <img 
                                 src={finalLogoSman1} 
                                 alt="Logo SMAN 1 Baleendah" 
-                                className="h-14 w-14 mr-4 flex-shrink-0" 
+                                className="h-16 w-16 bg-white rounded-full p-1" 
                             />
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">
-                                    SMA Negeri 1 Baleendah
+                                <h3 className="text-lg font-bold leading-tight">
+                                    SMAN 1 <br/> Baleendah
                                 </h3>
-                                <p className="text-sm text-primary font-medium italic">
-                                    Unggul dalam Prestasi, Berkarakter Mulia
-                                </p>
                             </div>
                         </div>
-                        
-                        {/* Map */}
+                        <p className="text-blue-100 text-sm leading-relaxed">
+                            Mewujudkan generasi unggul, berkarakter, dan berwawasan global. Sekolah pilihan terbaik untuk masa depan gemilang.
+                        </p>
+                        <div className="flex gap-3 pt-2">
+                             {finalSocialMediaLinks.map(social => {
+                                const IconComponent = social.icon;
+                                return (
+                                    <a
+                                        key={social.name}
+                                        href={social.href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-accent-yellow hover:text-gray-900 transition-all"
+                                        title={social.name}
+                                    >
+                                        {IconComponent ? <IconComponent size={18} /> : <Link2 size={18} />}
+                                    </a>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Column 2: Quick Links */}
+                    <div>
+                        <h4 className="text-lg font-bold text-accent-yellow mb-6">Tautan Cepat</h4>
+                        <ul className="space-y-3">
+                            {quickLinks.map(link => (
+                                <li key={link.title}>
+                                    <Link 
+                                        href={link.href} 
+                                        className="text-blue-100 hover:text-white hover:translate-x-1 transition-all inline-block"
+                                    >
+                                        {link.title}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Column 3: Contact */}
+                    <div>
+                        <h4 className="text-lg font-bold text-accent-yellow mb-6">Hubungi Kami</h4>
+                        <div className="space-y-4 text-blue-100">
+                            <div className="flex items-start gap-3">
+                                <MapPin className="w-5 h-5 text-accent-yellow mt-1 flex-shrink-0" />
+                                <p className="text-sm">
+                                    Jl. R.A.A. Wiranatakusumah No. 30,<br />
+                                    Baleendah, Bandung,<br />
+                                    Jawa Barat 40375
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Phone className="w-5 h-5 text-accent-yellow flex-shrink-0" />
+                                <a href="tel:+62225940268" className="text-sm hover:text-white">
+                                    (022) 5940268
+                                </a>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Mail className="w-5 h-5 text-accent-yellow flex-shrink-0" />
+                                <a href="mailto:info@sman1baleendah.sch.id" className="text-sm hover:text-white">
+                                    info@sman1baleendah.sch.id
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Column 4: Map */}
+                    {showMap && (
                         <div>
-                            <div className="aspect-[16/9] rounded-lg overflow-hidden shadow-md border border-gray-200">
+                            <h4 className="text-lg font-bold text-accent-yellow mb-6">Lokasi Sekolah</h4>
+                            <div className="w-full h-48 bg-gray-300 rounded-lg overflow-hidden shadow-lg border-2 border-white/20">
                                 <iframe
                                     src={finalGoogleMapsEmbedUrl}
                                     width="100%"
@@ -57,132 +128,12 @@ export default function Footer({
                                 ></iframe>
                             </div>
                         </div>
-                    </div>
+                    )}
 
-                    {/* Profil Links */}
-                    <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                            Profil Sekolah
-                        </h4>
-                        <ul className="space-y-2">
-                            {profilLinks.slice(0, 4).map(link => (
-                                <li key={`footer-profil-${link.title}`}>
-                                    <Link 
-                                        href={link.href} 
-                                        className="text-base text-gray-600 hover:text-primary transition-colors duration-200 block py-1"
-                                    >
-                                        {link.title}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Academic Links */}
-                    <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                            Akademik
-                        </h4>
-                        <ul className="space-y-2">
-                            {akademikLinks.map(link => (
-                                <li key={`footer-akad-${link.title}`}>
-                                    <Link 
-                                        href={link.href} 
-                                        className="text-base text-gray-600 hover:text-primary transition-colors duration-200 block py-1"
-                                    >
-                                        {link.title}
-                                    </Link>
-                                </li>
-                            ))}
-                            <li>
-                                <Link 
-                                    href="/berita-pengumuman" 
-                                    className="text-base text-gray-600 hover:text-primary transition-colors duration-200 block py-1"
-                                >
-                                    Berita & Pengumuman
-                                </Link>
-                            </li>
-                            <li>
-                                <Link 
-                                    href="/informasi-spmb" 
-                                    className="text-base text-gray-600 hover:text-primary transition-colors duration-200 block py-1"
-                                >
-                                    Informasi SPMB
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Contact Information */}
-                    <div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                            Kontak
-                        </h4>
-                        <div className="space-y-4">
-                            <div className="flex items-start">
-                                <MapPin className="w-6 h-6 text-primary mt-0.5 mr-3 flex-shrink-0" />
-                                <p className="text-base text-gray-600 leading-relaxed">
-                                    Jl. Raya Baleendah No. 456<br />
-                                    Baleendah, Kabupaten Bandung<br />
-                                    Jawa Barat 40375
-                                </p>
-                            </div>
-                            
-                            <div className="flex items-center">
-                                <Phone className="w-6 h-6 text-primary mr-3 flex-shrink-0" />
-                                <a 
-                                    href="tel:+622276543210" 
-                                    className="text-base text-gray-600 hover:text-primary transition-colors"
-                                >
-                                    (022) 7654321
-                                </a>
-                            </div>
-                            
-                            <div className="flex items-center">
-                                <Mail className="w-6 h-6 text-primary mr-3 flex-shrink-0" />
-                                <a 
-                                    href="mailto:info@sman1baleendah.sch.id" 
-                                    className="text-base text-gray-600 hover:text-primary transition-colors"
-                                >
-                                    info@sman1baleendah.sch.id
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* Social Media */}
-                        <div className="mt-6">
-                            <div className="flex flex-wrap gap-3">
-                                {finalSocialMediaLinks.map(social => {
-                                    const IconComponent = social.icon;
-                                    return (
-                                        <a
-                                            key={social.name}
-                                            href={social.href}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center justify-center w-12 h-12 bg-white border border-gray-200 rounded-lg hover:border-primary hover:bg-primary hover:text-white transition-all duration-200 group"
-                                            title={`Ikuti kami di ${social.name}`}
-                                        >
-                                            {IconComponent ? (
-                                                <IconComponent size={20} className="text-gray-600 group-hover:text-white" />
-                                            ) : (
-                                                <Link2 size={20} className="text-gray-600 group-hover:text-white" />
-                                            )}
-                                        </a>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                {/* Copyright */}
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                    <div className="text-center">
-                        <p className="text-base text-gray-500">
-                            © {new Date().getFullYear()} SMA Negeri 1 Baleendah. Hak Cipta Dilindungi Undang-Undang.
-                        </p>
-                    </div>
+                <div className="mt-12 pt-8 border-t border-blue-900 text-center text-blue-200 text-sm">
+                    <p>© {new Date().getFullYear()} SMAN 1 Baleendah. All Rights Reserved.</p>
                 </div>
             </div>
         </footer>

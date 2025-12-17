@@ -37,7 +37,7 @@ class LandingPageSetting extends Model
             'hero' => [
                 'title_line1' => 'Selamat Datang di',
                 'title_line2' => 'SMA Negeri 1 Baleendah',
-                'background_image_url' => '/images/hero-bg-sman1baleendah.jpg',
+                'background_image_url' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'about_lp' => [
                 'title' => 'Tentang SMAN 1 Baleendah',

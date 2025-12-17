@@ -80,3 +80,5 @@ phpunit-coverage.xml
 # Deployment logs
 deploy.log
 deploy-*.log
+
+docs

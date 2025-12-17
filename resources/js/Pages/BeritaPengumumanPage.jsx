@@ -1,81 +1,150 @@
 import React from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
+import { 
+    Search, 
+    Calendar, 
+    ChevronRight, 
+    TrendingUp, 
+    Bell, 
+    Newspaper, // Added for fallback
+    Tag,
+    ArrowRight
+} from 'lucide-react';
+
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
-// Import typography constants
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 
-// Import data navigasi
-// Get navigation data from centralized source
 const navigationData = getNavigationData();
 
+// --- MOCK DATA ---
 
-
-
-
-
-
-
-
-
-
-
-// Data berita dan pengumuman
-const beritaData = [
+const heroNews = [
     {
         id: 1,
-        judul: "Penerimaan Peserta Didik Baru (PPDB) Tahun Ajaran 2025/2026",
-        tanggal: "15 Januari 2025",
-        kategori: "Pengumuman",
-        ringkasan: "Informasi lengkap mengenai jadwal, persyaratan, dan tata cara pendaftaran PPDB SMAN 1 Baleendah tahun ajaran 2025/2026.",
-        gambar: "https://placehold.co/400x250/E2E8F0/A0AEC0?text=PPDB+2025"
+        title: "PPDB 2025 Resmi Dibuka: Panduan Lengkap Pendaftaran",
+        category: "Pengumuman",
+        date: "15 Jan 2025",
+        image: "/images/hero-bg-sman1-baleendah.jpeg", 
+        isMain: true
     },
     {
         id: 2,
-        judul: "Prestasi Gemilang Siswa SMAN 1 Baleendah di Olimpiade Sains Nasional",
-        tanggal: "10 Januari 2025",
-        kategori: "Berita",
-        ringkasan: "Siswa SMAN 1 Baleendah meraih medali emas dalam Olimpiade Sains Nasional bidang Fisika tingkat provinsi Jawa Barat.",
-        gambar: "https://placehold.co/400x250/E2E8F0/A0AEC0?text=OSN+2025"
+        title: "Tim Basket Putra Raih Juara 1 DBL West Java Series",
+        category: "Prestasi",
+        date: "14 Jan 2025",
+        image: "https://placehold.co/400x250/0D47A1/FFFFFF?text=Basket+Juara",
+        isMain: false
     },
     {
         id: 3,
-        judul: "Pelaksanaan Ujian Tengah Semester Genap 2024/2025",
-        tanggal: "8 Januari 2025",
-        kategori: "Pengumuman",
-        ringkasan: "Jadwal dan tata tertib pelaksanaan Ujian Tengah Semester Genap tahun ajaran 2024/2025 untuk seluruh siswa.",
-        gambar: "https://placehold.co/400x250/E2E8F0/A0AEC0?text=UTS+Genap"
-    },
-    {
-        id: 4,
-        judul: "Kegiatan Bakti Sosial SMAN 1 Baleendah di Desa Sekitar",
-        tanggal: "5 Januari 2025",
-        kategori: "Berita",
-        ringkasan: "Siswa dan guru SMAN 1 Baleendah mengadakan kegiatan bakti sosial berupa pembagian sembako kepada masyarakat kurang mampu.",
-        gambar: "https://placehold.co/400x250/E2E8F0/A0AEC0?text=Baksos"
-    },
-    {
-        id: 5,
-        judul: "Workshop Persiapan UTBK-SNBT 2025",
-        tanggal: "3 Januari 2025",
-        kategori: "Pengumuman",
-        ringkasan: "Pelaksanaan workshop intensif persiapan UTBK-SNBT 2025 untuk siswa kelas XII dengan narasumber berpengalaman.",
-        gambar: "https://placehold.co/400x250/E2E8F0/A0AEC0?text=UTBK+2025"
-    },
-    {
-        id: 6,
-        judul: "Festival Seni dan Budaya SMAN 1 Baleendah 2025",
-        tanggal: "28 Desember 2024",
-        kategori: "Berita",
-        ringkasan: "Penyelenggaraan festival seni dan budaya tahunan yang menampilkan berbagai kreativitas siswa dalam bidang seni dan budaya.",
-        gambar: "https://placehold.co/400x250/E2E8F0/A0AEC0?text=Festival+Seni"
+        title: "Kunjungan Edukasi ke Museum Geologi Bandung",
+        category: "Kegiatan",
+        date: "12 Jan 2025",
+        image: "https://placehold.co/400x250/0D47A1/FFFFFF?text=Museum+Geologi",
+        isMain: false
     }
 ];
 
+const latestNews = [
+    {
+        id: 4,
+        title: "Siswa SMAN 1 Baleendah Raih Medali Emas OSN Fisika",
+        excerpt: "Delegasi sekolah berhasil mengharumkan nama Jawa Barat di kancah nasional dengan perolehan medali emas pada bidang studi Fisika.",
+        category: "Prestasi",
+        date: "10 Jan 2025",
+        image: "https://placehold.co/300x200/0D47A1/FFFFFF?text=OSN+Emas"
+    },
+    {
+        id: 5,
+        title: "Jadwal Ujian Tengah Semester Genap 2024/2025",
+        excerpt: "Berikut adalah jadwal lengkap pelaksanaan UTS Genap untuk seluruh jenjang kelas X, XI, dan XII beserta tata tertib ujian.",
+        category: "Akademik",
+        date: "08 Jan 2025",
+        image: null // Test placeholder pattern
+    },
+    {
+        id: 6,
+        title: "Workshop 'Public Speaking' bersama Alumni Sukses",
+        excerpt: "Meningkatkan kepercayaan diri siswa dalam berkomunikasi di depan umum melalui pelatihan intensif bersama praktisi.",
+        category: "Kegiatan",
+        date: "05 Jan 2025",
+        image: "https://placehold.co/300x200/0D47A1/FFFFFF?text=Public+Speaking"
+    },
+    {
+        id: 7,
+        title: "Penyuluhan Kesehatan Remaja dari Puskesmas Baleendah",
+        excerpt: "Pentingnya menjaga kesehatan fisik dan mental bagi remaja di era digital menjadi topik utama dalam penyuluhan kali ini.",
+        category: "Kegiatan",
+        date: "03 Jan 2025",
+        image: "https://placehold.co/300x200/0D47A1/FFFFFF?text=Kesehatan"
+    }
+];
+
+const popularNews = [
+    { id: 1, title: "Syarat & Ketentuan PPDB Jalur Zonasi 2025" },
+    { id: 2, title: "Daftar Ekstrakurikuler Paling Diminati Tahun Ini" },
+    { id: 3, title: "Profil Lulusan SMAN 1 Baleendah di PTN Favorit" },
+    { id: 4, title: "Kalender Akademik Semester Genap 2024/2025" },
+    { id: 5, title: "Prestasi Internasional Tim Robotik Sekolah" }
+];
+
+const announcements = [
+    "Rapat Orang Tua Siswa Kelas XII (20 Jan 2025)",
+    "Libur Nasional Tahun Baru Imlek (29 Jan 2025)",
+    "Batas Akhir Pengumpulan Tugas Proyek (25 Jan 2025)",
+    "Pendaftaran Ulang Semester Genap (1-5 Feb 2025)"
+];
+
+const categories = ["Semua", "Berita", "Pengumuman", "Prestasi", "Akademik", "Kegiatan", "Alumni"];
+
+// --- COMPONENTS ---
+
+const NewsItem = ({ news }) => (
+    <div className="flex flex-col sm:flex-row gap-6 group border-b border-gray-100 last:border-0 pb-6 last:pb-0">
+        {/* Image / Placeholder - Fixed Width 30% */}
+        <div className="w-full sm:w-[30%] h-48 sm:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
+            {news.image ? (
+                <img 
+                    src={news.image} 
+                    alt={news.title} 
+                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                />
+            ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4 text-center">
+                    <Newspaper className="w-12 h-12 text-gray-300" />
+                </div>
+            )}
+            <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold text-primary shadow-sm">
+                {news.category}
+            </div>
+        </div>
+
+        {/* Content - Width 70% */}
+        <div className="flex-1 flex flex-col justify-center">
+            <div className="flex items-center text-xs text-gray-500 mb-2">
+                <Calendar className="w-3 h-3 mr-1" />
+                {news.date}
+            </div>
+            <Link href="/berita/detail" className="block">
+                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-primary transition-colors line-clamp-2 font-serif">
+                    {news.title}
+                </h3>
+            </Link>
+            <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                {news.excerpt}
+            </p>
+            <Link href="/berita/detail" className="text-primary text-sm font-semibold hover:underline inline-flex items-center">
+                Baca Selengkapnya <ArrowRight className="w-3 h-3 ml-1" />
+            </Link>
+        </div>
+    </div>
+);
+
 export default function BeritaPengumumanPage() {
     return (
-        <div className="bg-secondary text-gray-800 font-sans">
+        <div className="bg-secondary font-sans text-gray-800">
             <Head title="Berita & Pengumuman - SMAN 1 Baleendah" />
             
             <Navbar
@@ -85,142 +154,196 @@ export default function BeritaPengumumanPage() {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            {/* Header Section */}
-            <section className="pt-24 pb-12 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center md:text-left">
-                        <h1 className={TYPOGRAPHY.pageTitle}>
-                            Berita & Pengumuman
-                        </h1>
-                        <div className="h-1 w-32 bg-primary mt-2 mx-auto md:mx-0 mb-4"></div>
-                        <p className={TYPOGRAPHY.bodyText + " text-gray-600 max-w-3xl mx-auto md:mx-0"}>
-                            Ikuti perkembangan terkini dan informasi penting dari SMA Negeri 1 Baleendah. 
-                            Temukan berita prestasi siswa, kegiatan sekolah, dan pengumuman resmi yang perlu Anda ketahui.
-                        </p>
-                    </div>
+            {/* HERO SECTION (Immersive) */}
+            <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden pt-20">
+                {/* Background Image */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        alt="Berita SMAN 1 Baleendah" 
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40"></div>
+                </div>
+
+                <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-6 max-w-4xl mx-auto`}>
+                        Berita & <br/>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                            Pengumuman
+                        </span>
+                    </h1>
+                    
+                    <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
+                        Dapatkan informasi terkini seputar prestasi siswa, agenda sekolah, dan berita terbaru dari SMAN 1 Baleendah.
+                    </p>
                 </div>
             </section>
 
-            {/* Content Section */}
-            <section className="py-12 bg-secondary sm:py-16 lg:py-20">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Filter Kategori */}
-                    <div className="text-center mb-10 md:mb-12">
-                        <div className="flex flex-wrap gap-4 justify-center">
-                            <button className={`px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-darker transition-colors ${TYPOGRAPHY.buttonText}`}>
-                                Semua
-                            </button>
-                            <button className={`px-6 py-2 bg-white text-gray-700 rounded-full hover:bg-gray-100 transition-colors border border-gray-200 ${TYPOGRAPHY.buttonText}`}>
-                                Berita
-                            </button>
-                            <button className={`px-6 py-2 bg-white text-gray-700 rounded-full hover:bg-gray-100 transition-colors border border-gray-200 ${TYPOGRAPHY.buttonText}`}>
-                                Pengumuman
-                            </button>
+            <main className="py-12 relative z-0">
+                {/* PART 1: HERO SECTION (Strict Grid) */}
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                    {/* Hero Grid: 3 Columns */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Main Headline (Left - 2 Cols) */}
+                        <div className="lg:col-span-2 relative rounded-2xl overflow-hidden group shadow-lg h-[500px]">
+                            <img 
+                                src={heroNews[0].image} 
+                                alt={heroNews[0].title} 
+                                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                            />
+                            {/* Overlay Fix */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
+                            
+                            {/* Positioning Fix: Flexbox */}
+                            <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+                                <span className="inline-block self-start px-3 py-1 bg-accent-yellow text-gray-900 text-xs font-bold rounded-full mb-4">
+                                    {heroNews[0].category}
+                                </span>
+                                <Link href="/berita/detail">
+                                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white font-serif leading-tight mb-3 hover:underline decoration-accent-yellow decoration-2 underline-offset-4">
+                                        {heroNews[0].title}
+                                    </h2>
+                                </Link>
+                                <div className="flex items-center text-gray-300 text-sm">
+                                    <Calendar className="w-4 h-4 mr-2" />
+                                    {heroNews[0].date}
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Grid Berita */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                        {beritaData.map((berita) => (
-                            <div key={berita.id} className="group bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out overflow-hidden transform hover:-translate-y-1">
-                                <div className="w-full h-48 bg-gray-200 overflow-hidden">
-                                    <img
-                                        src={berita.gambar}
-                                        alt={berita.judul}
-                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                        {/* Sub-Headlines (Right - 1 Col) */}
+                        <div className="flex flex-col gap-6">
+                            {heroNews.slice(1).map((news) => (
+                                <div key={news.id} className="relative flex-1 rounded-2xl overflow-hidden group shadow-md h-[238px]">
+                                    <img 
+                                        src={news.image} 
+                                        alt={news.title} 
+                                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                     />
-                                </div>
-                                <div className="p-6">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                            berita.kategori === 'Berita' 
-                                                ? 'bg-primary text-white' 
-                                                : 'bg-gray-100 text-gray-800'
-                                        }`}>
-                                            {berita.kategori}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
+                                    <div className="absolute inset-0 flex flex-col justify-end p-6">
+                                        <span className="inline-block self-start px-2 py-0.5 bg-white/20 backdrop-blur-md text-white text-xs font-bold rounded mb-2 border border-white/30">
+                                            {news.category}
                                         </span>
-                                        <span className={TYPOGRAPHY.secondaryText + " text-gray-700"}>{berita.tanggal}</span>
+                                        <Link href="/berita/detail">
+                                            <h3 className="text-lg font-bold text-white font-serif leading-snug hover:text-accent-yellow transition-colors">
+                                                {news.title}
+                                            </h3>
+                                        </Link>
                                     </div>
-                                    <h3 className={TYPOGRAPHY.subsectionHeading + " group-hover:text-primary transition-colors mb-3 line-clamp-2"}>
-                                        {berita.judul}
-                                    </h3>
-                                    <p className={TYPOGRAPHY.bodyText + " text-gray-800 line-clamp-3"}>
-                                        {berita.ringkasan}
-                                    </p>
-                                    <button className={`text-primary hover:text-primary-darker transition-colors ${TYPOGRAPHY.buttonText}`}>
-                                        Baca Selengkapnya →
-                                    </button>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Pagination */}
-                    <div className="mt-12 flex justify-center">
-                        <div className="flex space-x-2">
-                            <button className={`px-4 py-2 bg-white text-gray-600 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 ${TYPOGRAPHY.buttonText}`}>
-                                ← Sebelumnya
-                            </button>
-                            <button className={`px-4 py-2 bg-primary text-white rounded-lg ${TYPOGRAPHY.buttonText}`}>
-                                1
-                            </button>
-                            <button className={`px-4 py-2 bg-white text-gray-600 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 ${TYPOGRAPHY.buttonText}`}>
-                                2
-                            </button>
-                            <button className={`px-4 py-2 bg-white text-gray-600 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 ${TYPOGRAPHY.buttonText}`}>
-                                3
-                            </button>
-                            <button className={`px-4 py-2 bg-white text-gray-600 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 ${TYPOGRAPHY.buttonText}`}>
-                                Selanjutnya →
-                            </button>
+                            ))}
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* Pengumuman Penting Section */}
-            <section className="py-12 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="bg-primary text-white p-8 rounded-xl shadow-lg">
-                            <h3 className={TYPOGRAPHY.subsectionHeading + " text-white mb-6 flex items-center"}>
-                                📢 Pengumuman Penting
-                            </h3>
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <div className="space-y-3">
-                                    <div className="flex items-start">
-                                        <div className="w-2 h-2 bg-white rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                        <span className={TYPOGRAPHY.bodyText}>Pendaftaran PPDB 2025/2026 dibuka mulai 1 Februari 2025</span>
-                                    </div>
-                                    <div className="flex items-start">
-                                        <div className="w-2 h-2 bg-white rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                        <span className={TYPOGRAPHY.bodyText}>Ujian Tengah Semester Genap dimulai 10 Februari 2025</span>
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <div className="flex items-start">
-                                        <div className="w-2 h-2 bg-white rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                        <span className={TYPOGRAPHY.bodyText}>Workshop UTBK-SNBT tersedia untuk siswa kelas XII</span>
-                                    </div>
-                                    <div className="flex items-start">
-                                        <div className="w-2 h-2 bg-white rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                        <span className={TYPOGRAPHY.bodyText}>Kegiatan ekstrakurikuler dimulai kembali setelah libur semester</span>
-                                    </div>
+                {/* PART 2: MAIN CONTENT AREA (Strict Grid) */}
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                        
+                        {/* Left Column: Latest News (8 Cols) */}
+                        <div className="lg:col-span-8">
+                            <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-4">
+                                <h2 className="text-2xl font-bold text-gray-900 font-serif">Berita Terbaru</h2>
+                                <div className="flex gap-2">
+                                    <select className="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2">
+                                        {categories.map((cat, idx) => (
+                                            <option key={idx} value={cat}>{cat}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
+
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                                <div className="space-y-6">
+                                    {latestNews.map((news) => (
+                                        <NewsItem key={news.id} news={news} />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Pagination */}
+                            <div className="mt-12 flex justify-center">
+                                <button className="px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-full hover:bg-gray-50 hover:shadow-md transition-all duration-300 flex items-center gap-2">
+                                    Muat Lebih Banyak <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Sidebar (4 Cols) */}
+                        <div className="lg:col-span-4 flex flex-col gap-10">
+                            
+                            {/* Search Widget */}
+                            <div className="relative">
+                                <input 
+                                    type="text" 
+                                    placeholder="Cari berita..." 
+                                    className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm outline-none transition-all"
+                                />
+                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            </div>
+
+                            {/* Pengumuman Penting Widget (Fixed Style) */}
+                            <div className="bg-yellow-50 border-l-4 border-accent-yellow p-6 rounded-r-xl relative overflow-hidden">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <Bell className="w-5 h-5 text-orange-600" />
+                                    Pengumuman Penting
+                                </h3>
+                                <ul className="space-y-3">
+                                    {announcements.map((item, idx) => (
+                                        <li key={idx} className="flex items-start gap-3 text-sm text-gray-800 border-b border-accent-yellow/20 last:border-0 pb-2 last:pb-0">
+                                            <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-1.5 flex-shrink-0"></span>
+                                            <span className="leading-relaxed">{item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {/* Terpopuler Widget */}
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 border-b border-gray-100 pb-4">
+                                    <TrendingUp className="w-5 h-5 text-primary" />
+                                    Terpopuler
+                                </h3>
+                                <div className="space-y-5">
+                                    {popularNews.map((news, idx) => (
+                                        <Link key={news.id} href="/berita/detail" className="flex gap-4 group">
+                                            <span className="text-3xl font-bold text-gray-300 font-serif group-hover:text-primary transition-colors">
+                                                0{idx + 1}
+                                            </span>
+                                            <div>
+                                                <h4 className="text-gray-800 font-medium text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                                                    {news.title}
+                                                </h4>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Categories Widget */}
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <Tag className="w-5 h-5 text-primary" />
+                                    Kategori
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {categories.map((cat, idx) => (
+                                        <Link key={idx} href="#" className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full hover:bg-primary hover:text-white transition-colors">
+                                            {cat}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            </main>
 
-            <Footer
-                logoSman1={navigationData.logoSman1}
-                googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
-                profilLinks={navigationData.profilLinks}
-                akademikLinks={navigationData.akademikLinks}
-                programStudiLinks={navigationData.programStudiLinks}
-                socialMediaLinks={navigationData.socialMediaLinks}
-            />
+            <Footer />
         </div>
     );
 }

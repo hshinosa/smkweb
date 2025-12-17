@@ -17,6 +17,10 @@ export default {
     			sans: [
     				'Plus Jakarta Sans',
                     ...defaultTheme.fontFamily.sans
+                ],
+                serif: [
+                    'Merriweather',
+                    ...defaultTheme.fontFamily.serif
                 ]
     		},
 			boxShadow: {
@@ -38,9 +42,10 @@ export default {
     				DEFAULT: 'hsl(var(--popover))',
     				foreground: 'hsl(var(--popover-foreground))'
     			},
-    			'primary': '#155DA0',         // PrimaryColor
-                'primary-darker': '#114B8C',  // Varian lebih gelap untuk hover
-                'secondary': '#FBFCFF',       // SecondaryColor
+    			'primary': '#0D47A1',         // Deep Blue (Brand)
+                'primary-darker': '#0a367a',  // Darker shade for hover
+                'secondary': '#F5F7FA',       // Light Grey (Backgrounds)
+                'accent-yellow': '#FFC107',   // Golden Yellow (CTA/Highlights)
     			muted: {
     				DEFAULT: 'hsl(var(--muted))',
     				foreground: 'hsl(var(--muted-foreground))'
@@ -63,7 +68,23 @@ export default {
     				'4': 'hsl(var(--chart-4))',
     				'5': 'hsl(var(--chart-5))'
     			}
-    		}
+    		},
+            keyframes: {
+                float: {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-15px)' },
+                },
+                fadeInUp: {
+                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                }
+            },
+            animation: {
+                'float-slow': 'float 6s ease-in-out infinite',
+                'float-medium': 'float 5s ease-in-out infinite',
+                'float-fast': 'float 4s ease-in-out infinite',
+                'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+            }
     	}
     },
 

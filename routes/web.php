@@ -24,7 +24,7 @@ Route::get('/', function () {
     $defaultHero = [
         'title_line1' => 'Selamat Datang di',
         'title_line2' => 'SMA Negeri 1 Baleendah',
-        'background_image_url' => '/images/hero-bg-sman1baleendah.jpg',
+        'background_image_url' => '/images/hero-bg-sman1baleendah.jpeg',
     ];
     $defaultAbout = [
         'title' => 'Tentang Kami (Default)',
@@ -59,6 +59,10 @@ Route::get('/', function () {
 Route::get('/informasi-spmb', function () {
     return Inertia::render('InformasiSpmbPage');
 })->name('informasi.spmb'); // Opsional: beri nama rute
+
+Route::get('/alumni', function () {
+    return Inertia::render('AlumniPage');
+})->name('alumni');
 
 Route::get('/profil-sekolah', function () {
     return Inertia::render('ProfilSekolahPage');
@@ -104,6 +108,10 @@ Route::get('/akademik/program-studi/bahasa', function () {
 Route::get('/berita-pengumuman', function () {
     return Inertia::render('BeritaPengumumanPage');
 })->name('berita.pengumuman');
+
+Route::get('/berita/detail', function () {
+    return Inertia::render('BeritaDetailPage');
+})->name('berita.detail');
 
 Route::get('/kontak', function () {
     return Inertia::render('KontakPage');

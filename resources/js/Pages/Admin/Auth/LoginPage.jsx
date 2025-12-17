@@ -8,7 +8,7 @@ import { GraduationCap } from 'lucide-react';   // Ikon untuk tombol
 
 // Path ke aset gambar
 const logoSman1Baleendah = '/images/logo-sman1baleendah.png'; // Logo SMAN 1 Baleendah
-const loginBgImage = '/images/hero-bg-sman1baleendah.jpg'; // Background image SMAN 1 Baleendah
+const loginBgImage = '/images/hero-bg-sman1baleendah.jpeg'; // Background image SMAN 1 Baleendah
 
 export default function LoginPage() {
     const { data, setData, post, processing, errors, reset } = useForm({

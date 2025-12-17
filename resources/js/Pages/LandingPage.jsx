@@ -117,7 +117,7 @@ export default function LandingPage({
                         <div className="relative mx-auto max-w-lg md:max-w-none w-full h-[500px] lg:h-[600px] flex justify-center items-end">
                             {/* Main Image */}
                             <img 
-                                src="/images/anak-sma.png" 
+                                src="/images/anak-sma.png?v=2" 
                                 alt="Siswa Berprestasi SMAN 1 Baleendah" 
                                 className="relative z-10 h-full w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                             />

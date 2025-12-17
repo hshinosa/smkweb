@@ -12,13 +12,13 @@ FROM php:8.2-fpm-alpine
 # Install system dependencies
 RUN apk add --no-cache \
     git curl libpng-dev libxml2-dev zip unzip \
-    mysql-client nginx supervisor \
+    postgresql-client postgresql-dev nginx supervisor \
     oniguruma-dev freetype-dev libjpeg-turbo-dev \
     autoconf g++ make rsync
 
 # Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd \
+    && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del autoconf g++ make

@@ -14,7 +14,15 @@ class AcademicCalendarContent extends Model
         'calendar_image_url',
         'semester',
         'academic_year_start',
+        'is_active',
         'sort_order',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'semester' => 'integer',
+        'academic_year_start' => 'integer',
+        'sort_order' => 'integer',
     ];
 
     public static function getDefaults(): array

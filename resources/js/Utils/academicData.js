@@ -388,33 +388,33 @@ export const extracurricularData = {
 };
 
 // Common page metadata for SEO consistency
-export const pageMetadata = {
+export const getPageMetadata = (siteName = 'SMAN 1 Baleendah') => ({
     kurikulum: {
-        title: "Kurikulum - SMAN 1 Baleendah",
-        description: "Kurikulum Merdeka SMA Negeri 1 Baleendah dengan program MIPA, IPS, dan Bahasa. Sistem pembelajaran modern dan komprehensif.",
-        keywords: "kurikulum, SMAN 1 Baleendah, kurikulum merdeka, MIPA, IPS, Bahasa"
+        title: `Kurikulum - ${siteName}`,
+        description: `Kurikulum Merdeka ${siteName} dengan program MIPA, IPS, dan Bahasa. Sistem pembelajaran modern dan komprehensif.`,
+        keywords: `kurikulum, ${siteName}, kurikulum merdeka, MIPA, IPS, Bahasa`
     },
     ekstrakurikuler: {
-        title: "Ekstrakurikuler - SMAN 1 Baleendah",
-        description: "Kegiatan ekstrakurikuler SMA Negeri 1 Baleendah meliputi olahraga, seni, akademik, keagamaan, dan sosial untuk pengembangan bakat siswa.",
-        keywords: "ekstrakurikuler, SMAN 1 Baleendah, kegiatan siswa, olahraga, seni, akademik"
+        title: `Ekstrakurikuler - ${siteName}`,
+        description: `Kegiatan ekstrakurikuler ${siteName} meliputi olahraga, seni, akademik, keagamaan, dan sosial untuk pengembangan bakat siswa.`,
+        keywords: `ekstrakurikuler, ${siteName}, kegiatan siswa, olahraga, seni, akademik`
     },
     mipa: {
-        title: "Program MIPA - SMAN 1 Baleendah",
-        description: "Program Matematika dan Ilmu Pengetahuan Alam SMAN 1 Baleendah dengan laboratorium lengkap dan persiapan PTN terbaik.",
-        keywords: "program MIPA, matematika, fisika, kimia, biologi, SMAN 1 Baleendah"
+        title: `Program MIPA - ${siteName}`,
+        description: `Program Matematika dan Ilmu Pengetahuan Alam ${siteName} dengan laboratorium lengkap dan persiapan PTN terbaik.`,
+        keywords: `program MIPA, matematika, fisika, kimia, biologi, ${siteName}`
     },
     ips: {
-        title: "Program IPS - SMAN 1 Baleendah",
-        description: "Program Ilmu Pengetahuan Sosial SMAN 1 Baleendah dengan fokus sejarah, geografi, ekonomi, dan sosiologi.",
-        keywords: "program IPS, sejarah, geografi, ekonomi, sosiologi, SMAN 1 Baleendah"
+        title: `Program IPS - ${siteName}`,
+        description: `Program Ilmu Pengetahuan Sosial ${siteName} dengan fokus sejarah, geografi, ekonomi, dan sosiologi.`,
+        keywords: `program IPS, sejarah, geografi, ekonomi, sosiologi, ${siteName}`
     },
     bahasa: {
-        title: "Program Bahasa - SMAN 1 Baleendah",
-        description: "Program Ilmu Bahasa dan Budaya SMAN 1 Baleendah dengan pembelajaran multibahasa dan studi budaya.",
-        keywords: "program bahasa, bahasa Indonesia, bahasa Inggris, sastra, SMAN 1 Baleendah"
+        title: `Program Bahasa - ${siteName}`,
+        description: `Program Ilmu Bahasa dan Budaya ${siteName} dengan pembelajaran multibahasa dan studi budaya.`,
+        keywords: `program bahasa, bahasa Indonesia, bahasa Inggris, sastra, ${siteName}`
     }
-};
+});
 
 // Helper functions for data access and manipulation
 export const getExtracurricularByCategory = (category) => {

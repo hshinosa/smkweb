@@ -1,8 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Bold, Italic, Pilcrow, AlignLeft, AlignCenter, AlignRight, List, ListOrdered } from 'lucide-react';
+import { Bold, Italic, Pilcrow, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Undo, Redo } from 'lucide-react';
 
 // Helper untuk membersihkan HTML dari tag yang tidak diinginkan sebelum simpan
 const sanitizeHtml = (htmlString) => {
+    if (!htmlString) return '';
     const doc = new DOMParser().parseFromString(htmlString, 'text/html');
     // Hapus atribut style dan class yang mungkin disisipkan browser
     doc.body.querySelectorAll('*').forEach(el => {
@@ -16,73 +17,105 @@ const sanitizeHtml = (htmlString) => {
 
 const MiniTextEditor = ({ initialValue = "", onChange, label, error }) => {
     const editorRef = useRef(null);
-    const [content, setContent] = useState(initialValue);
+    const isInternalUpdate = useRef(false);
 
+    // Sync initialValue to editor only when it changes from outside
     useEffect(() => {
-        setContent(initialValue); // Update content jika initialValue berubah dari props
+        if (editorRef.current && editorRef.current.innerHTML !== initialValue) {
+            // Jika update datang dari luar (bukan dari pengetikan user), update innerHTML
+            if (!isInternalUpdate.current) {
+                editorRef.current.innerHTML = initialValue || '';
+            }
+        }
+        isInternalUpdate.current = false;
     }, [initialValue]);
 
-    const handleContentChange = (e) => {
-        const newContent = e.target.innerHTML;
-        setContent(newContent);
-        if (onChange) {
-            onChange(sanitizeHtml(newContent)); // Kirim HTML yang sudah dibersihkan
+    const handleContentChange = () => {
+        if (editorRef.current) {
+            const newContent = editorRef.current.innerHTML;
+            isInternalUpdate.current = true;
+            if (onChange) {
+                onChange(sanitizeHtml(newContent));
+            }
         }
     };
 
     const execCommand = (command, value = null) => {
         document.execCommand(command, false, value);
-        editorRef.current.focus(); // Kembalikan fokus setelah command
-        // Update state setelah execCommand untuk merefleksikan perubahan ke parent
-        const updatedContent = editorRef.current.innerHTML;
-        setContent(updatedContent);
-        if (onChange) {
-            onChange(sanitizeHtml(updatedContent));
-        }
-    };
-
-    const formatBlock = (tag) => {
-        // execCommand('formatBlock', false, `<${tag}>`) kadang aneh perilakunya
-        // Alternatif: wrap selection, tapi lebih kompleks.
-        // Untuk paragraf baru, user bisa tekan Enter.
-        // Untuk bold/italic, execCommand lebih reliable.
-        // Ini adalah contoh SANGAT sederhana.
-        // Untuk paragraf, biasanya user cukup tekan Enter.
-        // Jika Anda butuh kontrol lebih, pertimbangkan library editor seperti TipTap atau Quill.
-        if (tag === 'p') { // Hanya untuk Enter
-            document.execCommand('insertParagraph', false, null);
-        }
         editorRef.current.focus();
-        const updatedContent = editorRef.current.innerHTML;
-        setContent(updatedContent);
-        if (onChange) {
-            onChange(sanitizeHtml(updatedContent));
-        }
+        handleContentChange();
     };
-
 
     return (
         <div className="mb-4">
-            {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
-            <div className="border border-gray-300 rounded-md shadow-sm">
-                <div className="flex items-center p-2 border-b bg-gray-50 space-x-1">
-                    <button type="button" onClick={() => execCommand('bold')} title="Bold" className="p-1.5 hover:bg-gray-200 rounded"><Bold size={16} /></button>
-                    <button type="button" onClick={() => execCommand('italic')} title="Italic" className="p-1.5 hover:bg-gray-200 rounded"><Italic size={16} /></button>
-                    {/* Tombol formatBlock untuk <p> bisa dihapus jika Enter sudah cukup */}
-                    {/* <button type="button" onClick={() => formatBlock('p')} title="Paragraf" className="p-1.5 hover:bg-gray-200 rounded"><Pilcrow size={16} /></button> */}
-                    {/* Tambahkan tombol lain jika perlu: list, align, dll. */}
+            {label && <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">{label}</label>}
+            <div className="border border-slate-200 rounded-xl shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all bg-white">
+                <div className="flex items-center p-2 border-b bg-slate-50/50 space-x-1">
+                    <button 
+                        type="button" 
+                        onClick={() => execCommand('undo')} 
+                        title="Undo (Ctrl+Z)" 
+                        className="p-1.5 hover:bg-slate-200 rounded text-slate-600 transition-colors"
+                    >
+                        <Undo size={16} />
+                    </button>
+                    <button 
+                        type="button" 
+                        onClick={() => execCommand('redo')} 
+                        title="Redo (Ctrl+Y)" 
+                        className="p-1.5 hover:bg-slate-200 rounded text-slate-600 transition-colors mr-2"
+                    >
+                        <Redo size={16} />
+                    </button>
+                    
+                    <div className="w-px h-4 bg-slate-300 mx-1" />
+                    
+                    <button 
+                        type="button" 
+                        onClick={() => execCommand('bold')} 
+                        title="Bold" 
+                        className="p-1.5 hover:bg-slate-200 rounded text-slate-700 font-bold transition-colors"
+                    >
+                        <Bold size={16} />
+                    </button>
+                    <button 
+                        type="button" 
+                        onClick={() => execCommand('italic')} 
+                        title="Italic" 
+                        className="p-1.5 hover:bg-slate-200 rounded text-slate-700 italic transition-colors"
+                    >
+                        <Italic size={16} />
+                    </button>
+                    
+                    <div className="w-px h-4 bg-slate-300 mx-1" />
+                    
+                    <button 
+                        type="button" 
+                        onClick={() => execCommand('insertUnorderedList')} 
+                        title="Bullet List" 
+                        className="p-1.5 hover:bg-slate-200 rounded text-slate-700 transition-colors"
+                    >
+                        <List size={16} />
+                    </button>
+                    <button 
+                        type="button" 
+                        onClick={() => execCommand('insertOrderedList')} 
+                        title="Numbered List" 
+                        className="p-1.5 hover:bg-slate-200 rounded text-slate-700 transition-colors"
+                    >
+                        <ListOrdered size={16} />
+                    </button>
                 </div>
                 <div
                     ref={editorRef}
                     contentEditable={true}
-                    dangerouslySetInnerHTML={{ __html: content }}
                     onInput={handleContentChange}
-                    onBlur={handleContentChange} // Update juga onBlur
-                    className="mt-1 block w-full p-2 min-h-[150px] prose prose-sm max-w-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }} // Untuk handle paragraf
+                    onBlur={handleContentChange}
+                    className="block w-full p-4 min-h-[180px] prose prose-sm max-w-none focus:outline-none"
+                    style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
                 />
             </div>
-            {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+            {error && <p className="mt-1.5 text-xs text-red-600 ml-1">{error}</p>}
         </div>
     );
 };

@@ -1,10 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, User, Bot, ChevronRight } from 'lucide-react';
+import { router, usePage } from '@inertiajs/react';
 
 export default function ChatWidget() {
+    const page = usePage();
+    if (!page) return null;
+    const { siteSettings } = page.props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
     const [isOpen, setIsOpen] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [inputValue, setInputValue] = useState("");
+    const [isHidden, setIsHidden] = useState(false);
     const messagesEndRef = useRef(null);
 
     // Initial Messages
@@ -12,7 +18,7 @@ export default function ChatWidget() {
         {
             id: 1,
             sender: 'bot',
-            text: "Halo! 👋 Selamat datang di SMAN 1 Baleendah. Ada yang bisa kami bantu seputar PPDB atau Info Sekolah?",
+            text: `Halo! 👋 Selamat datang di ${siteName}. Ada yang bisa kami bantu seputar PPDB atau Info Sekolah?`,
             type: 'text'
         },
         {
@@ -28,14 +34,38 @@ export default function ChatWidget() {
         }
     ]);
 
+    useEffect(() => {
+        const checkHidden = () => {
+            const path = window.location.pathname;
+            // Sembunyikan jika URL diawali dengan /admin atau /login (halaman login admin)
+            setIsHidden(path.startsWith('/admin') || path.startsWith('/login'));
+        };
+
+        // Cek saat pertama kali render
+        checkHidden();
+
+        // Cek setiap kali navigasi Inertia selesai
+        const removeListener = router.on('finish', checkHidden);
+
+        return () => {
+            removeListener();
+        };
+    }, []);
+
     // Auto-scroll to bottom
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages, isOpen, isTyping]);
+        if (!isHidden) {
+            scrollToBottom();
+        }
+    }, [messages, isOpen, isTyping, isHidden]);
+
+    if (isHidden) {
+        return null;
+    }
 
     // Handle Quick Action Click
     const handleChipClick = (option) => {
@@ -85,10 +115,10 @@ export default function ChatWidget() {
                 responseText = "Pendaftaran PPDB Tahun Ajaran 2025/2026 akan dibuka mulai bulan Juni 2025. Terdapat jalur Zonasi (50%), Prestasi (25%), Afirmasi (20%), dan Perpindahan Tugas (5%).";
                 break;
             case "Program Studi":
-                responseText = "SMAN 1 Baleendah memiliki 3 program peminatan unggulan: MIPA (Matematika & IPA), IPS (Ilmu Pengetahuan Sosial), dan Bahasa & Budaya.";
+                responseText = `${siteName} memiliki 3 program peminatan unggulan: MIPA (Matematika & IPA), IPS (Ilmu Pengetahuan Sosial), dan Bahasa & Budaya.`;
                 break;
             case "Biaya Masuk":
-                responseText = "Sesuai kebijakan Pemprov Jabar, SMAN 1 Baleendah tidak memungut biaya SPP bulanan (Gratis). Untuk biaya seragam dan kegiatan awal tahun, silakan hubungi Koperasi Sekolah.";
+                responseText = `Sesuai kebijakan Pemprov Jabar, ${siteName} tidak memungut biaya SPP bulanan (Gratis). Untuk biaya seragam dan kegiatan awal tahun, silakan hubungi Koperasi Sekolah.`;
                 break;
             case "Hubungi via WhatsApp":
                 responseText = "Anda akan dialihkan ke WhatsApp Admin kami untuk konsultasi lebih lanjut...";

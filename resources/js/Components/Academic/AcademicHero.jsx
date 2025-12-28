@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { TYPOGRAPHY } from '@/Utils/typography';
 
 /**
@@ -12,14 +12,17 @@ export default function AcademicHero({
     pageTitle,
     metaDescription 
 }) {
+    const { siteSettings } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+
     return (
         <>
-            <Head title={pageTitle || `${title} - SMAN 1 Baleendah`}>
+            <Head title={pageTitle || `${title} - ${siteName}`}>
                 {metaDescription && (
                     <meta name="description" content={metaDescription} />
                 )}
-                <meta name="keywords" content={`SMAN 1 Baleendah, ${title}, akademik, pendidikan, sekolah menengah atas`} />
-                <meta property="og:title" content={pageTitle || `${title} - SMAN 1 Baleendah`} />
+                <meta name="keywords" content={`${siteName}, ${title}, akademik, pendidikan, sekolah menengah atas`} />
+                <meta property="og:title" content={pageTitle || `${title} - ${siteName}`} />
                 {metaDescription && (
                     <meta property="og:description" content={metaDescription} />
                 )}

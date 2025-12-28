@@ -10,16 +10,43 @@ import Modal from '@/Components/Modal';
 // Import utilities
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
-import { mockGalleryData, galleryCategories, filterGalleryByCategory } from '@/Utils/galleryData';
+import { usePage } from '@inertiajs/react';
 
-const navigationData = getNavigationData();
-
-export default function GaleriPage() {
+export default function GaleriPage({ galleries = [] }) {
+    const { siteSettings } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const navigationData = getNavigationData(siteSettings);
     const [selectedCategory, setSelectedCategory] = useState('Semua');
     const [searchQuery, setSearchQuery] = useState('');
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
+
+    const heroSettings = siteSettings?.hero_gallery || {};
+    
+    // Helper to format image path correctly
+    const formatImagePath = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http') || path.startsWith('/')) return path;
+        return `/storage/${path}`;
+    };
+
+    // Get unique categories from galleries
+    const categories = useMemo(() => {
+        return ['Semua', ...new Set(galleries.map(item => item.category))];
+    }, [galleries]);
+
+    const renderHighlightedTitle = (title) => {
+        if (!title) return null;
+        const words = title.split(' ');
+        if (words.length <= 1) return title;
+        const lastWord = words.pop();
+        return (
+            <>
+                {words.join(' ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{lastWord}</span>
+            </>
+        );
+    };
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -27,24 +54,23 @@ export default function GaleriPage() {
 
     // Filter dan search gallery data
     const filteredData = useMemo(() => {
-        let data = mockGalleryData;
+        let data = galleries;
         
         // Filter by category
         if (selectedCategory !== 'Semua') {
-            data = filterGalleryByCategory(selectedCategory);
+            data = data.filter(item => item.category === selectedCategory);
         }
         
         // Search
         if (searchQuery.trim()) {
             data = data.filter(item => 
                 item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+                (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()))
             );
         }
         
         return data;
-    }, [selectedCategory, searchQuery]);
+    }, [selectedCategory, searchQuery, galleries]);
 
     // Reset pagination when filter/search changes
     React.useEffect(() => {
@@ -110,7 +136,7 @@ export default function GaleriPage() {
             {/* Image Wrapper */}
             <div className="relative aspect-[4/3] overflow-hidden">
                 <img 
-                    src={item.thumbnail} 
+                    src={item.url} 
                     alt={item.title}
                     className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
                     loading="lazy"
@@ -133,7 +159,7 @@ export default function GaleriPage() {
                         {item.category}
                     </span>
                     <span className={`${TYPOGRAPHY.metaText}`}>
-                        {new Date(item.date).toLocaleDateString('id-ID', {
+                        {new Date(item.date || item.created_at).toLocaleDateString('id-ID', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric'
@@ -152,7 +178,7 @@ export default function GaleriPage() {
 
     return (
         <div className="bg-secondary min-h-screen font-sans text-gray-800 flex flex-col">
-            <Head title="Galeri - SMAN 1 Baleendah" description="Galeri kehidupan sekolah SMAN 1 Baleendah." />
+            <Head title={`Galeri - ${siteName}`} description={`Galeri kehidupan sekolah ${siteName}.`} />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -166,7 +192,7 @@ export default function GaleriPage() {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
                         alt="Background Galeri Sekolah" 
                         className="w-full h-full object-cover"
                     />
@@ -175,10 +201,10 @@ export default function GaleriPage() {
 
                 <div className="relative z-10 container mx-auto px-4 text-center text-white">
                     <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
-                        Galeri <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Kehidupan Sekolah</span>
+                        {renderHighlightedTitle(heroSettings.title || 'Galeri Sekolah')}
                     </h1>
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
-                        Momen berharga, prestasi, dan kreativitas siswa SMAN 1 Baleendah.
+                        {heroSettings.subtitle || `Momen berharga, prestasi, dan kreativitas siswa ${siteName}.`}
                     </p>
                 </div>
             </section>
@@ -191,7 +217,7 @@ export default function GaleriPage() {
                     <div className="flex flex-col lg:flex-row justify-between items-center mb-12 gap-6">
                         {/* Categories */}
                         <div className="flex flex-wrap justify-center gap-3">
-                            {galleryCategories.map((cat) => (
+                            {categories.map((cat) => (
                                 <button
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}

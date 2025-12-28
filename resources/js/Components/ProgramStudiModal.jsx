@@ -2,11 +2,14 @@ import React from 'react';
 import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { Award, Globe, BookOpen, Users, GraduationCap, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 
 export default function ProgramStudiModal({ show, onClose, program }) {
+    const { siteSettings } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    
     if (!program) return null;
 
     // Data lengkap untuk setiap program studi
@@ -124,7 +127,7 @@ export default function ProgramStudiModal({ show, onClose, program }) {
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/30"></div>
                     <img 
                         src="/images/anak-sma.png" 
-                        alt="Siswa SMAN 1 Baleendah"
+                        alt={`Siswa ${siteName}`}
                         className="absolute right-0 top-0 h-full w-auto object-cover opacity-80 transform hover:scale-105 transition-transform duration-500"
                     />
                     <div className="relative z-10 p-6 sm:p-8 text-white h-full flex flex-col justify-between">

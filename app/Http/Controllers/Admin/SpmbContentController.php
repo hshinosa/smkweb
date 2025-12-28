@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Helpers\ActivityLogger;
+use App\Helpers\HtmlSanitizer;
 use App\Http\Controllers\Controller;
 use App\Models\SpmbSetting;
 use Illuminate\Http\Request;
@@ -45,36 +46,36 @@ class SpmbContentController extends Controller
                 // Build validation rules based on section
                 if ($sectionKey === 'pengaturan_umum') {
                     $sectionRules["{$sectionKey}.title"] = 'required|string|max:200';
-                    $sectionRules["{$sectionKey}.description"] = 'required|string|max:5000';
+                    $sectionRules["{$sectionKey}.description_html"] = 'required|string|max:5000';
                     $sectionRules["{$sectionKey}.banner_image_url"] = 'nullable|string|max:255';
+                    $sectionRules["{$sectionKey}.brochure_url"] = 'nullable|string|max:255';
+                    $sectionRules["{$sectionKey}.whatsapp_number"] = 'nullable|string|max:20';
+                    $sectionRules["{$sectionKey}.video_guide_url"] = 'nullable|string|max:255';
                     $sectionRules["{$sectionKey}.registration_open"] = 'required|boolean';
-                    $sectionRules["{$sectionKey}.announcement"] = 'nullable|string|max:2000';
+                    $sectionRules["{$sectionKey}.registration_year"] = 'required|string|max:20';
+                    $sectionRules["{$sectionKey}.announcement_text"] = 'nullable|string|max:2000';
                 } elseif ($sectionKey === 'jalur_pendaftaran') {
-                    $sectionRules["{$sectionKey}.regular"] = 'present|array';
-                    $sectionRules["{$sectionKey}.regular.description"] = 'required|string|max:2000';
-                    $sectionRules["{$sectionKey}.regular.quota"] = 'required|integer|min:0';
-                    $sectionRules["{$sectionKey}.regular.requirements"] = 'present|array';
-                    $sectionRules["{$sectionKey}.regular.requirements.*"] = 'required|string|max:500';
-                    $sectionRules["{$sectionKey}.prestasi"] = 'present|array';
-                    $sectionRules["{$sectionKey}.prestasi.description"] = 'required|string|max:2000';
-                    $sectionRules["{$sectionKey}.prestasi.quota"] = 'required|integer|min:0';
-                    $sectionRules["{$sectionKey}.prestasi.requirements"] = 'present|array';
-                    $sectionRules["{$sectionKey}.prestasi.requirements.*"] = 'required|string|max:500';
+                    $sectionRules["{$sectionKey}.items"] = 'present|array';
+                    $sectionRules["{$sectionKey}.items.*.label"] = 'required|string|max:200';
+                    $sectionRules["{$sectionKey}.items.*.description"] = 'required|string|max:2000';
+                    $sectionRules["{$sectionKey}.items.*.quota"] = 'required|string|max:50';
+                    $sectionRules["{$sectionKey}.items.*.requirements"] = 'present|array';
+                    $sectionRules["{$sectionKey}.items.*.requirements.*"] = 'required|string|max:500';
                 } elseif ($sectionKey === 'jadwal_penting') {
-                    $sectionRules["{$sectionKey}.events"] = 'present|array';
-                    $sectionRules["{$sectionKey}.events.*.title"] = 'required_with:'.$sectionKey.'.events.*.date|nullable|string|max:200';
-                    $sectionRules["{$sectionKey}.events.*.date"] = 'required_with:'.$sectionKey.'.events.*.title|nullable|date';
-                    $sectionRules["{$sectionKey}.events.*.description"] = 'nullable|string|max:1000';
+                    $sectionRules["{$sectionKey}.items"] = 'present|array';
+                    $sectionRules["{$sectionKey}.items.*.title"] = 'required_with:'.$sectionKey.'.items.*.date|nullable|string|max:200';
+                    $sectionRules["{$sectionKey}.items.*.date"] = 'required_with:'.$sectionKey.'.items.*.title|nullable|date';
+                    $sectionRules["{$sectionKey}.items.*.description"] = 'nullable|string|max:1000';
                 } elseif ($sectionKey === 'persyaratan') {
-                    $sectionRules["{$sectionKey}.documents"] = 'present|array';
-                    $sectionRules["{$sectionKey}.documents.*.name"] = 'required_with:'.$sectionKey.'.documents.*.description|nullable|string|max:200';
-                    $sectionRules["{$sectionKey}.documents.*.description"] = 'required_with:'.$sectionKey.'.documents.*.name|nullable|string|max:1000';
-                    $sectionRules["{$sectionKey}.documents.*.required"] = 'required_with:'.$sectionKey.'.documents.*.name|nullable|boolean';
+                    $sectionRules["{$sectionKey}.items"] = 'present|array';
+                    $sectionRules["{$sectionKey}.items.*.name"] = 'required_with:'.$sectionKey.'.items.*.description|nullable|string|max:200';
+                    $sectionRules["{$sectionKey}.items.*.description"] = 'required_with:'.$sectionKey.'.items.*.name|nullable|string|max:1000';
+                    $sectionRules["{$sectionKey}.items.*.required"] = 'required_with:'.$sectionKey.'.items.*.name|nullable|boolean';
                     $sectionRules["{$sectionKey}.additional_notes"] = 'nullable|string|max:2000';
                 } elseif ($sectionKey === 'prosedur') {
-                    $sectionRules["{$sectionKey}.steps"] = 'present|array';
-                    $sectionRules["{$sectionKey}.steps.*.title"] = 'required_with:'.$sectionKey.'.steps.*.description|nullable|string|max:200';
-                    $sectionRules["{$sectionKey}.steps.*.description"] = 'required_with:'.$sectionKey.'.steps.*.title|nullable|string|max:1000';
+                    $sectionRules["{$sectionKey}.items"] = 'present|array';
+                    $sectionRules["{$sectionKey}.items.*.title"] = 'required_with:'.$sectionKey.'.items.*.description|nullable|string|max:200';
+                    $sectionRules["{$sectionKey}.items.*.description"] = 'required_with:'.$sectionKey.'.items.*.title|nullable|string|max:1000';
                     $sectionRules["{$sectionKey}.contact_info"] = 'nullable|string|max:2000';
                 } elseif ($sectionKey === 'faq') {
                     $sectionRules["{$sectionKey}.items"] = 'present|array';
@@ -86,27 +87,29 @@ class SpmbContentController extends Controller
                 // Collect only fields defined in $sectionFields[$sectionKey]
                 foreach ($fields as $field) {
                     if (isset($currentSectionDataFromRequest[$field])) {
-                        if (in_array($field, ['events', 'documents', 'steps', 'items']) && is_array($currentSectionDataFromRequest[$field])) {
+                        if ($field === 'items' && is_array($currentSectionDataFromRequest[$field])) {
                             // Filter out empty items for array fields
-                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function ($item) use ($field) {
-                                if ($field === 'events') {
+                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function ($item) use ($sectionKey) {
+                                if ($sectionKey === 'jadwal_penting') {
                                     return ! empty(trim($item['title'] ?? '')) || ! empty(trim($item['date'] ?? ''));
-                                } elseif ($field === 'documents') {
+                                } elseif ($sectionKey === 'persyaratan') {
                                     return ! empty(trim($item['name'] ?? '')) || ! empty(trim($item['description'] ?? ''));
-                                } elseif ($field === 'steps') {
+                                } elseif ($sectionKey === 'prosedur') {
                                     return ! empty(trim($item['title'] ?? '')) || ! empty(trim($item['description'] ?? ''));
-                                } elseif ($field === 'items') {
-                                    return ! empty(trim($item['question'] ?? '')) || ! empty(trim($item['answer'] ?? ''));
+                                } elseif ($sectionKey === 'faq') {
+                                    return ! empty(trim($item['question'] ?? ''));
+                                } elseif ($sectionKey === 'jalur_pendaftaran') {
+                                    return ! empty(trim($item['label'] ?? ''));
                                 }
-
                                 return true;
                             }));
+                            
                             // Ensure empty arrays remain as arrays
                             if (empty($dataForThisSection[$field])) {
                                 $dataForThisSection[$field] = [];
                             }
                         } elseif ($field === 'requirements' && is_array($currentSectionDataFromRequest[$field])) {
-                            // Filter out empty requirements
+                            // Filter out empty requirements (for jalur_pendaftaran items)
                             $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function ($requirement) {
                                 return ! empty(trim($requirement ?? ''));
                             }));
@@ -122,17 +125,17 @@ class SpmbContentController extends Controller
                         $dataForThisSection[$field] = $defaultsForSection[$field] ?? null;
                     }
                 }
-                $finalDataToSave[$sectionKey] = $dataForThisSection;
+                $finalDataToSave[$sectionKey] = HtmlSanitizer::sanitizeSection($sectionKey, $dataForThisSection);
             }
         }
 
         $validator = Validator::make($inputData, $rules, [
-            'jadwal_penting.events.*.title.required_with' => 'Judul kegiatan diperlukan jika tanggal diisi.',
-            'jadwal_penting.events.*.date.required_with' => 'Tanggal kegiatan diperlukan jika judul diisi.',
-            'persyaratan.documents.*.name.required_with' => 'Nama dokumen diperlukan jika deskripsi diisi.',
-            'persyaratan.documents.*.description.required_with' => 'Deskripsi dokumen diperlukan jika nama diisi.',
-            'prosedur.steps.*.title.required_with' => 'Judul langkah diperlukan jika deskripsi diisi.',
-            'prosedur.steps.*.description.required_with' => 'Deskripsi langkah diperlukan jika judul diisi.',
+            'jadwal_penting.items.*.title.required_with' => 'Judul kegiatan diperlukan jika tanggal diisi.',
+            'jadwal_penting.items.*.date.required_with' => 'Tanggal kegiatan diperlukan jika judul diisi.',
+            'persyaratan.items.*.name.required_with' => 'Nama dokumen diperlukan jika deskripsi diisi.',
+            'persyaratan.items.*.description.required_with' => 'Deskripsi dokumen diperlukan jika nama diisi.',
+            'prosedur.items.*.title.required_with' => 'Judul langkah diperlukan jika deskripsi diisi.',
+            'prosedur.items.*.description.required_with' => 'Deskripsi langkah diperlukan jika judul diisi.',
             'faq.items.*.question.required_with' => 'Pertanyaan diperlukan jika jawaban diisi.',
             'faq.items.*.answer.required_with' => 'Jawaban diperlukan jika pertanyaan diisi.',
         ]);
@@ -158,7 +161,7 @@ class SpmbContentController extends Controller
 
             ActivityLogger::log('Update Konten SPMB', 'Semua section SPMB telah diperbarui.', $request);
 
-            return redirect()->route('admin.spmb.content.index')
+            return redirect()->route('admin.spmb.index')
                 ->with('success', 'Konten SPMB berhasil diperbarui!');
 
         } catch (\Exception $e) {

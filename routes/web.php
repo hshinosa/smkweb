@@ -2,18 +2,29 @@
 
 use App\Http\Controllers\AcademicCalendarPublicController;
 use App\Http\Controllers\Admin\AcademicCalendarController;
+use App\Http\Controllers\Admin\CurriculumController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\Auth\LoginController as AdminLoginController;
 use App\Http\Controllers\Admin\CloudflareStatsController;
 use App\Http\Controllers\Admin\LandingPageContentController;
 use App\Http\Controllers\Admin\SpmbContentController;
 use App\Models\LandingPageSetting;
+use App\Models\ProgramStudiSetting;
+use App\Models\SpmbSetting;
+use App\Models\Program;
+use App\Models\Gallery;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
     $settings = LandingPageSetting::all()->keyBy('section_key');
+    // Filter hanya Program Studi untuk Landing Page
+    $featuredPrograms = Program::where('is_featured', true)
+        ->where('category', 'Program Studi')
+        ->orderBy('sort_order')
+        ->get();
+    $featuredGalleries = Gallery::where('is_featured', true)->latest()->get();
 
     // Helper untuk mendapatkan konten atau default
     $getContentOrDefault = function ($key, $defaults) use ($settings) {
@@ -24,107 +35,254 @@ Route::get('/', function () {
     $defaultHero = [
         'title_line1' => 'Selamat Datang di',
         'title_line2' => 'SMA Negeri 1 Baleendah',
-        'background_image_url' => '/images/hero-bg-sman1baleendah.jpeg',
+        'hero_text' => 'Sekolah penggerak prestasi dan inovasi masa depan. Kami berkomitmen mencetak lulusan yang cerdas, berakhlak mulia, dan siap bersaing di era global.',
+        'background_image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
+        'student_image_url' => '/images/anak-sma.png',
+        'stats' => [
+            ['label' => 'Akreditasi', 'value' => 'A', 'icon' => 'Trophy'],
+            ['label' => 'Lulusan', 'value' => '15k+', 'icon' => 'GraduationCap'],
+            ['label' => 'Siswa Aktif', 'value' => '1.2k+', 'icon' => 'Users'],
+        ]
     ];
     $defaultAbout = [
-        'title' => 'Tentang Kami (Default)',
-        'description_html' => '<p>Deskripsi default tentang sekolah...</p>',
-        'image_url' => '/images/keluarga-besar-sman1baleendah.png',
+        'title' => 'Tentang Kami',
+        'description_html' => '<p>SMAN 1 Baleendah berdiri sejak tahun 1975 dan telah menjadi salah satu sekolah rujukan di Jawa Barat. Dengan visi menjadi sekolah unggul dalam prestasi dan berwawasan lingkungan, kami terus berinovasi dalam pembelajaran berbasis teknologi dan penguatan karakter.</p><p>Kami percaya bahwa setiap siswa memiliki potensi unik yang perlu dikembangkan melalui bimbingan yang tepat dan fasilitas yang memadai.</p>',
+        'image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
     ];
     $defaultKepsek = [
-        'title' => 'Sambutan Kepala Sekolah (Default)',
+        'title' => 'Sambutan Kepala Sekolah',
         'kepsek_name' => 'Drs. H. Ahmad Suryadi, M.Pd.',
         'kepsek_title' => 'Kepala SMA Negeri 1 Baleendah',
         'kepsek_image_url' => '/images/kepala-sekolah.jpg',
         'welcome_text_html' => '<p>Assalamu\'alaikum Warahmatullahi Wabarakatuh...</p><p>Saya mewakili seluruh warga SMA Negeri 1 Baleendah menyampaikan terima kasih atas kunjungan Anda ke website resmi kami...</p><p>Hormat kami,</p>',
     ];
-    $defaultFakta = [
-        'items' => [
-            ['label' => 'Guru', 'value' => 0],
-            ['label' => 'Siswa', 'value' => 0],
-        ],
+    $defaultPrograms = [
+        'title' => 'Program Akademik',
+        'description' => 'Berbagai program inovatif yang dirancang untuk mengembangkan potensi siswa secara holistik.',
     ];
+    $defaultGallery = [
+        'title' => 'Galeri Sekolah',
+        'description' => 'Momen-momen seru dan kegiatan inspiratif siswa-siswi SMAN 1 Baleendah.',
+    ];
+    $defaultCta = [
+        'title' => 'Siap Menjadi Bagian dari Keluarga Besar SMAN 1 Baleendah?',
+        'description' => 'Dapatkan informasi lengkap mengenai pendaftaran peserta didik baru, jadwal, dan persyaratan yang dibutuhkan.',
+        'button_text' => 'Daftar Sekarang',
+        'button_link' => '/informasi-spmb'
+    ];
+
+    $latestPosts = \App\Models\Post::where('status', 'published')
+        ->where('published_at', '<=', now())
+        ->latest('published_at')
+        ->take(3)
+        ->get();
 
     return Inertia::render('LandingPage', [
         // auth dan props lain yang sudah ada
         'heroContent' => $getContentOrDefault('hero', $defaultHero),
         'aboutLpContent' => $getContentOrDefault('about_lp', $defaultAbout),
         'kepsekWelcomeLpContent' => $getContentOrDefault('kepsek_welcome_lp', $defaultKepsek),
-        'faktaLpContent' => $getContentOrDefault('fakta_lp', $defaultFakta),
+        'programsLpContent' => array_merge($getContentOrDefault('programs_lp', $defaultPrograms), ['items' => $featuredPrograms]),
+        'galleryLpContent' => array_merge($getContentOrDefault('gallery_lp', $defaultGallery), ['images' => $featuredGalleries->pluck('url')->toArray()]),
+        'ctaLpContent' => $getContentOrDefault('cta_lp', $defaultCta),
+        'latestPosts' => $latestPosts,
         // ... props lain yang sudah Anda kirim ke LandingPage.jsx
     ]);
 })->name('home'); // Beri nama jika belum
 
 // Tambahkan rute baru untuk Informasi SPMB
 Route::get('/informasi-spmb', function () {
-    return Inertia::render('InformasiSpmbPage');
+    $settings = SpmbSetting::all()->keyBy('section_key');
+    $spmbData = [];
+    foreach (array_keys(SpmbSetting::getSectionFields()) as $key) {
+        $dbRow = $settings->get($key);
+        $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
+        $spmbData[$key] = SpmbSetting::getContent($key, $dbContent);
+    }
+    return Inertia::render('InformasiSpmbPage', [
+        'spmbData' => $spmbData
+    ]);
 })->name('informasi.spmb'); // Opsional: beri nama rute
 
 Route::get('/alumni', function () {
-    return Inertia::render('AlumniPage');
+    $alumnis = \App\Models\Alumni::where('is_published', true)
+        ->orderBy('sort_order')
+        ->latest()
+        ->get();
+    
+    return Inertia::render('AlumniPage', [
+        'alumnis' => $alumnis
+    ]);
 })->name('alumni');
 
 Route::get('/profil-sekolah', function () {
-    return Inertia::render('ProfilSekolahPage');
+    $settings = \App\Models\SchoolProfileSetting::all()->keyBy('section_key');
+    $hero = \App\Models\SchoolProfileSetting::getContent('hero_history', $settings->get('hero_history')['content'] ?? null);
+    $history = \App\Models\SchoolProfileSetting::getContent('history', $settings->get('history')['content'] ?? null);
+    $facilities = \App\Models\SchoolProfileSetting::getContent('facilities', $settings->get('facilities')['content'] ?? null);
+    
+    return Inertia::render('ProfilSekolahPage', [
+        'hero' => $hero,
+        'history' => $history,
+        'facilities' => $facilities
+    ]);
 })->name('profil.sekolah');
 
 Route::get('/visi-misi', function () {
-    return Inertia::render('VisiMisiPage');
+    $settings = \App\Models\SchoolProfileSetting::all()->keyBy('section_key');
+    $hero = \App\Models\SchoolProfileSetting::getContent('hero_vision_mission', $settings->get('hero_vision_mission')['content'] ?? null);
+    $visionMission = \App\Models\SchoolProfileSetting::getContent('vision_mission', $settings->get('vision_mission')['content'] ?? null);
+    
+    return Inertia::render('VisiMisiPage', [
+        'hero' => $hero,
+        'visionMission' => $visionMission
+    ]);
 })->name('visi.misi');
 
 Route::get('/struktur-organisasi', function () {
-    return Inertia::render('StrukturOrganisasiPage');
+    $settings = \App\Models\SchoolProfileSetting::all()->keyBy('section_key');
+    $hero = \App\Models\SchoolProfileSetting::getContent('hero_organization', $settings->get('hero_organization')['content'] ?? null);
+    $organization = \App\Models\SchoolProfileSetting::getContent('organization', $settings->get('organization')['content'] ?? null);
+    
+    return Inertia::render('StrukturOrganisasiPage', [
+        'hero' => $hero,
+        'organization' => $organization
+    ]);
 })->name('struktur.organisasi');
 
 Route::get('/program', function () {
-    return Inertia::render('ProgramSekolahPage');
+    return Inertia::render('ProgramSekolahPage', [
+        'programs' => Program::orderBy('sort_order')->get()
+    ]);
 })->name('program.sekolah');
 
 Route::get('/kalender-akademik', [AcademicCalendarPublicController::class, 'index'])->name('kalender.akademik');
 
+// Route redirect login untuk mengatasi error "Route [login] not defined"
+Route::get('/login', function () {
+    return redirect()->route('admin.login.form');
+})->name('login');
+
 // Route untuk halaman akademik baru
 Route::get('/akademik/kurikulum', function () {
-    return Inertia::render('KurikulumPage');
+    $programs = Program::where('category', 'Program Studi')->orderBy('sort_order')->get();
+    $settings = \App\Models\CurriculumSetting::all()->keyBy('section_key');
+    
+    $curriculumData = [];
+    foreach (array_keys(\App\Models\CurriculumSetting::getSectionFields()) as $key) {
+        $dbRow = $settings->get($key);
+        $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
+        $curriculumData[$key] = \App\Models\CurriculumSetting::getContent($key, $dbContent);
+    }
+
+    return Inertia::render('KurikulumPage', [
+        'programs' => $programs,
+        'curriculumData' => $curriculumData
+    ]);
 })->name('akademik.kurikulum');
 
 Route::get('/akademik/ekstrakurikuler', function () {
-    return Inertia::render('EkstrakurikulerPage');
+    $extracurriculars = \App\Models\Extracurricular::where('is_active', true)->orderBy('sort_order')->get();
+    return Inertia::render('EkstrakurikulerPage', [
+        'extracurriculars' => $extracurriculars
+    ]);
 })->name('akademik.ekstrakurikuler');
 
+// Helper untuk mendapatkan data program studi
+$getProgramData = function ($programName) {
+    $settings = ProgramStudiSetting::where('program_name', $programName)->get()->keyBy('section_key');
+    $pageData = [];
+    foreach (array_keys(ProgramStudiSetting::getSectionFields()) as $key) {
+        $dbRow = $settings->get($key);
+        $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
+        $pageData[$key] = ProgramStudiSetting::getContent($key, $dbContent);
+    }
+    return $pageData;
+};
+
 // Route untuk program studi
-Route::get('/akademik/program-studi/mipa', function () {
-    return Inertia::render('ProgramMipaPage');
+Route::get('/akademik/program-studi/mipa', function () use ($getProgramData) {
+    return Inertia::render('ProgramMipaPage', [
+        'content' => $getProgramData('mipa')
+    ]);
 })->name('akademik.program.mipa');
 
-Route::get('/akademik/program-studi/ips', function () {
-    return Inertia::render('ProgramIpsPage');
+Route::get('/akademik/program-studi/ips', function () use ($getProgramData) {
+    return Inertia::render('ProgramIpsPage', [
+        'content' => $getProgramData('ips')
+    ]);
 })->name('akademik.program.ips');
 
-Route::get('/akademik/program-studi/bahasa', function () {
-    return Inertia::render('ProgramBahasaPage');
+Route::get('/akademik/program-studi/bahasa', function () use ($getProgramData) {
+    return Inertia::render('ProgramBahasaPage', [
+        'content' => $getProgramData('bahasa')
+    ]);
 })->name('akademik.program.bahasa');
 
 // Route untuk halaman baru
 Route::get('/berita-pengumuman', function () {
-    return Inertia::render('BeritaPengumumanPage');
+    $posts = \App\Models\Post::with('author')
+        ->where('status', 'published')
+        ->where('published_at', '<=', now())
+        ->latest('published_at')
+        ->get();
+
+    $popularPosts = \App\Models\Post::where('status', 'published')
+        ->orderBy('views_count', 'desc')
+        ->take(5)
+        ->get();
+
+    return Inertia::render('BeritaPengumumanPage', [
+        'posts' => $posts,
+        'popularPosts' => $popularPosts
+    ]);
 })->name('berita.pengumuman');
 
-Route::get('/berita/detail', function () {
-    return Inertia::render('BeritaDetailPage');
+Route::get('/berita/{slug}', function ($slug) {
+    $post = \App\Models\Post::with('author')->where('slug', $slug)->firstOrFail();
+    $post->increment('views_count');
+    
+    $relatedPosts = \App\Models\Post::where('id', '!=', $post->id)
+        ->where('category', $post->category)
+        ->where('status', 'published')
+        ->latest('published_at')
+        ->take(3)
+        ->get();
+
+    return Inertia::render('BeritaDetailPage', [
+        'post' => $post,
+        'relatedPosts' => $relatedPosts
+    ]);
 })->name('berita.detail');
 
 Route::get('/kontak', function () {
-    return Inertia::render('KontakPage');
+    $faqs = \App\Models\Faq::where('is_published', true)
+        ->orderBy('sort_order')
+        ->get();
+    
+    return Inertia::render('KontakPage', [
+        'faqs' => $faqs
+    ]);
 })->name('kontak');
+
+Route::post('/kontak', [\App\Http\Controllers\ContactController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('kontak.store');
 
 // Route untuk galeri
 Route::get('/galeri', function () {
-    return Inertia::render('GaleriPage');
+    $galleries = Gallery::latest()->get();
+    return Inertia::render('GaleriPage', [
+        'galleries' => $galleries
+    ]);
 })->name('galeri');
 
 // Route untuk guru & staff
 Route::get('/guru-staff', function () {
-    return Inertia::render('GuruStaffPage');
+    $teachers = \App\Models\Teacher::where('is_active', true)->orderBy('sort_order')->get();
+    return Inertia::render('GuruStaffPage', [
+        'teachers' => $teachers
+    ]);
 })->name('guru.staff');
 
 // --- RUTE ADMIN ---
@@ -145,7 +303,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Rute untuk memproses login
     Route::post('/login', [AdminLoginController::class, 'store'])
-        ->middleware('guest:admin')
+        ->middleware(['guest:admin', 'throttle:10,1'])
         ->name('login.attempt');
 
     // Rute untuk logout (harus sudah login sebagai admin)
@@ -155,8 +313,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Contoh rute dashboard admin (harus sudah login sebagai admin)
     Route::get('/dashboard', function () {
+        $unreadMessagesCount = \App\Models\ContactMessage::where('is_read', false)->count();
+        
         return Inertia::render('Admin/DashboardPage', [ // Pastikan path Inertia benar
             'admin' => Auth::guard('admin')->user(),
+            'unreadMessagesCount' => $unreadMessagesCount,
         ]);
     })->middleware('auth:admin')->name('dashboard');
 
@@ -173,8 +334,36 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('/academic-calendar/{content}/set-active', [AcademicCalendarController::class, 'setActive'])->name('academic-calendar.set-active');
 
         // SPMB Content Management Routes
-        Route::get('/spmb-content', [SpmbContentController::class, 'index'])->name('spmb.content.index');
-        Route::put('/spmb-content/update-all', [SpmbContentController::class, 'storeOrUpdate'])->name('spmb.content.update_all');
+        Route::get('/spmb-content', [SpmbContentController::class, 'index'])->name('spmb.index');
+        Route::put('/spmb-content/update-all', [SpmbContentController::class, 'storeOrUpdate'])->name('spmb.update_all');
+
+        // Program Studi Content Management Routes
+        Route::get('/program-studi', [\App\Http\Controllers\Admin\ProgramStudiController::class, 'index'])->name('program-studi.index');
+        Route::post('/program-studi/update-all', [\App\Http\Controllers\Admin\ProgramStudiController::class, 'storeOrUpdate'])->name('program-studi.update_all');
+
+        // Program & Gallery Management Routes
+        Route::resource('programs', \App\Http\Controllers\Admin\ProgramController::class);
+        Route::resource('galleries', \App\Http\Controllers\Admin\GalleryController::class);
+
+        // New Management Routes
+        Route::post('/teachers/update-settings', [\App\Http\Controllers\Admin\TeacherController::class, 'updateSettings'])->name('teachers.update_settings');
+        Route::resource('teachers', \App\Http\Controllers\Admin\TeacherController::class);
+        Route::resource('posts', \App\Http\Controllers\Admin\PostController::class);
+        Route::resource('alumni', \App\Http\Controllers\Admin\AlumniController::class);
+        Route::resource('faqs', \App\Http\Controllers\Admin\FaqController::class);
+        Route::get('/school-profile', [\App\Http\Controllers\Admin\SchoolProfileController::class, 'index'])->name('school-profile.index');
+        Route::post('/school-profile', [\App\Http\Controllers\Admin\SchoolProfileController::class, 'update'])->name('school-profile.update');
+        Route::get('/kurikulum', [CurriculumController::class, 'index'])->name('curriculum.index');
+        Route::post('/kurikulum', [CurriculumController::class, 'update'])->name('curriculum.update');
+        Route::get('/site-settings', [\App\Http\Controllers\Admin\SiteSettingController::class, 'index'])->name('site-settings.index');
+        Route::post('/site-settings', [\App\Http\Controllers\Admin\SiteSettingController::class, 'update'])->name('site-settings.update');
+        
+        // Contact Messages
+        Route::get('/contact-messages', [\App\Http\Controllers\Admin\ContactMessageController::class, 'index'])->name('contact-messages.index');
+        Route::get('/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'show'])->name('contact-messages.show');
+        Route::delete('/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+
+        Route::resource('extracurriculars', \App\Http\Controllers\Admin\ExtracurricularController::class);
     });
 });
 // --- AKHIR RUTE ADMIN ---

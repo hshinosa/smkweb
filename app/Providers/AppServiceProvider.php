@@ -5,7 +5,9 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use App\Models\SiteSetting;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,5 +30,10 @@ class AppServiceProvider extends ServiceProvider
 
         Vite::prefetch(concurrency: 3);
         Schema::defaultStringLength(191);
+
+        // Share site settings with all views (including app.blade.php) using cache
+        if (Schema::hasTable('site_settings')) {
+            View::share('siteSettings', SiteSetting::getCachedAll());
+        }
     }
 }

@@ -9,97 +9,66 @@ import Footer from '@/Components/Footer';
 import Modal from '@/Components/Modal';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
+import { usePage } from '@inertiajs/react';
 import { 
     Search, ChevronLeft, ChevronRight, X, ArrowRight,
-    Leaf, Lightbulb, Users, Microscope, BookOpen
+    Leaf, Lightbulb, Users, Microscope, BookOpen,
+    GraduationCap, Trophy, Heart, Globe, Code, Music, Camera, Palette
 } from 'lucide-react';
 
-const navigationData = getNavigationData();
-
-// --- DATA PROGRAM ---
-const programCategories = ["Semua", "Akademik", "Karakter & Agama", "Lingkungan", "Inovasi"];
-
-const allPrograms = [
-    { 
-        id: 1, 
-        title: "Program Hafidz & Kajian Muslim", 
-        category: "Karakter & Agama",
-        icon: BookOpen,
-        color: "bg-blue-100 text-blue-600",
-        description: "Program pembinaan keagamaan intensif untuk mencetak generasi penghafal Al-Qur'an dan memperdalam pemahaman nilai-nilai Islam yang rahmatan lil alamin." 
-    },
-    { 
-        id: 2, 
-        title: "Gerakan Memungut Sampah (GMS)", 
-        category: "Lingkungan",
-        icon: Leaf,
-        color: "bg-green-100 text-green-600",
-        description: "Inisiatif sekolah untuk menumbuhkan kesadaran lingkungan melalui pembiasaan memungut sampah sebelum dan sesudah kegiatan belajar mengajar." 
-    },
-    { 
-        id: 3, 
-        title: "Pengembangan Lab Sains & Bahasa", 
-        category: "Akademik",
-        icon: Microscope,
-        color: "bg-purple-100 text-purple-600",
-        description: "Modernisasi fasilitas laboratorium sains dan bahasa dengan peralatan terkini untuk mendukung pembelajaran praktikum yang efektif dan menyenangkan." 
-    },
-    { 
-        id: 4, 
-        title: "Implementasi Jabar Masagi & P5", 
-        category: "Karakter & Agama",
-        icon: Users,
-        color: "bg-orange-100 text-orange-600",
-        description: "Penguatan karakter siswa melalui nilai-nilai kearifan lokal Jawa Barat dan Proyek Penguatan Profil Pelajar Pancasila." 
-    },
-    { 
-        id: 5, 
-        title: "Pembelajaran Berbasis Proyek (PjBL)", 
-        category: "Inovasi",
-        icon: Lightbulb,
-        color: "bg-yellow-100 text-yellow-600",
-        description: "Metode pembelajaran inovatif yang mendorong siswa untuk berpikir kritis dan kreatif dalam memecahkan masalah nyata melalui proyek kolaboratif." 
-    },
-    { 
-        id: 6, 
-        title: "Kelas Unggulan MIPA & IPS", 
-        category: "Akademik",
-        icon: Microscope,
-        color: "bg-indigo-100 text-indigo-600",
-        description: "Program kelas khusus dengan kurikulum pengayaan untuk mempersiapkan siswa menghadapi kompetisi sains nasional dan seleksi masuk perguruan tinggi favorit." 
-    },
-    { 
-        id: 7, 
-        title: "Sekolah Pencetak Wirausaha (SPW)", 
-        category: "Inovasi",
-        icon: Lightbulb,
-        color: "bg-red-100 text-red-600",
-        description: "Program pelatihan kewirausahaan bagi siswa untuk mengembangkan mindset bisnis dan keterampilan manajerial sejak dini." 
-    },
-    { 
-        id: 8, 
-        title: "Program Sekolah Ramah Anak", 
-        category: "Karakter & Agama",
-        icon: Users,
-        color: "bg-pink-100 text-pink-600",
-        description: "Menciptakan lingkungan sekolah yang aman, nyaman, dan inklusif bagi seluruh warga sekolah, serta bebas dari perundungan." 
-    }
-];
-
-export default function ProgramSekolahPage({ auth }) {
+export default function ProgramSekolahPage({ programs = [] }) {
+    const { siteSettings } = usePage().props;
+    const navigationData = getNavigationData(siteSettings);
     const [activeCategory, setActiveCategory] = useState("Semua");
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedProgram, setSelectedProgram] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+
+    // Map icon names to Lucide components
+    const iconMap = {
+        Leaf,
+        Lightbulb,
+        Users,
+        Microscope,
+        BookOpen,
+        GraduationCap,
+        Trophy,
+        Heart,
+        Globe,
+        Code,
+        Music,
+        Camera,
+        Palette
+    };
+
+    const renderHighlightedTitle = (title) => {
+        if (!title) return null;
+        const words = title.split(' ');
+        if (words.length <= 1) return title;
+        const lastWord = words.pop();
+        return (
+            <>
+                {words.join(' ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{lastWord}</span>
+            </>
+        );
+    };
+
+    // Get unique categories from programs
+    const programCategories = useMemo(() => {
+        const categories = ["Semua", ...new Set(programs.map(p => p.category))];
+        return categories;
+    }, [programs]);
+
     // Filtering Logic
     const filteredPrograms = useMemo(() => {
-        return allPrograms.filter(program => {
+        return programs.filter(program => {
             const matchesCategory = activeCategory === "Semua" || program.category === activeCategory;
             const matchesSearch = program.title.toLowerCase().includes(searchTerm.toLowerCase());
             return matchesCategory && matchesSearch;
         });
-    }, [activeCategory, searchTerm]);
+    }, [activeCategory, searchTerm, programs]);
 
     const openModal = (program) => {
         setSelectedProgram(program);
@@ -134,8 +103,8 @@ export default function ProgramSekolahPage({ auth }) {
                 </div>
 
                 <div className="relative z-10 container mx-auto px-4 text-center text-white">
-                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300`}>
-                        Program Unggulan
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
+                        {renderHighlightedTitle('Program Unggulan')}
                     </h1>
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
                         Membangun karakter dan kompetensi siswa melalui berbagai inisiatif positif.
@@ -191,7 +160,7 @@ export default function ProgramSekolahPage({ auth }) {
                                     {/* Content */}
                                     <div className="p-6 flex flex-col flex-grow">
                                         <div className="mb-3">
-                                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${program.color}`}>
+                                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${program.color_class || 'bg-blue-50 text-primary'}`}>
                                                 {program.category}
                                             </span>
                                         </div>
@@ -231,14 +200,17 @@ export default function ProgramSekolahPage({ auth }) {
                 {selectedProgram && (
                     <div className="bg-white rounded-2xl overflow-hidden">
                         {/* Modal Header */}
-                        <div className={`p-8 ${selectedProgram.color.replace('text-', 'bg-').replace('100', '50')} flex items-center justify-between`}>
+                        <div className={`p-8 ${selectedProgram.color_class ? selectedProgram.color_class.split(' ')[0].replace('bg-', 'bg-opacity-20 bg-') : 'bg-primary/10'} flex items-center justify-between`}>
                             <div className="flex items-center gap-4">
                                 <div className={`p-3 bg-white rounded-xl shadow-sm`}>
-                                    <selectedProgram.icon size={32} className={selectedProgram.color.split(' ')[1]} />
+                                    {(() => {
+                                        const IconComponent = iconMap[selectedProgram.icon_name] || BookOpen;
+                                        return <IconComponent size={32} className={selectedProgram.color_class ? selectedProgram.color_class.split(' ')[1] : 'text-primary'} />;
+                                    })()}
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-bold text-gray-900">{selectedProgram.title}</h2>
-                                    <span className={`text-sm font-semibold ${selectedProgram.color.split(' ')[1]}`}>
+                                    <span className={`text-sm font-semibold ${selectedProgram.color_class ? selectedProgram.color_class.split(' ')[1] : 'text-primary'}`}>
                                         {selectedProgram.category}
                                     </span>
                                 </div>

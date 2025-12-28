@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { 
     Dribbble, 
@@ -32,9 +32,8 @@ import Footer from '@/Components/Footer';
 import Modal from '@/Components/Modal';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
-import { extracurricularData, pageMetadata } from '@/Utils/academicData';
-
-const navigationData = getNavigationData();
+import { getPageMetadata } from '@/Utils/academicData';
+import { usePage } from '@inertiajs/react';
 
 // --- Helper Functions for Visuals ---
 
@@ -143,8 +142,8 @@ const ActivityDetailModal = ({ show, onClose, activity, categoryTheme }) => {
                 <div className="h-48 relative overflow-hidden bg-gray-900">
                     {/* Image */}
                     <img 
-                        src="/images/hero-bg-sman1-baleendah.jpeg" 
-                        alt="Banner" 
+                        src={activity.image_url || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                        alt={activity.name} 
                         className="absolute inset-0 w-full h-full object-cover"
                     />
                     
@@ -241,7 +240,7 @@ const ActivityDetailModal = ({ show, onClose, activity, categoryTheme }) => {
                                     </div>
                                     <div>
                                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Pembina</p>
-                                        <p className="font-medium text-gray-900">Bpk. Pembina {activity.name}</p>
+                                        <p className="font-medium text-gray-900">{activity.coach_name || 'Akan diinformasikan'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -266,10 +265,35 @@ const ActivityDetailModal = ({ show, onClose, activity, categoryTheme }) => {
 
 // --- Main Page Component ---
 
-export default function EkstrakurikulerPage() {
+export default function EkstrakurikulerPage({ extracurriculars = [] }) {
+    const { siteSettings } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const navigationData = getNavigationData(siteSettings);
+    const pageMetadata = getPageMetadata(siteName);
     const [selectedActivity, setSelectedActivity] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [activeCategoryTheme, setActiveCategoryTheme] = useState(null);
+
+    const heroSettings = siteSettings?.hero_extracurricular || {};
+    
+    // Helper to format image path correctly
+    const formatImagePath = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http') || path.startsWith('/')) return path;
+        return `/storage/${path}`;
+    };
+
+    const renderHighlightedTitle = (title) => {
+        if (!title) return null;
+        const words = title.split(' ');
+        if (words.length <= 1) return title;
+        const lastWord = words.pop();
+        return (
+            <>
+                {words.join(' ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{lastWord}</span>
+            </>
+        );
+    };
 
     const openDetailModal = (activity, categoryName) => {
         setSelectedActivity(activity);
@@ -281,6 +305,14 @@ export default function EkstrakurikulerPage() {
         setShowModal(false);
         setTimeout(() => setSelectedActivity(null), 300); // Delay clear for animation
     };
+
+    const groupedActivities = useMemo(() => {
+        const categories = [...new Set(extracurriculars.map(e => e.category))];
+        return categories.map(cat => ({
+            category: cat,
+            activities: extracurriculars.filter(e => e.category === cat)
+        }));
+    }, [extracurriculars]);
 
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
@@ -298,8 +330,8 @@ export default function EkstrakurikulerPage() {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src="/images/hero-bg-sman1-baleendah.jpeg" 
-                        alt="Background Ekstrakurikuler" 
+                        src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                        alt={`Background Ekstrakurikuler ${siteName}`} 
                         className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/60"></div>
@@ -307,10 +339,10 @@ export default function EkstrakurikulerPage() {
 
                 <div className="relative z-10 container mx-auto px-4 text-center text-white">
                     <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
-                        Ekstrakurikuler & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Pengembangan Diri</span>
+                        {renderHighlightedTitle(heroSettings.title || 'Ekstrakurikuler')}
                     </h1>
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
-                        Wadah kreativitas dan prestasi siswa SMAN 1 Baleendah untuk membentuk karakter unggul.
+                        {heroSettings.subtitle || `Wadah kreativitas dan prestasi siswa ${siteName} untuk membentuk karakter unggul.`}
                     </p>
                 </div>
             </section>
@@ -320,38 +352,46 @@ export default function EkstrakurikulerPage() {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     
                     {/* Render Categories */}
-                    {Object.entries(extracurricularData.categories).map(([categoryKey, category]) => {
-                        const theme = getCategoryTheme(category.name);
-                        
-                        return (
-                            <div key={categoryKey} className="mb-20 last:mb-0">
-                                {/* Category Header */}
-                                <div className="flex items-center gap-4 mb-10">
-                                    <div className={`p-3 rounded-xl ${theme.light} ${theme.color}`}>
-                                        <theme.icon className="w-8 h-8" />
+                    {groupedActivities.length > 0 ? (
+                        groupedActivities.map((group, idx) => {
+                            const theme = getCategoryTheme(group.category);
+                            
+                            return (
+                                <div key={idx} className="mb-20 last:mb-0">
+                                    {/* Category Header */}
+                                    <div className="flex items-center gap-4 mb-10">
+                                        <div className={`p-3 rounded-xl ${theme.light} ${theme.color}`}>
+                                            <theme.icon className="w-8 h-8" />
+                                        </div>
+                                        <div>
+                                            <h2 className={`${TYPOGRAPHY.sectionHeading} text-gray-900`}>
+                                                {group.category}
+                                            </h2>
+                                            <div className={`h-1.5 w-24 ${theme.accent} mt-2 rounded-full`}></div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h2 className={`${TYPOGRAPHY.sectionHeading} text-gray-900`}>
-                                            {category.name}
-                                        </h2>
-                                        <div className={`h-1.5 w-24 ${theme.accent} mt-2 rounded-full`}></div>
-                                    </div>
-                                </div>
 
-                                {/* Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                    {category.activities.map((activity, index) => (
-                                        <ActivityCard 
-                                            key={index} 
-                                            activity={activity} 
-                                            categoryTheme={theme}
-                                            onClick={() => openDetailModal(activity, category.name)}
-                                        />
-                                    ))}
+                                    {/* Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        {group.activities.map((activity, index) => (
+                                            <ActivityCard 
+                                                key={index} 
+                                                activity={activity} 
+                                                categoryTheme={theme}
+                                                onClick={() => openDetailModal(activity, group.category)}
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })
+                    ) : (
+                        <div className="text-center py-20">
+                            <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                            <h3 className="text-xl font-bold text-gray-900">Belum ada data ekstrakurikuler</h3>
+                            <p className="text-gray-500">Silakan kembali lagi nanti.</p>
+                        </div>
+                    )}
 
                 </div>
             </section>
@@ -364,7 +404,7 @@ export default function EkstrakurikulerPage() {
 
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                        Siap Menjadi Bagian dari <br/> Keluarga Besar SMAN 1 Baleendah?
+                        Siap Menjadi Bagian dari <br/> Keluarga Besar {siteName}?
                     </h2>
                     <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
                         Dapatkan informasi lengkap mengenai pendaftaran peserta didik baru, jadwal, dan persyaratan yang dibutuhkan.

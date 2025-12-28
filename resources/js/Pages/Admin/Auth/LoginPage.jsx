@@ -1,16 +1,17 @@
 // FILE: resources/js/Pages/Admin/Auth/LoginPage.jsx
 import React from 'react';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, usePage } from '@inertiajs/react';
 import InputLabel from '@/Components/InputLabel'; // Asumsi Anda punya komponen ini dari Breeze
 import TextInput from '@/Components/TextInput';   // Asumsi Anda punya komponen ini dari Breeze
 import InputError from '@/Components/InputError'; // Asumsi Anda punya komponen ini
 import { GraduationCap } from 'lucide-react';   // Ikon untuk tombol
 
-// Path ke aset gambar
-const logoSman1Baleendah = '/images/logo-sman1baleendah.png'; // Logo SMAN 1 Baleendah
-const loginBgImage = '/images/hero-bg-sman1baleendah.jpeg'; // Background image SMAN 1 Baleendah
-
 export default function LoginPage() {
+    const { siteSettings } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const logoSekolah = siteSettings?.general?.site_logo || '/images/logo-sman1baleendah.png';
+    const loginBgImage = '/images/hero-bg-sman1baleendah.jpeg'; // Default background image
+
     const { data, setData, post, processing, errors, reset } = useForm({
         username: '',
         password: '',
@@ -44,11 +45,11 @@ export default function LoginPage() {
                     <div className="w-full max-w-md">
                         <div className="flex justify-center mb-8">
                             <Link href="/">
-                                <img src={logoSman1Baleendah} alt="Logo SMAN 1 Baleendah" className="h-16 w-auto" />
+                                <img src={logoSekolah} alt={`Logo ${siteName}`} className="h-16 w-auto" />
                             </Link>
                         </div>
                         <h2 className="text-2xl font-bold text-center text-gray-700 mb-1">
-                            SMA Negeri 1 Baleendah
+                            {siteName}
                         </h2>
                         <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">
                             Masuk

@@ -119,4 +119,14 @@ class AcademicCalendarController extends Controller
 
         return redirect()->route('admin.academic-calendar.index')->with('success', 'Konten kalender akademik berhasil dihapus.');
     }
+
+    public function setActive(AcademicCalendarContent $content)
+    {
+        $content->update(['is_active' => !$content->is_active]);
+        
+        $status = $content->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        ActivityLogger::log('update', "Mengubah status kalender akademik {$content->title} menjadi {$status}");
+
+        return redirect()->route('admin.academic-calendar.index')->with('success', "Kalender akademik berhasil {$status}.");
+    }
 }

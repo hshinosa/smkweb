@@ -1,42 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, Link } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import Modal from '@/Components/Modal';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
-import { Calendar, X, ZoomIn, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
+import { Calendar, X, Download, FileText, ExternalLink, ChevronRight } from 'lucide-react';
 
 export default function AcademicCalendarPage({ 
-    auth, 
     calendarContents = [],
     currentAcademicYear 
 }) {
-    const page = usePage();
-    const flash = page.props.flash || {};
+    const { siteSettings } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const navigationData = getNavigationData(siteSettings);
+    
     const [selectedCalendar, setSelectedCalendar] = useState(null);
     const [showImageModal, setShowImageModal] = useState(false);
 
-    // Filter active calendar contents
-    const activeCalendars = calendarContents.filter(content => content.is_active);    // Prioritize Semester Ganjil (1) first, then Semester Genap (2), otherwise use the first calendar
+    // Initial selection logic
     useEffect(() => {
-        if (activeCalendars.length > 0 && !selectedCalendar) {
-            // Find the Semester Ganjil calendar (semester = 1)
-            const ganjilCalendar = activeCalendars.find(cal => cal.semester === 1);
+        if (Array.isArray(calendarContents) && calendarContents.length > 0 && !selectedCalendar) {
+            // Find current semester or just the first one
+            const currentYear = new Date().getFullYear();
+            const month = new Date().getMonth() + 1;
+            const currentSemester = (month >= 7 || month <= 1) ? 1 : 2; // Ganjil starts in July, Genap starts in Jan/Feb
             
-            // If found, select it, otherwise fallback to the first available calendar
-            setSelectedCalendar(ganjilCalendar || activeCalendars[0]);
+            const match = calendarContents.find(cal => 
+                cal.academic_year_start === currentYear && cal.semester === currentSemester
+            ) || calendarContents[0];
+            
+            setSelectedCalendar(match);
         }
     }, [calendarContents, selectedCalendar]);
-    
-    useEffect(() => {
-        if (flash && flash.success) {
-            const timer = setTimeout(() => {
-                flash.success = null;
-            }, 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [flash]);
 
     const openImageModal = (calendar) => {
         setSelectedCalendar(calendar);
@@ -47,27 +43,9 @@ export default function AcademicCalendarPage({
         setShowImageModal(false);
     };
 
-    // Standard navigation data used across the site
-    // Get navigation data from centralized source
-const navigationData = getNavigationData();
-
-    const programStudiDataNav = [
-        { nama: "MIPA", link: "/program-studi/mipa" },
-        { nama: "IPS", link: "/program-studi/ips" },
-        { nama: "Bahasa", link: "/program-studi/bahasa" },
-    ];
-    
-
-    
-
-    
-    
-        return (
-        <div className="bg-secondary text-gray-800 font-sans">
-            <Head>
-                <title>Kalender Akademik - SMAN 1 Baleendah</title>
-<meta name="description" content="Kalender akademik resmi SMA Negeri 1 Baleendah untuk tahun ajaran terkini. Berisi informasi jadwal penting semester, ujian, libur dan kegiatan sekolah." />
-            </Head>
+    return (
+        <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
+            <Head title={`Kalender Akademik - ${siteName}`} description={`Informasi jadwal kegiatan akademik, ujian, dan hari libur resmi ${siteName}.`} />
             
             <Navbar 
                 logoSman1={navigationData.logoSman1}
@@ -76,117 +54,220 @@ const navigationData = getNavigationData();
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            {/* Header Section */}
-            <section className="pt-24 pb-12 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 className={`${TYPOGRAPHY.pageTitle} text-center md:text-left text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300`}>
-                        Kalender Akademik
+            {/* 1. HERO SECTION (Consistent with other pages) */}
+            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+                {/* Background Image */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        alt="Background Kalender Akademik" 
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/60"></div>
+                </div>
+
+                <div className="relative z-10 container mx-auto px-4 text-center text-white">
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
+                        Kalender <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Akademik</span>
                     </h1>
-                    <p className={TYPOGRAPHY.bodyText + " text-gray-600 max-w-4xl mx-auto md:mx-0 text-center md:text-left"}>
-                        Tahun Ajaran {currentAcademicYear || "Terbaru"}
+                    <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
+                        Panduan jadwal kegiatan belajar mengajar dan agenda resmi sekolah tahun ajaran {currentAcademicYear}.
                     </p>
                 </div>
-            </section>            {/* Flash Message */}
-            {flash && flash.success && (
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-                    <div className="bg-blue-100 border border-primary text-primary px-4 py-3 rounded">
-                        {flash.success}
-                    </div>
-                </div>
-            )}
+            </section>
 
-            <main>                {/* Calendar Selection Tabs - Changed to semester tabs */}
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white">
-                    <div className="border-b border-gray-200 max-w-5xl mx-auto">
-                        <nav className="flex -mb-px space-x-8 overflow-x-auto justify-center" aria-label="Tabs">
-                            <button
-                                onClick={() => setSelectedCalendar(calendarContents.find(cal => cal.semester === 1) || null)}
-                                className={`whitespace-nowrap py-4 px-4 border-b-2 font-medium text-sm ${
-                                    selectedCalendar && selectedCalendar.semester === 1
-                                        ? 'border-primary text-primary'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
-                            >
-                                Semester Ganjil
-                            </button>
-                            <button
-                                onClick={() => setSelectedCalendar(calendarContents.find(cal => cal.semester === 2) || null)}
-                                className={`whitespace-nowrap py-4 px-4 border-b-2 font-medium text-sm ${
-                                    selectedCalendar && selectedCalendar.semester === 2
-                                        ? 'border-primary text-primary'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
-                            >
-                                Semester Genap
-                            </button>
-                        </nav>
+            {/* 2. MAIN CONTENT SECTION */}
+            <section className="py-16 bg-gray-50 flex-grow">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    
+                    {/* Semester Navigation & Info */}
+                    <div className="max-w-5xl mx-auto mb-12">
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-8">
+                            <div className="text-center md:text-left">
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Pilih Tahun & Semester</h2>
+                                <p className="text-gray-500 text-sm">Lihat detail agenda akademik berdasarkan periode yang tersedia.</p>
+                            </div>
+                            
+                            <div className="flex flex-wrap justify-center gap-3">
+                                {Array.isArray(calendarContents) && calendarContents.length > 0 ? (
+                                    calendarContents.map((cal) => (
+                                        <button
+                                            key={cal.id}
+                                            onClick={() => setSelectedCalendar(cal)}
+                                            className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 border ${
+                                                selectedCalendar?.id === cal.id 
+                                                ? "bg-primary text-white border-primary shadow-md scale-105" 
+                                                : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                                            }`}
+                                        >
+                                            {cal.academic_year} - {cal.semester_name}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="text-gray-400 italic">Tidak ada data kalender.</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                </div>
-                  {/* Selected Calendar Content */}
-                <section className="py-12 bg-secondary sm:py-16 lg:py-20">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+
+                    {/* Display Area */}
+                    <div className="max-w-6xl mx-auto">
                         {selectedCalendar ? (
-                            <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl max-w-5xl mx-auto border border-gray-200">
-                                <h2 className={TYPOGRAPHY.subsectionHeading + " text-center text-gray-800 mb-8"}>
-                                    Kalender Akademik {selectedCalendar.academic_year} Semester {selectedCalendar.semester_name}
-                                </h2>
-                                
-                                <div className="flex justify-center">
-                                    <div className="w-full max-w-4xl">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                                {/* Left: Info Details (4 Cols) */}
+                                <div className="lg:col-span-4 space-y-6">
+                                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                                        <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-6 text-primary">
+                                            <Calendar size={24} />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900 mb-4">{selectedCalendar.title}</h3>
+                                        
+                                        <div className="space-y-4 pt-4 border-t border-gray-50">
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-500">Tahun Ajaran</span>
+                                                <span className="font-bold text-gray-900">{selectedCalendar.academic_year}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-500">Semester</span>
+                                                <span className="font-bold text-gray-900">{selectedCalendar.semester_name}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-8 space-y-3">
+                                            <button 
+                                                onClick={() => openImageModal(selectedCalendar)}
+                                                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20"
+                                            >
+                                                <ExternalLink size={18} />
+                                                Lihat Full Screen
+                                            </button>
+                                            <a 
+                                                href={selectedCalendar.calendar_image_url} 
+                                                download 
+                                                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all"
+                                            >
+                                                <Download size={18} />
+                                                Unduh Gambar
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    {/* Important Note Box */}
+                                    <div className="bg-yellow-50 border-l-4 border-accent-yellow p-6 rounded-r-2xl">
+                                        <div className="flex items-center gap-2 text-yellow-800 font-bold mb-2">
+                                            <FileText size={18} />
+                                            <span>Catatan Penting</span>
+                                        </div>
+                                        <p className="text-sm text-yellow-700 leading-relaxed">
+                                            Jadwal sewaktu-waktu dapat berubah menyesuaikan dengan kebijakan Dinas Pendidikan Provinsi dan kalender pendidikan nasional.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Right: Calendar Image (8 Cols) */}
+                                <div className="lg:col-span-8 group relative rounded-3xl overflow-hidden bg-white shadow-xl border border-gray-100 p-2">
+                                    <div 
+                                        className="relative aspect-[3/4] md:aspect-[4/3] overflow-hidden rounded-2xl cursor-zoom-in"
+                                        onClick={() => openImageModal(selectedCalendar)}
+                                    >
                                         <img 
                                             src={selectedCalendar.calendar_image_url} 
-                                            alt={`Kalender Akademik ${selectedCalendar.academic_year} Semester ${selectedCalendar.semester_name} - Klik untuk memperbesar`}
-                                            className="w-full h-auto rounded-md border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity duration-200"
-                                            onClick={() => openImageModal(selectedCalendar)}
+                                            alt={selectedCalendar.title} 
+                                            className="w-full h-full object-contain bg-gray-50 transform group-hover:scale-[1.02] transition-transform duration-700"
                                         />
-                                        
-                                        <p className={TYPOGRAPHY.secondaryText + " text-center mt-4"}>
-                                            Klik pada gambar untuk memperbesar.
-                                        </p>
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 flex items-center justify-center">
+                                            <div className="bg-white/90 backdrop-blur-sm p-4 rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-opacity transform scale-90 group-hover:scale-100 duration-300">
+                                                <ExternalLink size={24} className="text-primary" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="p-4 text-center">
+                                        <p className="text-xs text-gray-400 font-medium italic">Klik pada gambar untuk memperbesar detail jadwal.</p>
                                     </div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-white p-6 md:p-8 rounded-lg shadow-xl max-w-5xl mx-auto border border-gray-200 text-center py-12">
-                                <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                                <h3 className={TYPOGRAPHY.cardTitle + " mt-2 text-gray-900"}>Tidak ada kalender akademik</h3>
-                                <p className={TYPOGRAPHY.secondaryText + " mt-1"}>
-                                    Kalender akademik belum tersedia saat ini.
+                            <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 p-20 text-center">
+                                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Calendar size={40} className="text-gray-300" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">Belum Ada Kalender</h3>
+                                <p className="text-gray-500 max-w-sm mx-auto leading-relaxed">
+                                    Data kalender akademik belum tersedia untuk periode ini. Silakan hubungi bagian kurikulum atau cek kembali nanti.
                                 </p>
                             </div>
                         )}
                     </div>
-                </section>
-            </main>            {/* Full Image Modal */}
-            <Modal show={showImageModal} onClose={closeImageModal} maxWidth="5xl">
-                <div className="p-4 relative">
-                    {/* Tombol Close di sudut kanan atas */}
+                </div>
+            </section>
+
+            {/* 3. FAQ / INFO ADDITIONAL SECTION */}
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid lg:grid-cols-2 gap-16 items-center">
+                        <div className="space-y-6">
+                            <h2 className={TYPOGRAPHY.sectionHeading}>Informasi <span className="text-primary">Kurikulum</span></h2>
+                            <p className={TYPOGRAPHY.bodyText}>
+                                Kalender akademik ini disusun berdasarkan pedoman kurikulum yang berlaku di {siteName}. Untuk detail kegiatan belajar mengajar per mata pelajaran, silakan jelajahi halaman kurikulum kami.
+                            </p>
+                            <Link 
+                                href="/akademik/kurikulum" 
+                                className="inline-flex items-center px-6 py-3 bg-blue-50 text-primary font-bold rounded-xl hover:bg-blue-100 transition-all group"
+                            >
+                                Lihat Detail Kurikulum
+                                <ChevronRight size={18} className="ml-2 transform group-hover:translate-x-1 transition-transform" />
+                            </Link>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {[
+                                { title: "Ujian Semester", desc: "Penilaian Sumatif Akhir Semester biasanya dilakukan di bulan Desember dan Juni." },
+                                { title: "Libur Sekolah", desc: "Mengikuti ketetapan kalender pendidikan dari Dinas Pendidikan Provinsi Jawa Barat." }
+                            ].map((item, idx) => (
+                                <div key={idx} className="p-6 rounded-2xl bg-gray-50 border border-gray-100">
+                                    <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
+                                    <p className="text-sm text-gray-600 leading-relaxed">{item.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Full Image Modal */}
+            <Modal show={showImageModal} onClose={closeImageModal} maxWidth="6xl">
+                <div className="p-2 relative bg-black/90 min-h-[50vh] flex items-center justify-center rounded-2xl overflow-hidden">
                     <button
                         onClick={closeImageModal}
-                        className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 bg-white/70 rounded-full p-1 focus:outline-none z-10"
-                        aria-label="Tutup gambar"
+                        className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-20"
+                        aria-label="Tutup"
                     >
                         <X size={24} />
                     </button>
                     
                     {selectedCalendar && (
-                        <img 
-                            src={selectedCalendar.calendar_image_url} 
-                            alt={`Kalender Akademik ${selectedCalendar.academic_year} (diperbesar)`}
-                            className="w-full h-auto rounded max-h-[80vh] object-contain"
-                        />
+                        <div className="w-full h-full flex flex-col items-center">
+                            <img 
+                                src={selectedCalendar.calendar_image_url} 
+                                alt={selectedCalendar.title}
+                                className="max-w-full max-h-[85vh] object-contain rounded-lg"
+                            />
+                            <div className="mt-4 pb-4 px-6 text-center text-white/80">
+                                <p className="font-bold text-lg">{selectedCalendar.title}</p>
+                                <p className="text-sm text-white/60">{selectedCalendar.academic_year} - {selectedCalendar.semester_name}</p>
+                            </div>
+                        </div>
                     )}
                 </div>
             </Modal>
             
-            <Footer 
+            <Footer
                 logoSman1={navigationData.logoSman1}
                 googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
-                profilLinks={navigationData.profilLinks}
-                akademikLinks={navigationData.akademikLinks}
-                programStudiLinks={navigationData.programStudiLinks}
                 socialMediaLinks={navigationData.socialMediaLinks}
             />
         </div>
     );
 }
+

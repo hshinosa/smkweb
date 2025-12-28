@@ -12,7 +12,8 @@ import {
     Calendar,
     MapPin,
     Phone,
-    Mail
+    Mail,
+    Leaf
 } from 'lucide-react';
 
 // Import Components
@@ -20,47 +21,41 @@ import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import { getNavigationData } from '@/Utils/navigationData';
 import { TYPOGRAPHY } from '@/Utils/typography';
-
-// Data Navigation
-const navigationData = getNavigationData();
+import { usePage } from '@inertiajs/react';
 
 export default function LandingPage({ 
     heroContent, 
     aboutLpContent, 
     kepsekWelcomeLpContent, 
-    faktaLpContent 
+    programsLpContent,
+    galleryLpContent,
+    ctaLpContent,
+    latestPosts = []
 }) {
-    // Programs Data
-    const programs = [
-        {
-            title: "MIPA",
-            fullName: "Matematika & Ilmu Pengetahuan Alam",
-            icon: Microscope,
-            description: "Program unggulan bagi siswa yang berminat dalam sains, teknologi, dan matematika. Fasilitas laboratorium lengkap.",
-            link: "/akademik/program-studi/mipa",
-            type: "MIPA"
-        },
-        {
-            title: "IPS",
-            fullName: "Ilmu Pengetahuan Sosial",
-            icon: Globe,
-            description: "Mendalami fenomena sosial, ekonomi, dan sejarah. Membentuk karakter kritis dan berwawasan luas.",
-            link: "/akademik/program-studi/ips",
-            type: "IPS"
-        },
-        {
-            title: "Bahasa",
-            fullName: "Ilmu Bahasa & Budaya",
-            icon: BookOpen,
-            description: "Eksplorasi bahasa asing dan seni budaya. Mempersiapkan siswa kompeten dalam komunikasi global.",
-            link: "/akademik/program-studi/bahasa",
-            type: "BAHASA"
-        }
-    ];
+    const { siteSettings } = usePage().props;
+    const navigationData = getNavigationData(siteSettings);
+    
+    // Map icon names to Lucide components
+    const iconMap = {
+        Microscope,
+        Globe,
+        BookOpen,
+        Users,
+        Trophy,
+        GraduationCap,
+        Calendar,
+        Leaf
+    };
+
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const siteDescription = siteSettings?.general?.site_description || 'Website Resmi SMAN 1 Baleendah';
 
     return (
         <div className="bg-secondary min-h-screen font-sans text-gray-800">
-            <Head title="SMAN 1 Baleendah - Generasi Unggul & Berkarakter" />
+            <Head>
+                <title>{`${siteName} - Generasi Unggul & Berkarakter`}</title>
+                <meta name="description" content={siteDescription} />
+            </Head>
 
             {/* Navbar */}
             <Navbar
@@ -75,7 +70,7 @@ export default function LandingPage({
                 {/* Hero Background Image */}
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        src={heroContent.background_image_url} 
                         alt="Background" 
                         className="w-full h-full object-cover"
                     />
@@ -91,11 +86,11 @@ export default function LandingPage({
                         {/* Left Column: Text */}
                         <div className="space-y-6 animate-fade-in-up">
                             <h1 className={TYPOGRAPHY.heroTitle}>
-                                Selamat Datang di <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">SMAN 1 Baleendah</span>
+                                {heroContent.title_line1} <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{heroContent.title_line2}</span>
                             </h1>
                             <p className={`${TYPOGRAPHY.heroText} max-w-lg`}>
-                                Sekolah penggerak prestasi dan inovasi masa depan. Kami berkomitmen mencetak lulusan yang cerdas, berakhlak mulia, dan siap bersaing di era global.
+                                {heroContent.hero_text}
                             </p>
                             <div className="flex flex-wrap gap-4 pt-4">
                                 <Link 
@@ -117,44 +112,36 @@ export default function LandingPage({
                         <div className="relative mx-auto max-w-lg md:max-w-none w-full h-[500px] lg:h-[600px] flex justify-center items-end">
                             {/* Main Image */}
                             <img 
-                                src="/images/anak-sma.png?v=2" 
-                                alt="Siswa Berprestasi SMAN 1 Baleendah" 
+                                src={heroContent.student_image_url || "/images/anak-sma.png"} 
+                                alt={`Siswa Berprestasi ${siteName}`} 
                                 className="relative z-10 h-full w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                             />
 
                             {/* Floating Glass Cards */}
-                            {/* Card 1: Akreditasi */}
-                            <div className="absolute top-10 -left-6 md:-left-12 bg-white/70 backdrop-blur-md border border-white/40 p-4 rounded-xl shadow-lg flex items-center gap-3 animate-float-slow max-w-[200px]">
-                                <div className="p-2 bg-yellow-100 rounded-full text-yellow-600">
-                                    <Trophy size={24} fill="currentColor" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 font-medium">Akreditasi</p>
-                                    <p className="text-sm font-bold text-gray-900">A (Unggul)</p>
-                                </div>
-                            </div>
-
-                            {/* Card 2: Lulusan PTN */}
-                            <div className="absolute bottom-20 -right-4 md:-right-8 bg-white/70 backdrop-blur-md border border-white/40 p-4 rounded-xl shadow-lg flex items-center gap-3 animate-float-medium max-w-[220px]">
-                                <div className="p-2 bg-blue-100 rounded-full text-primary">
-                                    <GraduationCap size={24} fill="currentColor" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 font-medium">Lulusan ke PTN</p>
-                                    <p className="text-sm font-bold text-gray-900">90% Diterima</p>
-                                </div>
-                            </div>
-
-                            {/* Card 3: Siswa Aktif */}
-                            <div className="absolute bottom-8 left-4 md:-left-4 bg-white/70 backdrop-blur-md border border-white/40 p-4 rounded-xl shadow-lg flex items-center gap-3 animate-float-fast max-w-[200px]">
-                                <div className="p-2 bg-green-100 rounded-full text-green-600">
-                                    <Users size={24} fill="currentColor" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 font-medium">Siswa Aktif</p>
-                                    <p className="text-sm font-bold text-gray-900">1200+ Siswa</p>
-                                </div>
-                            </div>
+                            {(heroContent.stats || []).map((stat, idx) => {
+                                const Icon = iconMap[stat.icon_name] || Trophy;
+                                const animations = ['animate-float-slow', 'animate-float-medium', 'animate-float-fast'];
+                                const positions = [
+                                    'top-10 -left-6 md:-left-12',
+                                    'bottom-20 -right-4 md:-right-8',
+                                    'bottom-8 left-4 md:-left-4'
+                                ];
+                                
+                                return (
+                                    <div 
+                                        key={idx}
+                                        className={`absolute ${positions[idx % positions.length]} bg-white/70 backdrop-blur-md border border-white/40 p-4 rounded-xl shadow-lg flex items-center gap-3 ${animations[idx % animations.length]} max-w-[220px] z-20`}
+                                    >
+                                        <div className={`p-2 rounded-full ${idx === 0 ? 'bg-yellow-100 text-yellow-600' : idx === 1 ? 'bg-blue-100 text-primary' : 'bg-green-100 text-green-600'}`}>
+                                            <Icon size={24} fill="currentColor" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 font-medium">{stat.label}</p>
+                                            <p className="text-sm font-bold text-gray-900">{stat.value}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
@@ -167,8 +154,8 @@ export default function LandingPage({
                         <div className="relative">
                             <div className="aspect-video rounded-2xl overflow-hidden shadow-xl bg-gray-200">
                                 <img 
-                                    src="/images/hero-bg-sman1-baleendah.jpeg" 
-                                    alt="Gedung SMAN 1 Baleendah" 
+                                    src={aboutLpContent.image_url} 
+                                    alt={aboutLpContent.title} 
                                     className="w-full h-full object-cover"
                                 />
                             </div>
@@ -177,35 +164,12 @@ export default function LandingPage({
                         </div>
                         <div>
                             <h2 className={`${TYPOGRAPHY.sectionHeading} mb-6`}>
-                                Tentang <span className="text-primary">Kami</span>
+                                {aboutLpContent.title.split(' ').slice(0, -1).join(' ')} <span className="text-primary">{aboutLpContent.title.split(' ').slice(-1)}</span>
                             </h2>
-                            <p className={`${TYPOGRAPHY.bodyText} mb-6`}>
-                                SMAN 1 Baleendah berdiri sejak tahun 1975 dan telah menjadi salah satu sekolah rujukan di Jawa Barat. Dengan visi menjadi sekolah unggul dalam prestasi dan berwawasan lingkungan, kami terus berinovasi dalam pembelajaran berbasis teknologi dan penguatan karakter.
-                            </p>
-                            <p className={`${TYPOGRAPHY.bodyText} mb-8`}>
-                                Kami percaya bahwa setiap siswa memiliki potensi unik yang perlu dikembangkan melalui bimbingan yang tepat dan fasilitas yang memadai.
-                            </p>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-blue-50 rounded-lg text-primary">
-                                        <Users size={24} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-2xl font-bold text-gray-900">60+</h4>
-                                        <p className="text-sm text-gray-600">Guru Bersertifikasi</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-yellow-50 rounded-lg text-yellow-600">
-                                        <Trophy size={24} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-2xl font-bold text-gray-900">150+</h4>
-                                        <p className="text-sm text-gray-600">Prestasi Tahunan</p>
-                                    </div>
-                                </div>
-                            </div>
+                            <div 
+                                className={`${TYPOGRAPHY.bodyText} mb-8 prose prose-blue max-w-none`}
+                                dangerouslySetInnerHTML={{ __html: aboutLpContent.description_html }}
+                            />
 
                             <Link 
                                 href="/profil/sejarah" 
@@ -273,43 +237,46 @@ export default function LandingPage({
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center max-w-3xl mx-auto mb-16">
                         <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
-                            Program <span className="text-primary">Akademik</span>
+                            {programsLpContent.title.split(' ').slice(0, -1).join(' ')} <span className="text-primary">{programsLpContent.title.split(' ').slice(-1)}</span>
                         </h2>
                         <p className={TYPOGRAPHY.bodyText}>
-                            Pilihan program studi yang dirancang untuk mempersiapkan siswa menuju jenjang pendidikan tinggi dan karir masa depan.
+                            {programsLpContent.description}
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {programs.map((program, idx) => (
-                            <div key={idx} className="group flex flex-col items-center">
-                                {/* Image Area - Floating above */}
-                                <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
-                                    <img 
-                                        src="/images/anak-sma-programstudi.png" 
-                                        alt={program.fullName}
-                                        className="h-full w-auto object-contain drop-shadow-xl transform group-hover:scale-105 transition-transform duration-500" 
-                                    />
-                                </div>
-                                
-                                {/* Content Section */}
-                                <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 relative -mt-12 pt-10 flex-1 flex flex-col z-10 w-full">
-                                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-primary mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
-                                        <program.icon size={24} />
+                        {(programsLpContent.items || []).map((program, idx) => {
+                            const IconComponent = iconMap[program.icon_name] || Microscope;
+                            return (
+                                <div key={idx} className="group flex flex-col items-center">
+                                    {/* Image Area - Floating above */}
+                                    <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
+                                        <img 
+                                            src={program.image_url || "/images/anak-sma-programstudi.png"} 
+                                            alt={program.title}
+                                            className="h-full w-auto object-contain drop-shadow-xl transform group-hover:scale-105 transition-transform duration-500" 
+                                        />
                                     </div>
-                                    <h3 className={`${TYPOGRAPHY.cardTitle} mb-2`}>{program.fullName}</h3>
-                                    <p className={`${TYPOGRAPHY.smallText} mb-8 leading-relaxed flex-1`}>
-                                        {program.description}
-                                    </p>
-                                    <Link 
-                                        href={program.link}
-                                        className="w-full py-3 rounded-xl border-2 border-primary text-primary font-bold hover:bg-primary hover:text-white transition-all text-center block"
-                                    >
-                                        Lihat Mata Pelajaran
-                                    </Link>
+                                    
+                                    {/* Content Section */}
+                                    <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 relative -mt-12 pt-10 flex-1 flex flex-col z-10 w-full">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors ${program.color_class || 'bg-blue-50 text-primary'}`}>
+                                            <IconComponent size={24} />
+                                        </div>
+                                        <h3 className={`${TYPOGRAPHY.cardTitle} mb-2`}>{program.title}</h3>
+                                        <p className={`${TYPOGRAPHY.smallText} mb-8 leading-relaxed flex-1`}>
+                                            {program.description}
+                                        </p>
+                                        <Link 
+                                            href={program.link || '#'}
+                                            className="w-full py-3 rounded-xl border-2 border-primary text-primary font-bold hover:bg-primary hover:text-white transition-all text-center block"
+                                        >
+                                            Lihat Selengkapnya
+                                        </Link>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </section>
@@ -332,71 +299,37 @@ export default function LandingPage({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {/* News Card 1 */}
-                        <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-all">
-                            <div className="h-48 bg-gray-200 relative overflow-hidden">
-                                <img src="/images/hero-bg-sman1-baleendah.jpeg" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" alt="News 1" />
-                                <div className="absolute top-4 left-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">
-                                    Pengumuman
+                        {latestPosts.map((post) => (
+                            <div key={post.id} className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-all">
+                                <div className="h-48 bg-gray-200 relative overflow-hidden">
+                                    <img 
+                                        src={post.featured_image || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
+                                        alt={post.title} 
+                                    />
+                                    <div className="absolute top-4 left-4 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">
+                                        {post.category}
+                                    </div>
+                                </div>
+                                <div className="p-6">
+                                    <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
+                                        <Calendar size={16} />
+                                        <span>{new Date(post.published_at || post.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                    </div>
+                                    <h3 className={`${TYPOGRAPHY.cardTitle} mb-3 line-clamp-2 hover:text-primary cursor-pointer`}>
+                                        {post.title}
+                                    </h3>
+                                    <Link href={`/berita/${post.slug}`} className="text-primary font-semibold text-sm hover:underline">
+                                        Baca Selengkapnya
+                                    </Link>
                                 </div>
                             </div>
-                            <div className="p-6">
-                                <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
-                                    <Calendar size={16} />
-                                    <span>12 Januari 2025</span>
-                                </div>
-                                <h3 className={`${TYPOGRAPHY.cardTitle} mb-3 line-clamp-2 hover:text-primary cursor-pointer`}>
-                                    Penerimaan Peserta Didik Baru (PPDB) Tahun Ajaran 2025/2026
-                                </h3>
-                                <Link href="/berita-pengumuman" className="text-primary font-semibold text-sm hover:underline">
-                                    Baca Selengkapnya
-                                </Link>
+                        ))}
+                        {latestPosts.length === 0 && (
+                            <div className="col-span-3 text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                                <p className="text-gray-500">Belum ada berita terbaru.</p>
                             </div>
-                        </div>
-
-                        {/* News Card 2 */}
-                        <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-all">
-                            <div className="h-48 bg-gray-200 relative overflow-hidden">
-                                <img src="/images/anak-sma.png" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" alt="News 2" />
-                                <div className="absolute top-4 left-4 bg-accent-yellow text-gray-900 text-xs font-bold px-3 py-1 rounded-full">
-                                    Prestasi
-                                </div>
-                            </div>
-                            <div className="p-6">
-                                <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
-                                    <Calendar size={16} />
-                                    <span>10 Januari 2025</span>
-                                </div>
-                                <h3 className={`${TYPOGRAPHY.cardTitle} mb-3 line-clamp-2 hover:text-primary cursor-pointer`}>
-                                    Tim Robotik SMAN 1 Baleendah Raih Medali Emas Nasional
-                                </h3>
-                                <Link href="/berita-pengumuman" className="text-primary font-semibold text-sm hover:underline">
-                                    Baca Selengkapnya
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* News Card 3 */}
-                        <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-all">
-                            <div className="h-48 bg-gray-200 relative overflow-hidden">
-                                <img src="/images/hero-bg-sman1-baleendah.jpeg" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" alt="News 3" />
-                                <div className="absolute top-4 left-4 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                                    Kegiatan
-                                </div>
-                            </div>
-                            <div className="p-6">
-                                <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
-                                    <Calendar size={16} />
-                                    <span>05 Januari 2025</span>
-                                </div>
-                                <h3 className={`${TYPOGRAPHY.cardTitle} mb-3 line-clamp-2 hover:text-primary cursor-pointer`}>
-                                    Workshop Kewirausahaan untuk Siswa Kelas XII
-                                </h3>
-                                <Link href="/berita-pengumuman" className="text-primary font-semibold text-sm hover:underline">
-                                    Baca Selengkapnya
-                                </Link>
-                            </div>
-                        </div>
+                        )}
                     </div>
 
                     <div className="mt-8 text-center md:hidden">
@@ -409,6 +342,7 @@ export default function LandingPage({
 
             {/* GALLERY SECTION */}
             <section className="py-20 bg-white overflow-hidden">
+                {/* ... (style tag remains same) */}
                 <style>{`
                     @keyframes scroll {
                         0% { transform: translateX(0); }
@@ -432,10 +366,10 @@ export default function LandingPage({
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
                     <div className="text-center max-w-3xl mx-auto">
                         <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
-                            Galeri <span className="text-primary">Sekolah</span>
+                            {galleryLpContent.title.split(' ').slice(0, -1).join(' ')} <span className="text-primary">{galleryLpContent.title.split(' ').slice(-1)}</span>
                         </h2>
                         <p className={TYPOGRAPHY.bodyText}>
-                            Momen-momen seru dan kegiatan inspiratif siswa-siswi SMAN 1 Baleendah.
+                            {galleryLpContent.description}
                         </p>
                     </div>
                 </div>
@@ -443,17 +377,12 @@ export default function LandingPage({
                 <div className="flex flex-col gap-6 pause-hover">
                     {/* Row 1 - Scroll Left */}
                     <div className="flex gap-6 animate-scroll w-max">
-                        {/* Duplicate images to create seamless loop (Original set) */}
-                        {[1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4].map((item, idx) => (
+                        {/* Duplicate images to create seamless loop */}
+                        {[...(galleryLpContent.images || []), ...(galleryLpContent.images || []), ...(galleryLpContent.images || [])].map((imgUrl, idx) => (
                             <div key={`row1-${idx}`} className="w-64 h-64 md:w-80 md:h-80 flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all relative group">
                                 <img 
-                                    src={[
-                                        "/images/panen-karya-sman1-baleendah.jpg",
-                                        "/images/hero-bg-sman1-baleendah.jpeg",
-                                        "/images/keluarga-besar-sman1-baleendah.png",
-                                        "/images/hero-bg-sman1-baleendah.jpeg"
-                                    ][(item - 1)]} 
-                                    alt={`Gallery ${item}`} 
+                                    src={imgUrl} 
+                                    alt={`Gallery ${idx}`} 
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                                 />
                                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
@@ -463,17 +392,12 @@ export default function LandingPage({
 
                     {/* Row 2 - Scroll Right (Reverse) */}
                     <div className="flex gap-6 animate-scroll-reverse w-max">
-                        {/* Duplicate images to create seamless loop */}
-                        {[3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2].map((item, idx) => (
+                        {/* Duplicate images to create seamless loop (reversed) */}
+                        {[...(galleryLpContent.images || []), ...(galleryLpContent.images || []), ...(galleryLpContent.images || [])].reverse().map((imgUrl, idx) => (
                             <div key={`row2-${idx}`} className="w-64 h-64 md:w-80 md:h-80 flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all relative group">
                                 <img 
-                                    src={[
-                                        "/images/panen-karya-sman1-baleendah.jpg",
-                                        "/images/hero-bg-sman1-baleendah.jpeg",
-                                        "/images/keluarga-besar-sman1-baleendah.png",
-                                        "/images/hero-bg-sman1-baleendah.jpeg"
-                                    ][(item - 1)]} 
-                                    alt={`Gallery ${item}`} 
+                                    src={imgUrl} 
+                                    alt={`Gallery ${idx}`} 
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                                 />
                                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
@@ -500,10 +424,10 @@ export default function LandingPage({
 
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                        Siap Menjadi Bagian dari <br/> Keluarga Besar SMAN 1 Baleendah?
+                        {ctaLpContent.title}
                     </h2>
                     <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
-                        Dapatkan informasi lengkap mengenai pendaftaran peserta didik baru, jadwal, dan persyaratan yang dibutuhkan.
+                        {ctaLpContent.description}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link 

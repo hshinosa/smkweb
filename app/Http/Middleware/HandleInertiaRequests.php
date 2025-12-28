@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -29,10 +31,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $siteSettings = Schema::hasTable('site_settings') ? SiteSetting::getCachedAll() : [];
+
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+                'admin' => $request->user('admin'),
+            ],
+            'siteSettings' => $siteSettings,
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
             ],
         ];
     }

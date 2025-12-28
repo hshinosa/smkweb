@@ -10,22 +10,35 @@ import { Check, Star, Target } from 'lucide-react';
 // Import typography constants
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
+import { usePage } from '@inertiajs/react';
 
-// Get navigation data from centralized source
-const navigationData = getNavigationData();
+export default function VisiMisiPage({ auth, visionMission, hero }) {
+    const { siteSettings } = usePage().props;
+    const navigationData = getNavigationData(siteSettings);
+    const { vision, mission, goals } = visionMission || {};
 
-const misiPoints = [
-    "Melaksanakan pembelajaran berbasis teknologi dan inovasi.",
-    "Menanamkan nilai karakter dan budi pekerti luhur.",
-    "Mengembangkan potensi akademik dan non-akademik siswa.",
-    "Menciptakan lingkungan sekolah yang ramah dan berwawasan lingkungan.",
-    "Menjalin kerjasama dengan berbagai institusi pendidikan tinggi."
-];
+    // Helper to format image path correctly
+    const formatImagePath = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http') || path.startsWith('/')) return path;
+        return `/storage/${path}`;
+    };
 
-export default function VisiMisiPage({ auth }) {
+    const renderHighlightedTitle = (title) => {
+        if (!title) return null;
+        const words = title.split(' ');
+        if (words.length <= 1) return title;
+        const lastWord = words.pop();
+        return (
+            <>
+                {words.join(' ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{lastWord}</span>
+            </>
+        );
+    };
+
     return (
         <div className="bg-white font-sans text-gray-800">
-            <Head title="Visi & Misi - SMAN 1 Baleendah" description="Visi dan Misi SMA Negeri 1 Baleendah. Membentuk peserta didik berakhlak mulia, berprestasi akademik tinggi, berkarakter kuat, dan berwawasan global." />
+            <Head title={`${hero?.title || 'Visi & Misi'} - SMAN 1 Baleendah`} description="Visi dan Misi SMA Negeri 1 Baleendah. Membentuk peserta didik berakhlak mulia, berprestasi akademik tinggi, bercarakter kuat, dan berwawasan global." />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -39,7 +52,7 @@ export default function VisiMisiPage({ auth }) {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
                         alt="Background Visi Misi" 
                         className="w-full h-full object-cover"
                     />
@@ -49,13 +62,13 @@ export default function VisiMisiPage({ auth }) {
                 {/* Content */}
                 <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
                     <h1 className={`${TYPOGRAPHY.heroTitle} mb-4 drop-shadow-lg`}>
-                        Visi & Misi <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Sekolah</span>
+                        {renderHighlightedTitle(hero?.title || 'Visi & Misi Sekolah')}
                     </h1>
                 </div>
             </section>
 
             {/* SECTION C: VISI & MISI */}
-            <section className="py-20 bg-white">
+            <section className="py-20 bg-white border-b">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-stretch">
                         {/* Left Card (VISI) */}
@@ -71,7 +84,7 @@ export default function VisiMisiPage({ auth }) {
                                     Visi Sekolah
                                 </h2>
                                 <p className="text-xl md:text-2xl leading-relaxed font-medium italic text-blue-50">
-                                    "Terwujudnya Peserta Didik yang Beriman, Cerdas, Terampil, Mandiri, dan Berwawasan Global."
+                                    "{vision || "Terwujudnya Peserta Didik yang Beriman, Cerdas, Terampil, Mandiri, dan Berwawasan Global."}"
                                 </p>
                             </div>
                         </div>
@@ -85,7 +98,7 @@ export default function VisiMisiPage({ auth }) {
                                 Misi Sekolah
                             </h2>
                             <ul className="space-y-4">
-                                {misiPoints.map((point, idx) => (
+                                {(mission || []).map((point, idx) => (
                                     <li key={idx} className="flex items-start gap-4 group">
                                         <div className="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition-colors">
                                             <Check className="w-4 h-4 text-green-600" />
@@ -98,6 +111,26 @@ export default function VisiMisiPage({ auth }) {
                     </div>
                 </div>
             </section>
+
+            {/* SECTION D: GOALS */}
+            {goals && goals.length > 0 && (
+                <section className="py-20 bg-gray-50">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-16">
+                            <h2 className={TYPOGRAPHY.sectionHeading}>
+                                Tujuan Strategis <span className="text-primary">Sekolah</span>
+                            </h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {goals.map((goal, idx) => (
+                                <div key={idx} className="bg-white p-6 rounded-2xl shadow-md border-t-4 border-primary">
+                                    <p className="text-gray-700 font-medium">{goal}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             <Footer
                 logoSman1={navigationData.logoSman1}

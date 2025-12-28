@@ -1,7 +1,8 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { MapPin, Phone, Mail, Link2, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
 import { getNavigationData } from '@/Utils/navigationData';
+import ChatWidget from './ChatWidget';
 
 export default function Footer({
     logoSman1,
@@ -9,13 +10,17 @@ export default function Footer({
     socialMediaLinks,
     showMap = true
 }) {
-    // Get navigation data from centralized source
-    const navigationData = getNavigationData();
+    const { siteSettings } = usePage().props;
+    const navigationData = getNavigationData(siteSettings);
     
     // Use props if provided, otherwise use navigationData
     const finalLogoSman1 = logoSman1 || navigationData.logoSman1;
     const finalGoogleMapsEmbedUrl = googleMapsEmbedUrl || navigationData.googleMapsEmbedUrl;
     const finalSocialMediaLinks = socialMediaLinks || navigationData.socialMediaLinks;
+    const finalAddress = navigationData.address;
+    const finalPhone = navigationData.phone;
+    const finalEmail = navigationData.email;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
 
     // Combined Quick Links
     const quickLinks = [
@@ -25,6 +30,8 @@ export default function Footer({
         { title: "Berita & Pengumuman", href: "/berita-pengumuman" },
         { title: "Kontak Kami", href: "/kontak" },
     ];
+
+    const footerSettings = siteSettings?.footer || {};
 
     return (
         <footer className="bg-primary text-white">
@@ -36,17 +43,17 @@ export default function Footer({
                         <div className="flex items-center gap-3">
                             <img 
                                 src={finalLogoSman1} 
-                                alt="Logo SMAN 1 Baleendah" 
+                                alt={`Logo ${siteName}`} 
                                 className="h-16 w-16 bg-white rounded-full p-1" 
                             />
                             <div>
                                 <h3 className="text-lg font-bold leading-tight">
-                                    SMAN 1 <br/> Baleendah
+                                    {siteName}
                                 </h3>
                             </div>
                         </div>
                         <p className="text-blue-100 text-sm leading-relaxed">
-                            Mewujudkan generasi unggul, berkarakter, dan berwawasan global. Sekolah pilihan terbaik untuk masa depan gemilang.
+                            {footerSettings.footer_description || 'Mewujudkan generasi unggul, berkarakter, dan berwawasan global. Sekolah pilihan terbaik untuk masa depan gemilang.'}
                         </p>
                         <div className="flex gap-3 pt-2">
                              {finalSocialMediaLinks.map(social => {
@@ -91,21 +98,19 @@ export default function Footer({
                             <div className="flex items-start gap-3">
                                 <MapPin className="w-5 h-5 text-accent-yellow mt-1 flex-shrink-0" />
                                 <p className="text-sm">
-                                    Jl. R.A.A. Wiranatakusumah No. 30,<br />
-                                    Baleendah, Bandung,<br />
-                                    Jawa Barat 40375
+                                    {finalAddress}
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Phone className="w-5 h-5 text-accent-yellow flex-shrink-0" />
-                                <a href="tel:+62225940268" className="text-sm hover:text-white">
-                                    (022) 5940268
+                                <a href={`tel:${finalPhone}`} className="text-sm hover:text-white">
+                                    {finalPhone}
                                 </a>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Mail className="w-5 h-5 text-accent-yellow flex-shrink-0" />
-                                <a href="mailto:info@sman1baleendah.sch.id" className="text-sm hover:text-white">
-                                    info@sman1baleendah.sch.id
+                                <a href={`mailto:${finalEmail}`} className="text-sm hover:text-white">
+                                    {finalEmail}
                                 </a>
                             </div>
                         </div>
@@ -124,7 +129,7 @@ export default function Footer({
                                     allowFullScreen=""
                                     loading="lazy"
                                     referrerPolicy="no-referrer-when-downgrade"
-                                    title="Peta Lokasi SMAN 1 Baleendah"
+                                    title={`Peta Lokasi ${siteName}`}
                                 ></iframe>
                             </div>
                         </div>
@@ -133,9 +138,10 @@ export default function Footer({
                 </div>
 
                 <div className="mt-12 pt-8 border-t border-blue-900 text-center text-blue-200 text-sm">
-                    <p>© {new Date().getFullYear()} SMAN 1 Baleendah. All Rights Reserved.</p>
+                    <p>{footerSettings.copyright_text || `© ${new Date().getFullYear()} ${siteName}. All Rights Reserved.`}</p>
                 </div>
             </div>
+            <ChatWidget />
         </footer>
     );
 }

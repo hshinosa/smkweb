@@ -5,6 +5,7 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import ChatWidget from '@/Components/ChatWidget';
+import { Toaster } from 'react-hot-toast';
 
 createInertiaApp({
     resolve: (name) =>
@@ -18,7 +19,7 @@ createInertiaApp({
         root.render(
             <>
                 <App {...props} />
-                <ChatWidget />
+                <Toaster position="top-right" />
             </>
         );
     },

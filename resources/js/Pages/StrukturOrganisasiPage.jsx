@@ -11,14 +11,21 @@ import { X } from 'lucide-react';
 // Import typography constants
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
+import { usePage } from '@inertiajs/react';
 
-// Get navigation data from centralized source
-const navigationData = getNavigationData();
-
-const strukturImage = '/images/struktur-organisasi-sman1-baleendah.jpg';
-
-export default function StrukturOrganisasiPage({ auth }) {
+export default function StrukturOrganisasiPage({ auth, organization, hero }) {
+    const { siteSettings } = usePage().props;
+    const navigationData = getNavigationData(siteSettings);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    
+    // Helper to format image path correctly
+    const formatImagePath = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http') || path.startsWith('/')) return path;
+        return `/storage/${path}`;
+    };
+
+    const imagePath = formatImagePath(organization?.image_url) || '/images/struktur-organisasi-sman1-baleendah.jpg';
 
     const openImageModal = () => {
         setIsImageModalOpen(true);
@@ -28,9 +35,21 @@ export default function StrukturOrganisasiPage({ auth }) {
         setIsImageModalOpen(false);
     };
 
+    const renderHighlightedTitle = (title) => {
+        if (!title) return null;
+        const words = title.split(' ');
+        if (words.length <= 1) return title;
+        const lastWord = words.pop();
+        return (
+            <>
+                {words.join(' ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{lastWord}</span>
+            </>
+        );
+    };
+
     return (
         <div className="bg-white font-sans text-gray-800">
-            <Head title="Struktur Organisasi - SMAN 1 Baleendah" description="Bagan struktur organisasi SMA Negeri 1 Baleendah." />
+            <Head title={`${hero?.title || 'Struktur Organisasi'} - SMAN 1 Baleendah`} description="Bagan struktur organisasi SMA Negeri 1 Baleendah." />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -44,7 +63,7 @@ export default function StrukturOrganisasiPage({ auth }) {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
                         alt="Background Struktur Organisasi" 
                         className="w-full h-full object-cover"
                     />
@@ -54,7 +73,7 @@ export default function StrukturOrganisasiPage({ auth }) {
                 {/* Content */}
                 <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
                     <h1 className={`${TYPOGRAPHY.heroTitle} mb-4 drop-shadow-lg`}>
-                        Struktur <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Organisasi</span>
+                        {renderHighlightedTitle(hero?.title || 'Struktur Organisasi')}
                     </h1>
                 </div>
             </section>
@@ -64,7 +83,7 @@ export default function StrukturOrganisasiPage({ auth }) {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl max-w-6xl mx-auto border border-gray-100">
                         <img
-                            src={strukturImage}
+                            src={imagePath}
                             alt="Bagan Struktur Organisasi SMA Negeri 1 Baleendah - Klik untuk memperbesar"
                             className="w-full h-auto rounded-xl border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01]"
                             onClick={openImageModal}
@@ -93,7 +112,7 @@ export default function StrukturOrganisasiPage({ auth }) {
                         <X size={24} />
                     </button>
                     <img
-                        src={strukturImage}
+                        src={imagePath}
                         alt="Bagan Struktur Organisasi SMA Negeri 1 Baleendah (diperbesar)"
                         className="w-full h-auto rounded-lg"
                     />

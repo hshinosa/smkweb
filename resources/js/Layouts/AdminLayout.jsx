@@ -3,15 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, usePage, Head } from '@inertiajs/react';
 import {
     ChevronDown, ChevronRight, LayoutDashboard, LogOut, Newspaper,
-    CalendarDays, Info, FileText,
-    Menu as MenuIcon, X as XIcon, UserCog // Hapus ikon yang tidak terpakai jika ada
+    CalendarDays, Info, FileText, Image as ImageIcon, LayoutGrid,
+    Menu as MenuIcon, X as XIcon, UserCog, Star, Mail, Settings
 } from 'lucide-react';
-import Dropdown from '@/Components/Dropdown'; // Untuk dropdown profil desktop
-import { Transition } from '@headlessui/react'; // Import Transition
+import Dropdown from '@/Components/Dropdown';
+import { Transition } from '@headlessui/react';
+import ChatWidget from '@/Components/ChatWidget';
 
-const logoSekolah = '/images/logo-sman1baleendah.png';
-
-// Komponen SidebarItem (untuk item utama di sidebar desktop dan mobile)
 const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen, onClick, isMobile = false, level = 0, closeMobileMenu }) => {
     const activeClass = isActive ? 'bg-primary/10 text-primary font-semibold' : (isMobile ? 'hover:bg-gray-100' : 'hover:bg-gray-50');
     const Tag = hasSubmenu ? 'button' : Link;
@@ -50,7 +48,7 @@ const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen,
 const SubmenuItem = ({ href, children, isActive, hasSubmenu, isOpen, onClick, level = 1, isMobile = false, closeMobileMenu }) => {
     const activeClass = isActive ? 'text-primary font-semibold' : 'hover:text-primary';
     const Tag = hasSubmenu ? 'button' : Link;
-    const indentClassDesktop = level === 1 ? 'ml-[1.3rem] border-l-2 border-gray-200 pl-2 pr-1' : 'ml-[1.3rem] border-l-2 border-gray-200 pl-5 pr-1'; // Indentasi desktop
+    const indentClassDesktop = level === 1 ? 'border-l-2 border-gray-200 pl-4' : 'border-l-2 border-gray-200 pl-6'; // Indentasi desktop
     const indentClassMobile = `pl-${4 + level * 4} pr-3`; // Indentasi mobile
     const indentClass = isMobile ? indentClassMobile : indentClassDesktop;
 
@@ -63,12 +61,12 @@ const SubmenuItem = ({ href, children, isActive, hasSubmenu, isOpen, onClick, le
     };
 
     return (
-        <li>
+        <li className={!isMobile ? 'ml-[1.3rem]' : ''}>
             <Tag
                 href={!hasSubmenu && href ? href : undefined}
                 type={Tag === 'button' ? 'button' : undefined}
                 onClick={handleClick}
-                className={`flex items-center justify-between w-full py-2 text-xs rounded-md ${activeClass} ${indentClass} ${isMobile ? 'px-3' : ''}`}
+                className={`flex items-center justify-between w-full py-2 text-xs rounded-md transition-all ${activeClass} ${indentClass} ${isMobile ? 'px-3' : ''}`}
             >
                 {children}
                 {hasSubmenu && (
@@ -79,47 +77,24 @@ const SubmenuItem = ({ href, children, isActive, hasSubmenu, isOpen, onClick, le
     );
 };
 
-// Data link
-const tentangKamiSidebarLinks = [
-    { title: "Profil Sekolah", href: route('profil.sekolah')}, // Ganti # dengan route yang benar jika ada
-    { title: "Visi & Misi", href: route('visi.misi')},
-    { title: "Struktur Organisasi", href: route('struktur.organisasi')},
-    { title: "Fasilitas", href: "#"}, // Ganti href jika ada
-    { title: "Program Sekolah (Publik)", href: route('program.sekolah')},
-    { title: "Daftar Guru & TU", href: "#"},
-    { title: "Hubungi Kami", href: "#"},
-];
-const manajemenSekolahSidebarLinks = [
-    { title: "Kurikulum", href: "#" },
-    { title: "Kesiswaan", href: "#" },
-    { title: "Humas & Industri", href: "#" },
-    { title: "Sarana Prasarana", href: "#" },
-];
-
-const programKeahlianSubmenuLinks = [
-    { title: "Pekerjaan Sosial", href: "#" },
-    { title: "Kuliner", href: "#" },
-    { title: "Perhotelan", href: "#" },
-    { title: "Desain Komunikasi Visual", href: "#" },
-];
-const landingPageSubmenuLinks = [
-    { title: "Hero Section", href: "#" },
-    { title: "Tentang", href: "#" },
-    { title: "Sambutan Kepala Sekolah", href: "#" },
-    { title: "Program Keahlian (di LP)", href: "#" },
-    { title: "Fakta", href: "#" },
-];
-const akademikSubmenuLinks = [
-    { title: "Kalender Akademik", href: route('admin.academic-calendar.index') },
-    { title: "Berita dan Pengumuman", href: "#" },
-];
-
-
 export default function AdminLayout({ children, headerTitle = "Dashboard Utama" }) {
-    const { auth } = usePage().props;
+    const { auth, siteSettings } = usePage().props;
     const admin = auth?.admin;
+    
+    // Fix image URL handling: use asset helper logic if path doesn't start with http or /
+    const getAssetUrl = (path, fallback) => {
+        if (!path) return fallback;
+        if (path.startsWith('http') || path.startsWith('/')) return path;
+        return `/storage/${path}`;
+    };
 
-    const [openMenus, setOpenMenus] = useState({ /* ... state menu sama ... */ });
+    const logoSekolah = getAssetUrl(siteSettings?.general?.site_logo, '/images/logo-sman1-baleendah.png');
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+
+    const [openMenus, setOpenMenus] = useState({
+        konten_utama: true,
+        master_data: true,
+    });
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const toggleMenu = (menuName) => (e) => {
@@ -142,7 +117,7 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                     <ItemOrSubItemComponent
                         href={!hasSubmenu ? item.href : undefined}
                         icon={currentLevel === 0 ? item.icon : undefined}
-                        isActive={item.href && typeof route === 'function' && route().current(item.href)}
+                        isActive={item.routeName ? route().current(item.routeName) : (item.href && item.href !== '#' && route().current(item.href))}
                         hasSubmenu={hasSubmenu}
                         isOpen={openMenus[menuKey]}
                         onClick={hasSubmenu ? toggleMenu(menuKey) : undefined}
@@ -163,88 +138,126 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
     };
 
     const navigationStructure = [
-        { title: "Dashboard Utama", href: route('admin.dashboard'), icon: LayoutDashboard, submenuKey: 'dashboard' },
+        { title: "Dashboard Utama", href: route('admin.dashboard'), icon: LayoutDashboard, routeName: 'admin.dashboard' },
         {
-            title: "Kelola Landing Page", // Nama diubah
+            title: "Kelola Konten Utama",
+            icon: LayoutGrid,
+            submenuKey: 'konten_utama',
+            sublinks: [
+                { title: "Landing Page", href: route('admin.landingpage.content.index'), routeName: 'admin.landingpage.content.*' },
+                { title: "Informasi SPMB", href: route('admin.spmb.index'), routeName: 'admin.spmb.*' },
+                { title: "Program Studi", href: route('admin.program-studi.index'), routeName: 'admin.program-studi.*' },
+                { title: "Profil Sekolah", href: route('admin.school-profile.index'), routeName: 'admin.school-profile.*' },
+                { title: "Kurikulum", href: route('admin.curriculum.index'), routeName: 'admin.curriculum.*' },
+                { title: "Kalender Akademik", href: route('admin.academic-calendar.index'), routeName: 'admin.academic-calendar.*' },
+            ]
+        },
+        {
+            title: "Master Data & Berita",
             icon: Newspaper,
-            href: route('admin.landingpage.content.index'), // Link langsung ke halaman pengelolaan
-            submenuKey: 'landingPageContentManagement', // Key unik untuk state jika diperlukan (misal untuk active state)
-            // sublinks dihapus karena semua form ada di satu halaman
+            submenuKey: 'master_data',
+            sublinks: [
+                { title: "Berita & Pengumuman", href: route('admin.posts.index'), routeName: 'admin.posts.*' },
+                { title: "Guru & Staff", href: route('admin.teachers.index'), routeName: 'admin.teachers.*' },
+                { title: "Ekstrakurikuler", href: route('admin.extracurriculars.index'), routeName: 'admin.extracurriculars.*' },
+                { title: "Jejak Alumni", href: route('admin.alumni.index'), routeName: 'admin.alumni.*' },
+                { title: "Galeri Sekolah", href: route('admin.galleries.index'), routeName: 'admin.galleries.*' },
+                { title: "FAQ", href: route('admin.faqs.index'), routeName: 'admin.faqs.*' },
+            ]
         },
         {
-            title: "Akademik & Informasi", icon: CalendarDays, submenuKey: 'akademik', sublinks: [
-                ...akademikSubmenuLinks.map(s => ({...s, href: s.href || "#"})),
-                { title: "Program Keahlian", submenuKey: 'programKeahlianAkademik', sublinks: programKeahlianSubmenuLinks.map(s => ({...s, href: s.href || "#"})) }
-            ]
-        },        {
-            title: "Kelola Informasi SPMB", // Nama diubah untuk menunjukkan ini adalah halaman pengelolaan
-            icon: FileText,
-            href: route('admin.spmb.content.index'), // Link langsung ke halaman pengelolaan SPMB
-            submenuKey: 'spmbContentManagement', // Key unik untuk state jika diperlukan (misal untuk active state)
-            // sublinks dihapus karena semua form ada di satu halaman
+            title: "Interaksi & Pesan",
+            icon: Mail,
+            href: route('admin.contact-messages.index'),
+            routeName: 'admin.contact-messages.*',
         },
         {
-            title: "Tentang Kami", icon: Info, submenuKey: 'tentangKami', sublinks: [
-                ...tentangKamiSidebarLinks.map(s => ({...s, href: s.href || "#"})),
-                { title: "Manajemen Sekolah", submenuKey: 'manajemenSekolah', sublinks: manajemenSekolahSidebarLinks.map(s => ({...s, href: s.href || "#"})) }
-            ]
+            title: "Pengaturan Situs",
+            icon: Settings,
+            href: route('admin.site-settings.index'),
+            routeName: 'admin.site-settings.*',
         }
     ];
 
 
     return (
-        <div className="min-h-screen flex bg-gray-100">
-            <Head title={`${headerTitle} - Admin SMAN 1 Baleendah`} />
+        <div className="h-screen flex bg-gray-100 overflow-hidden">
+            <Head title={`${headerTitle} - Admin ${siteName}`} />
 
             {/* Sidebar untuk Desktop */}
-            <aside className="w-72 bg-white border-r border-gray-200 hidden lg:flex lg:flex-col fixed h-screen transform-gpu"> {/* Added transform-gpu for potentially smoother fixed positioning */}
+            <aside className="w-72 bg-white border-r border-gray-200 hidden lg:flex lg:flex-col fixed h-screen transform-gpu">
                 <div className="p-4 border-b border-gray-200">
                     <Link href={route('admin.dashboard')} className="flex items-center px-2">
-                        <img src={logoSekolah} alt="Logo SMAN 1 Baleendah" className="h-10 w-auto" />
-                        <span className="ml-3 text-lg font-semibold text-gray-800">SMAN 1 Baleendah</span>
+                        <img src={logoSekolah} alt={`Logo ${siteName}`} className="h-10 w-auto" />
+                        <span className="ml-3 text-lg font-semibold text-gray-800">{siteName}</span>
                     </Link>
                 </div>
-                <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
+                <nav className="flex-grow p-4 space-y-1 overflow-y-auto overflow-x-hidden no-scrollbar">
                     <ul>
                         {renderNavItemsRecursive(navigationStructure, 'sidebar', 0, false)}
                     </ul>
                 </nav>
+
+                {/* Profile Section at Bottom */}
+                <div className="p-4 border-t border-gray-200 mt-auto bg-gray-50/50">
+                    <Dropdown>
+                        <Dropdown.Trigger>
+                            <button className="flex items-center w-full text-left text-sm font-medium text-gray-700 hover:bg-white p-2 rounded-xl transition-all border border-transparent hover:border-gray-200 hover:shadow-sm">
+                                <img src={logoSekolah} alt="Profil Admin" className="h-9 w-9 rounded-full mr-3 object-cover border border-gray-200 shadow-sm" />
+                                <div className="flex-grow min-w-0 mr-2">
+                                    <p className="font-bold text-gray-900 truncate">{admin ? admin.username : 'Admin'}</p>
+                                    <p className="text-xs text-gray-500 truncate capitalize">Administrator</p>
+                                </div>
+                                <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
+                            </button>
+                        </Dropdown.Trigger>
+                        <Dropdown.Content align="top" width="48" contentClasses="py-1 bg-white mb-2 shadow-2xl border border-gray-100 rounded-xl overflow-hidden">
+                            <div className="px-4 py-2 border-b border-gray-50 bg-gray-50/30 mb-1">
+                                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Status</p>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                    <span className="text-xs font-medium text-gray-600">Online</span>
+                                </div>
+                            </div>
+                            <Dropdown.Link href={route('admin.logout')} method="post" as="button" className="w-full text-left">
+                                <div className="flex items-center text-red-600 hover:text-red-700 transition-colors">
+                                    <LogOut size={16} className="mr-2" />
+                                    <span className="font-semibold">Keluar</span>
+                                </div>
+                            </Dropdown.Link>
+                        </Dropdown.Content>
+                    </Dropdown>
+                </div>
             </aside>
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col lg:pl-72"> {/* Padding kiri hanya untuk desktop */}
-                <header className="bg-white shadow-sm border-b border-gray-200 p-3 sm:p-4 sticky top-0 z-30">
-                    <div className="mx-auto flex justify-between items-center"> {/* Container dihilangkan untuk full width header */}
-                        <div className="flex items-center">
-                            <button onClick={toggleMobileMenu} className="lg:hidden p-2 mr-2 text-gray-600 hover:text-primary focus:outline-none">
-                                {mobileMenuOpen ? <XIcon size={24} /> : <MenuIcon size={24} />}
-                            </button>
-                            <h1 className="text-md sm:text-xl font-semibold text-gray-700">{headerTitle}</h1>
-                        </div>
-                        <div className="flex items-center">
-                            <Dropdown>
-                                <Dropdown.Trigger>
-                                    <button className="flex items-center text-sm font-medium text-gray-700 hover:text-primary focus:outline-none p-1 sm:p-2 rounded-md hover:bg-gray-100">
-                                        <img src={logoSekolah} alt="Profil Admin" className="h-7 w-7 rounded-full mr-0 sm:mr-2 object-cover" />
-                                        <span className="hidden sm:inline">{admin ? admin.username : 'Admin'}</span>
-                                        <ChevronDown size={16} className="ml-0 sm:ml-1" />
-                                    </button>
-                                </Dropdown.Trigger>
-                                <Dropdown.Content align="right" width="48">
-                                    <Dropdown.Link href={route('admin.logout')} method="post" as="button">
-                                        <LogOut size={16} className="mr-2 inline-block text-red-500" />
-                                        <span className="text-red-500">Logout</span>
-                                    </Dropdown.Link>
-                                </Dropdown.Content>
-                            </Dropdown>
-                        </div>
+                {/* Mobile Header (Visible only on mobile/tablet) */}
+                <header className="lg:hidden bg-white border-b border-gray-200 h-16 flex items-center px-4 sticky top-0 z-40">
+                    <button 
+                        onClick={toggleMobileMenu} 
+                        className="p-2 -ml-2 text-gray-600 hover:text-primary focus:outline-none transition-colors"
+                        aria-label="Toggle Menu"
+                    >
+                        <MenuIcon size={24} />
+                    </button>
+                    <div className="ml-3 flex items-center gap-3 overflow-hidden">
+                        <img src={logoSekolah} alt="Logo" className="h-8 w-auto flex-shrink-0" />
+                        <h1 className="text-sm font-bold text-gray-800 truncate uppercase tracking-wider">{headerTitle}</h1>
                     </div>
                 </header>
 
-                {/* Mobile Navigation Menu dengan Transisi */}
+                <main className="flex-1 overflow-y-auto pt-4 sm:pt-6">
+                    {/* Page Header (Title) - Integrated into main area for desktop */}
+                    <div className="px-4 sm:px-6 mb-2 hidden lg:block">
+                        <h1 className="text-2xl font-bold text-gray-800 mb-4">{headerTitle}</h1>
+                    </div>
+                    {children}
+                </main>
+
+                {/* Mobile Navigation Menu with Transition */}
                 <Transition show={mobileMenuOpen} as={React.Fragment}>
-                    <div className="lg:hidden fixed inset-0 z-40 flex" role="dialog" aria-modal="true">
-                        {/* Overlay */}
+                    <div className="lg:hidden fixed inset-0 z-[60] flex" role="dialog" aria-modal="true">
                         <Transition.Child
                             as={React.Fragment}
                             enter="transition-opacity ease-linear duration-300"
@@ -254,10 +267,9 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                             leaveFrom="opacity-100"
                             leaveTo="opacity-0"
                         >
-                            <div className="fixed inset-0 bg-black/30" aria-hidden="true" onClick={toggleMobileMenu}></div>
+                            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" onClick={toggleMobileMenu}></div>
                         </Transition.Child>
                         
-                        {/* Panel Menu */}
                         <Transition.Child
                             as={React.Fragment}
                             enter="transition ease-in-out duration-300 transform"
@@ -267,13 +279,13 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                             leaveFrom="translate-x-0"
                             leaveTo="-translate-x-full"
                         >
-                            <div className="relative flex flex-col w-72 max-w-[calc(100%-3rem)] bg-white h-full shadow-xl">
-                                <div className="p-4 border-b flex justify-between items-center">
+                            <div className="relative flex flex-col w-80 max-w-[calc(100%-3rem)] bg-white h-full shadow-2xl">
+                                <div className="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
                                     <Link href={route('admin.dashboard')} className="flex items-center" onClick={closeMobileMenu}>
-                                        <img src={logoSekolah} alt="Logo SMAN 1 Baleendah" className="h-8 w-auto" />
-                                        <span className="ml-2 text-md font-semibold text-gray-800">SMAN 1 Baleendah</span>
+                                        <img src={logoSekolah} alt={`Logo ${siteName}`} className="h-10 w-auto" />
+                                        <span className="ml-2 text-md font-bold text-gray-800">{siteName}</span>
                                     </Link>
-                                    <button onClick={toggleMobileMenu} className="p-2 text-gray-500 hover:text-gray-700">
+                                    <button onClick={toggleMobileMenu} className="p-2 text-gray-500 hover:text-gray-700 bg-gray-50 rounded-full">
                                         <XIcon size={20} />
                                     </button>
                                 </div>
@@ -281,14 +293,35 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                                     <ul>
                                         {renderNavItemsRecursive(navigationStructure, 'mobile', 0, true)}
                                     </ul>
-                                    {/* Bagian profil di bawah menu mobile DIHAPUS */}
                                 </nav>
+                                
+                                {/* Mobile Profile Section */}
+                                <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+                                    <div className="flex items-center justify-between p-3 bg-white rounded-2xl shadow-sm border border-gray-100">
+                                        <div className="flex items-center min-w-0">
+                                            <img src={logoSekolah} alt="Profil Admin" className="h-10 w-10 rounded-full mr-3 object-cover border-2 border-primary/10 shadow-sm" />
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-gray-900 truncate text-sm">{admin ? admin.username : 'Admin'}</p>
+                                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Administrator</p>
+                                            </div>
+                                        </div>
+                                        <Link 
+                                            href={route('admin.logout')} 
+                                            method="post" 
+                                            as="button" 
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                            title="Logout"
+                                        >
+                                            <LogOut size={20} />
+                                        </Link>
+                                    </div>
+                                </div>
                             </div>
                         </Transition.Child>
                     </div>
-                </Transition>                <main className="flex-1 overflow-y-auto">
-                    {children}
-                </main>
+                </Transition>
+
+                <ChatWidget />
             </div>
         </div>
     );

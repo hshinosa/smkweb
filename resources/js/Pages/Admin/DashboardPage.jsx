@@ -1,11 +1,11 @@
 // FILE: resources/js/Pages/Admin/DashboardPage.jsx
 import React, { useState, useEffect, useCallback } from 'react'; // Tambah useCallback
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, Link } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
 import Modal from '@/Components/Modal';
 import { TYPOGRAPHY } from '@/Utils/typography';
-import { Search, X, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, TrendingUp, AlertCircle, Info, Clock } from 'lucide-react'; // Tambah Clock
+import { Search, X, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, TrendingUp, AlertCircle, Info, Clock, Mail } from 'lucide-react';
 
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
@@ -80,7 +80,7 @@ const VisitorStatsChart = ({ chartData, loading, error, periodType }) => {
 const ITEMS_PER_LOG_PAGE_MODAL = 10;
 
 export default function DashboardPage() {
-    const { auth } = usePage().props;
+    const { auth, unreadMessagesCount } = usePage().props;
     // ... (state activity log sama)
     const [showActivityModal, setShowActivityModal] = useState(false);
     const [allActivityLogs, setAllActivityLogs] = useState([]);
@@ -227,6 +227,27 @@ export default function DashboardPage() {
             <Head title="Admin Dashboard" />
             
             <div className="max-w-screen-2xl mx-auto p-3 sm:p-4">
+                {/* Quick Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-white p-6 rounded-lg shadow flex items-center">
+                        <div className="p-3 bg-blue-100 rounded-full mr-4">
+                            <Mail className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-500 font-medium">Pesan Baru</p>
+                            <p className="text-2xl font-bold text-gray-800">{unreadMessagesCount || 0}</p>
+                        </div>
+                        <Link 
+                            href={route('admin.contact-messages.index')} 
+                            className="ml-auto text-blue-600 hover:text-blue-800"
+                            title="Lihat Semua Pesan"
+                        >
+                            <ExternalLink size={18} />
+                        </Link>
+                    </div>
+                    {/* Placeholder for other stats if needed */}
+                </div>
+
                 {/* Kartu Gabungan Statistik Pengunjung */}
             {/* Layout diubah menjadi flex-col untuk mobile, dan md:flex-row untuk tablet ke atas */}
             <div className="bg-white p-4 md:p-6 rounded-lg shadow mb-6">

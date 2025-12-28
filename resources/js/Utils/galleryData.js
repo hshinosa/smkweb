@@ -47,7 +47,7 @@ export const mockGalleryData = [
     {
         id: 5,
         title: "Juara Olimpiade Matematika",
-        description: "Siswa SMAN 1 Baleendah meraih juara 1 Olimpiade Matematika tingkat Kabupaten",
+        description: "Siswa meraih juara 1 Olimpiade Matematika tingkat Kabupaten",
         type: "photo",
         url: "https://picsum.photos/800/600?random=5",
         thumbnail: "https://picsum.photos/300/200?random=5",
@@ -80,7 +80,7 @@ export const mockGalleryData = [
     {
         id: 8,
         title: "Festival Band Sekolah",
-        description: "Kompetisi band antar sekolah se-Kabupaten Bandung yang diadakan di SMAN 1 Baleendah",
+        description: "Kompetisi band antar sekolah se-Kabupaten Bandung yang diadakan di sekolah",
         type: "video",
         url: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4",
         thumbnail: "https://picsum.photos/300/200?random=8",

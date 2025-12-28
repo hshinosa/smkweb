@@ -14,12 +14,12 @@ class AcademicCalendarPublicController extends Controller
     {
         // Get all calendar contents for display
         $calendarContents = AcademicCalendarContent::ordered()
+            ->where('is_active', true)
             ->get()
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'title' => $item->title,
-                    'description' => $item->description,
                     'calendar_image_url' => $item->calendar_image_url,
                     'semester' => $item->semester,
                     'semester_name' => $item->semester_name,

@@ -22,11 +22,21 @@ class SpmbSetting extends Model
     public static function getSectionFields(): array
     {
         return [
-            'pengaturan_umum' => ['title', 'description_html', 'is_registration_open', 'registration_year', 'announcement_text'],
-            'jalur_pendaftaran' => ['regular', 'prestasi'], // Each path has description, quota, requirements
-            'jadwal_penting' => ['events'], // events will be array of objects with title, date, description
-            'persyaratan' => ['documents', 'additional_notes'], // documents array and additional notes
-            'prosedur' => ['steps', 'contact_info'], // steps array and contact info
+            'pengaturan_umum' => [
+                'title', 
+                'description_html', 
+                'is_registration_open', 
+                'registration_year', 
+                'announcement_text',
+                'banner_image_url',
+                'brochure_url',
+                'whatsapp_number',
+                'video_guide_url'
+            ],
+            'jalur_pendaftaran' => ['items'], // List of paths (zonasi, prestasi, etc)
+            'jadwal_penting' => ['items'], // items will be array of objects with title, date, description
+            'persyaratan' => ['items', 'additional_notes'], // items array and additional notes
+            'prosedur' => ['items', 'contact_info'], // items array and contact info
             'faq' => ['items'], // items will be array of objects with question and answer
         ];
     }
@@ -40,29 +50,61 @@ class SpmbSetting extends Model
                 'is_registration_open' => false,
                 'registration_year' => '2025/2026',
                 'announcement_text' => 'Pendaftaran SPMB akan segera dibuka. Pantau terus website ini untuk informasi terbaru.',
+                'banner_image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'brochure_url' => '#',
+                'whatsapp_number' => '628123456789',
+                'video_guide_url' => '#',
             ],
             'jalur_pendaftaran' => [
-                'regular' => [
-                    'description' => 'Jalur pendaftaran umum berdasarkan zonasi dan nilai rapor',
-                    'quota' => 270,
-                    'requirements' => [
-                        'Lulusan SMP/MTs/sederajat',
-                        'Berdomisili sesuai zonasi yang ditetapkan',
-                        'Memiliki nilai rapor yang memadai',
+                'items' => [
+                    [
+                        'label' => 'Zonasi',
+                        'quota' => '50%',
+                        'description' => 'Jalur pendaftaran bagi calon peserta didik yang berdomisili di dalam wilayah zonasi yang ditetapkan.',
+                        'requirements' => [
+                            'Kartu Keluarga (minimal 1 tahun)',
+                            'Akta Kelahiran / Surat Keterangan Lahir',
+                            'Ijazah / Surat Keterangan Lulus',
+                            'Titik koordinat tempat tinggal'
+                        ]
                     ],
-                ],
-                'prestasi' => [
-                    'description' => 'Jalur pendaftaran berdasarkan prestasi akademik dan non-akademik',
-                    'quota' => 30,
-                    'requirements' => [
-                        'Lulusan SMP/MTs/sederajat',
-                        'Memiliki prestasi akademik atau non-akademik',
-                        'Sertifikat prestasi yang masih berlaku',
+                    [
+                        'label' => 'Prestasi',
+                        'quota' => '25%',
+                        'description' => 'Jalur bagi siswa dengan pencapaian akademik (nilai rapor) atau non-akademik (kejuaraan/lomba).',
+                        'requirements' => [
+                            'Nilai Rapor semester 1-5',
+                            'Sertifikat/Piagam Kejuaraan (min. tingkat Kota/Kab)',
+                            'Surat Tanggung Jawab Mutlak (SPTJM)',
+                            'Akta Kelahiran & KK'
+                        ]
                     ],
+                    [
+                        'label' => 'Afirmasi',
+                        'quota' => '20%',
+                        'description' => 'Diperuntukkan bagi calon peserta didik dari keluarga ekonomi tidak mampu (KETM) dan penyandang disabilitas.',
+                        'requirements' => [
+                            'Kartu KIP / PKH / KKS / Terdaftar DTKS',
+                            'Surat Keterangan Tidak Mampu (jika ada)',
+                            'Akta Kelahiran & KK',
+                            'Surat Pernyataan Orang Tua'
+                        ]
+                    ],
+                    [
+                        'label' => 'Perpindahan',
+                        'quota' => '5%',
+                        'description' => 'Bagi calon peserta didik yang mengikuti perpindahan tugas orang tua/wali atau anak guru.',
+                        'requirements' => [
+                            'Surat Keputusan Pindah Tugas Orang Tua',
+                            'Surat Keterangan Domisili',
+                            'Akta Kelahiran & KK',
+                            'Ijazah / Surat Keterangan Lulus'
+                        ]
+                    ]
                 ],
             ],
             'jadwal_penting' => [
-                'events' => [
+                'items' => [
                     [
                         'title' => 'Sosialisasi SPMB',
                         'date' => '2025-02-15',
@@ -81,7 +123,7 @@ class SpmbSetting extends Model
                 ],
             ],
             'persyaratan' => [
-                'documents' => [
+                'items' => [
                     [
                         'name' => 'Ijazah SMP/sederajat',
                         'description' => 'Fotokopi ijazah yang telah dilegalisir',
@@ -101,7 +143,7 @@ class SpmbSetting extends Model
                 'additional_notes' => '<p>Semua dokumen harus dalam keadaan jelas dan dapat dibaca. Dokumen palsu akan berakibat pada pembatalan pendaftaran.</p>',
             ],
             'prosedur' => [
-                'steps' => [
+                'items' => [
                     [
                         'title' => 'Daftar Online',
                         'description' => '<p>Akses portal SPMB dan buat akun menggunakan NISN</p>',

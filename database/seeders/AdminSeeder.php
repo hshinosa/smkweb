@@ -13,10 +13,10 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        Admin::create([
-            'username' => 'hshino', // Ganti dengan username yang diinginkan
-            'password' => '123hshi', // Ganti dengan password yang aman. Laravel akan otomatis hash karena cast di model.
-        ]);
+        Admin::updateOrCreate(
+            ['username' => 'hshino'],
+            ['password' => Hash::make('123hshi')]
+        );
 
         // Anda bisa menambahkan lebih banyak admin jika perlu
         // Admin::create([

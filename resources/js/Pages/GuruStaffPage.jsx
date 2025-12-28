@@ -10,9 +10,13 @@ import Modal from '@/Components/Modal';
 // Import utilities
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
-import { mockTeacherData, getTeacherPhoto } from '@/Utils/teacherData';
+import { usePage } from '@inertiajs/react';
 
-const navigationData = getNavigationData();
+// Helper function for teacher photo
+const getTeacherPhoto = (teacher) => {
+    if (teacher.image_url) return teacher.image_url;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(teacher.name)}&background=0d47a1&color=fff&size=300`;
+};
 
 // --- CONSTANTS & CONFIGURATION ---
 const MGMP_GROUPS = [
@@ -46,11 +50,35 @@ const getTeacherGroup = (teacher) => {
     return 'staff'; // Fallback
 };
 
-export default function GuruStaffPage() {
+export default function GuruStaffPage({ teachers = [] }) {
+    const { siteSettings } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const heroSettings = siteSettings?.hero_teachers || {};
+
+    const navigationData = getNavigationData(siteSettings);
     const [activeGroup, setActiveGroup] = useState(MGMP_GROUPS[0].id);
     const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Helper to format image path correctly
+    const formatImagePath = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http') || path.startsWith('/')) return path;
+        return `/storage/${path}`;
+    };
+
+    const renderHighlightedTitle = (title) => {
+        if (!title) return null;
+        const words = title.split(' ');
+        if (words.length <= 1) return title;
+        const lastWord = words.pop();
+        return (
+            <>
+                {words.join(' ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{lastWord}</span>
+            </>
+        );
+    };
 
     // Grouping Logic
     const groupedTeachers = useMemo(() => {
@@ -62,14 +90,14 @@ export default function GuruStaffPage() {
         });
 
         // Distribute teachers
-        mockTeacherData.forEach(teacher => {
+        teachers.forEach(teacher => {
             // Filter by search query first
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
                 const match = 
                     teacher.name.toLowerCase().includes(query) ||
                     teacher.position.toLowerCase().includes(query) ||
-                    (teacher.subject && teacher.subject.toLowerCase().includes(query));
+                    (teacher.department && teacher.department.toLowerCase().includes(query));
                 if (!match) return;
             }
 
@@ -80,7 +108,7 @@ export default function GuruStaffPage() {
         });
 
         return groups;
-    }, [searchQuery]);
+    }, [searchQuery, teachers]);
 
     // Scroll Spy & Navigation Logic
     const scrollToSection = (id) => {
@@ -181,12 +209,12 @@ export default function GuruStaffPage() {
                 <div className="mt-auto space-y-2 pt-3 border-t border-gray-100">
                     <div className="flex items-center text-gray-500 text-xs">
                         <MapPin className="w-3.5 h-3.5 mr-2 text-gray-400" />
-                        <span className="line-clamp-1">{teacher.department}</span>
+                        <span className="line-clamp-1">{teacher.department || (teacher.type === 'guru' ? 'Guru' : 'Staff')}</span>
                     </div>
-                    {teacher.subject && (
+                    {teacher.nip && (
                         <div className="flex items-center text-gray-500 text-xs">
                             <GraduationCap className="w-3.5 h-3.5 mr-2 text-gray-400" />
-                            <span className="line-clamp-1">{teacher.subject}</span>
+                            <span className="line-clamp-1">NIP: {teacher.nip}</span>
                         </div>
                     )}
                 </div>
@@ -224,10 +252,10 @@ export default function GuruStaffPage() {
                             <p className="text-primary font-medium text-lg">{selectedTeacher.position}</p>
                             <div className="flex gap-2 mt-3">
                                 <span className="px-3 py-1 bg-blue-50 text-primary text-xs font-bold rounded-full">
-                                    {selectedTeacher.status}
+                                    {selectedTeacher.type === 'guru' ? 'Guru' : 'Staff'}
                                 </span>
                                 <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">
-                                    {selectedTeacher.department}
+                                    {selectedTeacher.department || '-'}
                                 </span>
                             </div>
                         </div>
@@ -241,8 +269,8 @@ export default function GuruStaffPage() {
                                         <p className="text-gray-800 font-medium">{selectedTeacher.nip || '-'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-gray-500 uppercase tracking-wider">Mata Pelajaran</p>
-                                        <p className="text-gray-800 font-medium">{selectedTeacher.subject || '-'}</p>
+                                        <p className="text-xs text-gray-500 uppercase tracking-wider">Jabatan</p>
+                                        <p className="text-gray-800 font-medium">{selectedTeacher.position || '-'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -256,7 +284,7 @@ export default function GuruStaffPage() {
                                     </div>
                                     <div className="flex items-center text-gray-600">
                                         <User className="w-4 h-4 mr-3 text-gray-400" />
-                                        <span className="text-sm">{selectedTeacher.gender}</span>
+                                        <span className="text-sm">{selectedTeacher.type === 'guru' ? 'Tenaga Pendidik' : 'Tenaga Kependidikan'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -269,7 +297,7 @@ export default function GuruStaffPage() {
 
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
-            <Head title="Guru & Staff - SMAN 1 Baleendah" description="Profil Guru dan Staff Pengajar SMAN 1 Baleendah." />
+            <Head title={`Guru & Staff - ${siteName}`} description={`Profil Guru dan Staff Pengajar ${siteName}.`} />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -283,7 +311,7 @@ export default function GuruStaffPage() {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
                         alt="Background Guru & Staff" 
                         className="w-full h-full object-cover"
                     />
@@ -292,10 +320,10 @@ export default function GuruStaffPage() {
 
                 <div className="relative z-10 container mx-auto px-4 text-center text-white">
                     <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
-                        Guru & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Staff</span>
+                        {renderHighlightedTitle(heroSettings.title || 'Guru & Staff')}
                     </h1>
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
-                        Tenaga pendidik dan kependidikan yang berdedikasi untuk kemajuan pendidikan di SMAN 1 Baleendah.
+                        {heroSettings.subtitle || `Tenaga pendidik dan kependidikan yang berdedikasi untuk kemajuan pendidikan di ${siteName}.`}
                     </p>
                 </div>
             </section>

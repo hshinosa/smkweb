@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { TYPOGRAPHY } from '@/Utils/typography';
 
 /**
@@ -7,18 +7,22 @@ import { TYPOGRAPHY } from '@/Utils/typography';
  * Provides consistent CTA section with title, description and action buttons
  */
 export default function CallToAction({ 
-    title = "Bergabunglah dengan SMAN 1 Baleendah",
+    title,
     description = "Wujudkan impian pendidikan terbaik bersama kami. Dapatkan informasi lengkap tentang program studi dan proses pendaftaran.",
     primaryButton = { text: "Informasi SPMB", href: "/informasi-spmb" },
     secondaryButton = { text: "Hubungi Kami", href: "/kontak" },
     className = ""
 }) {
+    const { siteSettings } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const displayTitle = title || `Bergabunglah dengan ${siteName}`;
+
     return (
         <section className={`py-12 bg-primary sm:py-16 lg:py-20 ${className}`}>
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center">
                     <h2 className={`${TYPOGRAPHY.sectionHeading} text-white mb-6`}>
-                        {title}
+                        {displayTitle}
                     </h2>
                     <p className={`${TYPOGRAPHY.bodyText} text-blue-100 mb-8 text-lg`}>
                         {description}

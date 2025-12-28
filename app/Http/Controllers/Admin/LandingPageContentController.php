@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Helpers\ActivityLogger;
+use App\Helpers\HtmlSanitizer;
 use App\Http\Controllers\Controller;
 use App\Models\LandingPageSetting;
 use Illuminate\Http\Request;
@@ -17,20 +18,27 @@ class LandingPageContentController extends Controller
 
     public function index()
     {
-        $settingsFromDb = LandingPageSetting::all()->keyBy('section_key');
-        $pageData = [];
-        $sectionKeys = array_keys(LandingPageSetting::getSectionFields());
+        try {
+            $settingsFromDb = LandingPageSetting::all()->keyBy('section_key');
+            $pageData = [];
+            $sectionKeys = array_keys(LandingPageSetting::getSectionFields());
 
-        foreach ($sectionKeys as $key) {
-            $dbRow = $settingsFromDb->get($key);
-            $dbContent = ($dbRow && isset($dbRow['content']) && is_array($dbRow['content'])) ? $dbRow['content'] : null;
-            $pageData[$key] = LandingPageSetting::getContent($key, $dbContent);
+            foreach ($sectionKeys as $key) {
+                $dbRow = $settingsFromDb->get($key);
+                $dbContent = ($dbRow && isset($dbRow['content']) && is_array($dbRow['content'])) ? $dbRow['content'] : null;
+                $pageData[$key] = LandingPageSetting::getContent($key, $dbContent);
+            }
+            // Log::info('Admin Landing Page Data to View:', $pageData);
+
+            return Inertia::render('Admin/LandingPageContentPage', [
+                'currentSettings' => $pageData,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in LandingPageContentController@index: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['general' => 'Gagal memuat data: ' . $e->getMessage()]);
         }
-        // Log::info('Admin Landing Page Data to View:', $pageData);
-
-        return Inertia::render('Admin/LandingPageContentPage', [
-            'currentSettings' => $pageData,
-        ]);
     }
 
     public function storeOrUpdate(Request $request)
@@ -50,7 +58,13 @@ class LandingPageContentController extends Controller
                 if ($sectionKey === 'hero') {
                     $sectionRules["{$sectionKey}.title_line1"] = 'required|string|max:100';
                     $sectionRules["{$sectionKey}.title_line2"] = 'required|string|max:100';
+                    $sectionRules["{$sectionKey}.hero_text"] = 'required|string|max:500';
                     $sectionRules["{$sectionKey}.background_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+                    $sectionRules["{$sectionKey}.student_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+                    $sectionRules["{$sectionKey}.stats"] = 'nullable|array';
+                    $sectionRules["{$sectionKey}.stats.*.label"] = 'required|string|max:50';
+                    $sectionRules["{$sectionKey}.stats.*.value"] = 'required|string|max:50';
+                    $sectionRules["{$sectionKey}.stats.*.icon_name"] = 'required|string|max:50';
                 } elseif ($sectionKey === 'about_lp') {
                     $sectionRules["{$sectionKey}.title"] = 'required|string|max:150';
                     $sectionRules["{$sectionKey}.description_html"] = 'required|string|max:5000';
@@ -61,25 +75,36 @@ class LandingPageContentController extends Controller
                     $sectionRules["{$sectionKey}.kepsek_title"] = 'required|string|max:100';
                     $sectionRules["{$sectionKey}.kepsek_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
                     $sectionRules["{$sectionKey}.welcome_text_html"] = 'required|string|max:10000';
-                } elseif ($sectionKey === 'fakta_lp') {
-                    $sectionRules["{$sectionKey}.items"] = 'present|array';
-                    $sectionRules["{$sectionKey}.items.*.label"] = 'required_with:'.$sectionKey.'.items.*.value|nullable|string|max:50';
-                    $sectionRules["{$sectionKey}.items.*.value"] = 'required_with:'.$sectionKey.'.items.*.label|nullable|integer|min:0';
+                } elseif ($sectionKey === 'programs_lp') {
+                    $sectionRules["{$sectionKey}.title"] = 'required|string|max:150';
+                    $sectionRules["{$sectionKey}.description"] = 'required|string|max:500';
+                    // items is now managed separately
+                } elseif ($sectionKey === 'gallery_lp') {
+                    $sectionRules["{$sectionKey}.title"] = 'required|string|max:150';
+                    $sectionRules["{$sectionKey}.description"] = 'required|string|max:500';
+                    // images is now managed separately
+                } elseif ($sectionKey === 'cta_lp') {
+                    $sectionRules["{$sectionKey}.title"] = 'required|string|max:200';
+                    $sectionRules["{$sectionKey}.description"] = 'required|string|max:500';
                 }
                 $rules = array_merge($rules, $sectionRules);
 
                 // Ambil HANYA field yang didefinisikan di $sectionFields[$sectionKey]
                 foreach ($fields as $field) {
                     if (isset($currentSectionDataFromRequest[$field])) {
-                        if ($field === 'items' && $sectionKey === 'fakta_lp') {
-                            // Filter item fakta yang valid (label atau value diisi)
+                        if ($field === 'items' && $sectionKey === 'programs_lp') {
+                            // Filter item yang valid
                             $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function ($item) {
-                                return ! empty(trim($item['label'] ?? '')) || ! empty(trim($item['value'] ?? ''));
+                                return ! empty(trim($item['title'] ?? ''));
                             }));
                             // Jika setelah filter hasilnya array kosong, pastikan tetap array kosong
                             if (empty($dataForThisSection[$field])) {
                                 $dataForThisSection[$field] = [];
                             }
+                        } elseif ($field === 'images' && $sectionKey === 'gallery_lp') {
+                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function ($url) {
+                                return ! empty(trim($url));
+                            }));
                         } else {
                             $dataForThisSection[$field] = $currentSectionDataFromRequest[$field];
                         }
@@ -90,16 +115,13 @@ class LandingPageContentController extends Controller
                         $dataForThisSection[$field] = $defaultsForSection[$field] ?? null;
                     }
                 }
-                $finalDataToSave[$sectionKey] = $dataForThisSection;
+                $finalDataToSave[$sectionKey] = HtmlSanitizer::sanitizeSection($sectionKey, $dataForThisSection);
             }
         }
         // Log::info('Data to validate: ', $inputData);
         // Log::info('Validation rules: ', $rules);
 
-        $validator = Validator::make($inputData, $rules, [
-            'fakta_lp.items.*.label.required_with' => 'Label fakta diperlukan jika angka diisi.',
-            'fakta_lp.items.*.value.required_with' => 'Angka fakta diperlukan jika label diisi.',
-        ]);
+        $validator = Validator::make($inputData, $rules);
 
         if ($validator->fails()) {
             Log::warning('Validasi gagal untuk update Landing Page:', $validator->errors()->toArray());
@@ -113,19 +135,36 @@ class LandingPageContentController extends Controller
         try {
             foreach ($finalDataToSave as $sectionKey => $content) {
                 // Handle file uploads for each section
-                if ($sectionKey === 'hero' && $request->hasFile('hero.background_image')) {
-                    $file = $request->file('hero.background_image');
-                    $fileName = time().'_hero_bg_'.$file->getClientOriginalName();
-                    $filePath = $file->storeAs('landing-page', $fileName, 'public');
+                if ($sectionKey === 'hero') {
+                    if ($request->hasFile('hero.background_image')) {
+                        $file = $request->file('hero.background_image');
+                        $fileName = time().'_hero_bg_'.$file->getClientOriginalName();
+                        $filePath = $file->storeAs('landing-page', $fileName, 'public');
 
-                    // Delete old file if exists
-                    $existingContent = LandingPageSetting::where('section_key', $sectionKey)->first();
-                    if ($existingContent && isset($existingContent->content['background_image_url'])) {
-                        $oldFilePath = str_replace('/storage/', '', $existingContent->content['background_image_url']);
-                        Storage::disk('public')->delete($oldFilePath);
+                        // Delete old file if exists
+                        $existingContent = LandingPageSetting::where('section_key', $sectionKey)->first();
+                        if ($existingContent && isset($existingContent->content['background_image_url'])) {
+                            $oldFilePath = str_replace('/storage/', '', $existingContent->content['background_image_url']);
+                            Storage::disk('public')->delete($oldFilePath);
+                        }
+
+                        $content['background_image_url'] = '/storage/'.$filePath;
                     }
 
-                    $content['background_image_url'] = '/storage/'.$filePath;
+                    if ($request->hasFile('hero.student_image')) {
+                        $file = $request->file('hero.student_image');
+                        $fileName = time().'_hero_student_'.$file->getClientOriginalName();
+                        $filePath = $file->storeAs('landing-page', $fileName, 'public');
+
+                        // Delete old file if exists
+                        $existingContent = LandingPageSetting::where('section_key', $sectionKey)->first();
+                        if ($existingContent && isset($existingContent->content['student_image_url'])) {
+                            $oldFilePath = str_replace('/storage/', '', $existingContent->content['student_image_url']);
+                            Storage::disk('public')->delete($oldFilePath);
+                        }
+
+                        $content['student_image_url'] = '/storage/'.$filePath;
+                    }
                 } elseif ($sectionKey === 'about_lp' && $request->hasFile('about_lp.image')) {
                     $file = $request->file('about_lp.image');
                     $fileName = time().'_about_'.$file->getClientOriginalName();
@@ -156,9 +195,17 @@ class LandingPageContentController extends Controller
 
                 // Pastikan content adalah array dan bukan null sebelum menyimpan
                 if (is_array($content)) {
+                    $existing = LandingPageSetting::where('section_key', $sectionKey)->first();
+                    $finalContent = $content;
+                    
+                    if ($existing && is_array($existing->content)) {
+                        // Merge to preserve fields not in the request (like items or images)
+                        $finalContent = array_merge($existing->content, $content);
+                    }
+
                     LandingPageSetting::updateOrCreate(
                         ['section_key' => $sectionKey],
-                        ['content' => $content]
+                        ['content' => $finalContent]
                     );
                 } else {
                     Log::warning("Konten untuk section {$sectionKey} bukan array, tidak disimpan.", ['content' => $content]);

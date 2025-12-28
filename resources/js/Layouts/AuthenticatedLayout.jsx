@@ -25,10 +25,82 @@ export default function AuthenticatedLayout({ header, children }) {
 
                             <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                                 <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
+                                    href={route('admin.dashboard')}
+                                    active={route().current('admin.dashboard')}
                                 >
                                     Dashboard
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.landingpage.content.index')}
+                                    active={route().current('admin.landingpage.content.*')}
+                                >
+                                    Landing Page
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.posts.index')}
+                                    active={route().current('admin.posts.*')}
+                                >
+                                    Berita
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.teachers.index')}
+                                    active={route().current('admin.teachers.*')}
+                                >
+                                    Guru & Staff
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.extracurriculars.index')}
+                                    active={route().current('admin.extracurriculars.*')}
+                                >
+                                    Ekstrakurikuler
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.alumni.index')}
+                                    active={route().current('admin.alumni.*')}
+                                >
+                                    Alumni
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.faqs.index')}
+                                    active={route().current('admin.faqs.*')}
+                                >
+                                    FAQ
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.school-profile.index')}
+                                    active={route().current('admin.school-profile.*')}
+                                >
+                                    Profil Sekolah
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.curriculum.index')}
+                                    active={route().current('admin.curriculum.*')}
+                                >
+                                    Kurikulum
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.spmb.index')}
+                                    active={route().current('admin.spmb.*')}
+                                >
+                                    SPMB
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.academic-calendar.index')}
+                                    active={route().current('admin.academic-calendar.*')}
+                                >
+                                    Kalender
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.program-studi.index')}
+                                    active={route().current('admin.program-studi.*')}
+                                >
+                                    Program Studi
+                                </NavLink>
+                                <NavLink
+                                    href={route('admin.site-settings.index')}
+                                    active={route().current('admin.site-settings.*')}
+                                >
+                                    Pengaturan Situs
                                 </NavLink>
                             </div>
                         </div>
@@ -129,10 +201,82 @@ export default function AuthenticatedLayout({ header, children }) {
                 >
                     <div className="space-y-1 pb-3 pt-2">
                         <ResponsiveNavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
+                            href={route('admin.dashboard')}
+                            active={route().current('admin.dashboard')}
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.landingpage.content.index')}
+                            active={route().current('admin.landingpage.content.*')}
+                        >
+                            Landing Page
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.posts.index')}
+                            active={route().current('admin.posts.*')}
+                        >
+                            Berita
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.teachers.index')}
+                            active={route().current('admin.teachers.*')}
+                        >
+                            Guru & Staff
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.extracurriculars.index')}
+                            active={route().current('admin.extracurriculars.*')}
+                        >
+                            Ekstrakurikuler
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.alumni.index')}
+                            active={route().current('admin.alumni.*')}
+                        >
+                            Alumni
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.faqs.index')}
+                            active={route().current('admin.faqs.*')}
+                        >
+                            FAQ
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.school-profile.index')}
+                            active={route().current('admin.school-profile.*')}
+                        >
+                            Profil Sekolah
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.curriculum.index')}
+                            active={route().current('admin.curriculum.*')}
+                        >
+                            Kurikulum
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.spmb.index')}
+                            active={route().current('admin.spmb.*')}
+                        >
+                            SPMB
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.academic-calendar.index')}
+                            active={route().current('admin.academic-calendar.*')}
+                        >
+                            Kalender
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.program-studi.index')}
+                            active={route().current('admin.program-studi.*')}
+                        >
+                            Program Studi
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('admin.site-settings.index')}
+                            active={route().current('admin.site-settings.*')}
+                        >
+                            Pengaturan Situs
                         </ResponsiveNavLink>
                     </div>
 

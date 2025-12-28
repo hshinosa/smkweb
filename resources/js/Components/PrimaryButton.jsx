@@ -10,9 +10,11 @@ export default function PrimaryButton({
         <button
             {...props}
             className={
-                `inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 ${TYPOGRAPHY.buttonText} uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:bg-gray-900 ${
-                    disabled && 'opacity-25'
-                } ` + className
+                `inline-flex items-center justify-center rounded-lg px-4 py-2.5 font-semibold transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    disabled 
+                        ? 'opacity-50 cursor-not-allowed' 
+                        : 'active:scale-[0.98] hover:shadow-md'
+                } bg-accent-yellow text-gray-900 hover:bg-yellow-500 focus:ring-accent-yellow ${TYPOGRAPHY.buttonText} ` + className
             }
             disabled={disabled}
         >

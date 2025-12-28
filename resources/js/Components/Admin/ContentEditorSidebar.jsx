@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, Menu, X, ChevronDown } from 'lucide-react';
+import { ChevronRight, X, ChevronDown } from 'lucide-react';
 
 export default function ContentEditorSidebar({ tabs, activeTab, setActiveTab }) {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -8,31 +8,36 @@ export default function ContentEditorSidebar({ tabs, activeTab, setActiveTab }) 
 
     return (
         <div className="lg:col-span-1 lg:sticky lg:top-6 z-30">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                {/* Mobile Header (Togglable) */}
-                <div 
-                    className="lg:hidden p-4 bg-primary text-white flex justify-between items-center cursor-pointer"
-                    onClick={() => setIsExpanded(!isExpanded)}
-                >
-                    <div className="flex items-center gap-3">
-                        {ActiveIcon && <ActiveIcon size={20} />}
-                        <div>
-                            <p className="text-[10px] uppercase font-bold opacity-70 leading-none mb-1">Menu Editor</p>
-                            <h3 className="font-bold text-sm leading-none">{activeTabData?.label}</h3>
-                        </div>
-                    </div>
-                    <div className="bg-white/20 p-1.5 rounded-lg">
-                        {isExpanded ? <X size={18} /> : <ChevronDown size={18} className="animate-bounce" />}
+            {/* Mobile Header - Collapsible with clear visual feedback */}
+            <div 
+                className="lg:hidden bg-primary text-white p-4 rounded-t-xl flex justify-between items-center cursor-pointer hover:bg-primary-darker transition-colors"
+                onClick={() => setIsExpanded(!isExpanded)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setIsExpanded(!isExpanded)}
+                aria-expanded={isExpanded}
+            >
+                <div className="flex items-center gap-3">
+                    {ActiveIcon && <ActiveIcon size={22} />}
+                    <div>
+                        <p className="text-[10px] uppercase font-bold opacity-80 leading-none mb-1">Menu Editor</p>
+                        <h3 className="font-bold text-base leading-none">{activeTabData?.label}</h3>
                     </div>
                 </div>
-
-                {/* Desktop Title (Hidden on Mobile) */}
-                <div className="hidden lg:block mb-6 px-6 pt-6">
-                    <h1 className="text-2xl font-extrabold text-gray-800 tracking-tight">Menu Editor</h1>
-                    <p className="text-sm text-gray-500 mt-1">Konfigurasi konten halaman</p>
+                <div className="bg-white/20 p-2 rounded-lg">
+                    {isExpanded ? <X size={20} /> : <ChevronDown size={20} />}
                 </div>
+            </div>
 
-                <nav className={`space-y-1 p-2 lg:p-4 lg:block ${isExpanded ? 'block' : 'hidden'}`}>
+            {/* Desktop Title */}
+            <div className="hidden lg:block mb-6 px-6 pt-6">
+                <h1 className="text-xl font-bold text-gray-900">Menu Editor</h1>
+                <p className="text-sm text-gray-500 mt-1">Pilih bagian yang ingin diubah</p>
+            </div>
+
+            {/* Navigation - Card-based design with clear active states */}
+            <nav className={`lg:block ${isExpanded ? 'block' : 'hidden'}`} aria-label="Menu navigasi editor">
+                <div className="bg-white rounded-b-xl lg:rounded-xl shadow-sm border border-gray-100 lg:border-none lg:shadow-none overflow-hidden">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.key;
@@ -43,27 +48,34 @@ export default function ContentEditorSidebar({ tabs, activeTab, setActiveTab }) 
                                     setActiveTab(tab.key);
                                     setIsExpanded(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-4 py-4 lg:py-5 text-left rounded-xl transition-all duration-200 group ${
+                                className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-all duration-200 border-b lg:border-b-0 lg:border-none border-gray-100 last:border-b-0 ${
                                     isActive 
-                                    ? 'bg-blue-50 text-primary shadow-sm ring-1 ring-blue-100' 
-                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                    ? 'bg-accent-yellow/10 text-accent-yellow shadow-sm border-l-4 border-l-accent-yellow' 
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                 }`}
+                                aria-current={isActive ? 'page' : undefined}
                             >
-                                <div className={`p-2 rounded-lg transition-colors flex-shrink-0 ${isActive ? 'bg-white text-primary shadow-sm' : 'bg-gray-100 text-gray-500 group-hover:bg-white group-hover:text-primary'}`}>
-                                    <Icon size={20} className="lg:w-6 lg:h-6" />
+                                <div className={`p-2.5 rounded-lg transition-colors flex-shrink-0 ${
+                                    isActive 
+                                    ? 'bg-white text-accent-yellow shadow-sm border border-accent-yellow/20' 
+                                    : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                    <Icon size={22} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <span className={`block font-bold text-sm lg:text-base truncate ${isActive ? 'text-gray-900' : ''}`}>{tab.label}</span>
-                                    <span className="text-xs text-gray-400 hidden xl:block mt-1 leading-tight">
+                                    <span className={`block font-semibold text-base truncate ${isActive ? 'text-gray-900' : ''}`}>
+                                        {tab.label}
+                                    </span>
+                                    <span className="text-sm text-gray-500 hidden xl:block mt-1 line-clamp-1">
                                         {tab.description}
                                     </span>
                                 </div>
-                                {isActive && <ChevronRight size={18} className="ml-auto text-primary flex-shrink-0" />}
+                                {isActive && <ChevronRight size={20} className="text-accent-yellow flex-shrink-0" />}
                             </button>
                         );
                     })}
-                </nav>
-            </div>
+                </div>
+            </nav>
         </div>
     );
 }

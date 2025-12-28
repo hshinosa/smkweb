@@ -1,78 +1,80 @@
 // FILE: resources/js/Layouts/AdminLayout.jsx
+// Redesigned for accessibility (ages 20-50) with clearer navigation and larger touch targets
+
 import React, { useState, useEffect } from 'react';
 import { Link, usePage, Head } from '@inertiajs/react';
 import {
     ChevronDown, ChevronRight, LayoutDashboard, LogOut, Newspaper,
     CalendarDays, Info, FileText, Image as ImageIcon, LayoutGrid,
-    Menu as MenuIcon, X as XIcon, UserCog, Star, Mail, Settings
+    Menu as MenuIcon, X as XIcon, UserCog, Star, Mail, Settings,
+    BookOpen, GraduationCap, Users, Award
 } from 'lucide-react';
 import Dropdown from '@/Components/Dropdown';
 import { Transition } from '@headlessui/react';
 import ChatWidget from '@/Components/ChatWidget';
 
-const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen, onClick, isMobile = false, level = 0, closeMobileMenu }) => {
-    const activeClass = isActive ? 'bg-primary/10 text-primary font-semibold' : (isMobile ? 'hover:bg-gray-100' : 'hover:bg-gray-50');
-    const Tag = hasSubmenu ? 'button' : Link;
-    const paddingLeft = isMobile ? `pl-${4 + level * 4}` : '';
-
-    const handleClick = (e) => {
-        if (hasSubmenu && onClick) {
-            onClick(e);
-        } else if (isMobile && !hasSubmenu && closeMobileMenu) {
-            closeMobileMenu(); // Tutup menu mobile jika ini adalah link langsung di mobile
-        }
-        // Untuk Link, navigasi akan ditangani oleh Inertia
+// Icons mapping for consistent visual language
+const getIconComponent = (iconName) => {
+    const icons = {
+        LayoutDashboard, LogOut, Newspaper, CalendarDays, Info, FileText,
+        ImageIcon, LayoutGrid, MenuIcon, UserCog, Star, Mail, Settings,
+        BookOpen, GraduationCap, Users, Award
     };
+    return icons[iconName] || LayoutGrid;
+};
+
+const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen, onToggle, level = 0 }) => {
+    const activeClass = isActive 
+        ? 'bg-accent-yellow text-gray-900 font-bold shadow-sm' 
+        : 'text-white hover:bg-white/10 hover:text-white';
+    
+    const IconComponent = Icon ? getIconComponent(Icon) : null;
+    const paddingLeft = level === 0 ? 'pl-4' : `pl-${8 + level * 4}`;
 
     return (
-        <li>
-            <Tag
-                href={!hasSubmenu && href ? href : undefined}
-                type={Tag === 'button' ? 'button' : undefined}
-                onClick={handleClick} // Gunakan handler baru
-                className={`flex items-center justify-between w-full p-3 text-sm font-medium rounded-md transition-colors ${activeClass} ${paddingLeft}`}
-            >
-                <span className="flex items-center">
-                    {Icon && <Icon size={18} className="mr-3 flex-shrink-0" />}
-                    {children}
-                </span>
-                {hasSubmenu && (
-                    <ChevronDown size={16} className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ml-auto`} />
-                )}
-            </Tag>
+        <li className="my-1">
+            {hasSubmenu ? (
+                <button
+                    onClick={onToggle}
+                    className={`flex items-center justify-between w-full py-3 px-4 text-sm font-medium rounded-lg transition-all duration-200 ${activeClass} ${paddingLeft}`}
+                    aria-expanded={isOpen}
+                    aria-controls={`submenu-${level}`}
+                >
+                    <span className="flex items-center">
+                        {IconComponent && <IconComponent size={20} className={`mr-3 flex-shrink-0 ${isActive ? 'text-gray-900' : 'text-white'}`} />}
+                        <span className="text-base">{children}</span>
+                    </span>
+                    <ChevronDown 
+                        size={18} 
+                        className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ml-2 flex-shrink-0 ${isActive ? 'text-gray-900' : 'text-white'}`} 
+                    />
+                </button>
+            ) : (
+                <Link
+                    href={href || '#'}
+                    className={`flex items-center py-3 px-4 text-sm font-medium rounded-lg transition-all duration-200 block ${activeClass} ${paddingLeft}`}
+                >
+                    {IconComponent && <IconComponent size={20} className={`mr-3 flex-shrink-0 ${isActive ? 'text-gray-900' : 'text-white'}`} />}
+                    <span className="text-base">{children}</span>
+                </Link>
+            )}
         </li>
     );
 };
 
-// Komponen SubmenuItem (untuk item di dalam dropdown di sidebar desktop dan mobile)
-const SubmenuItem = ({ href, children, isActive, hasSubmenu, isOpen, onClick, level = 1, isMobile = false, closeMobileMenu }) => {
-    const activeClass = isActive ? 'text-primary font-semibold' : 'hover:text-primary';
-    const Tag = hasSubmenu ? 'button' : Link;
-    const indentClassDesktop = level === 1 ? 'border-l-2 border-gray-200 pl-4' : 'border-l-2 border-gray-200 pl-6'; // Indentasi desktop
-    const indentClassMobile = `pl-${4 + level * 4} pr-3`; // Indentasi mobile
-    const indentClass = isMobile ? indentClassMobile : indentClassDesktop;
-
-    const handleClick = (e) => {
-        if (hasSubmenu && onClick) {
-            onClick(e);
-        } else if (isMobile && !hasSubmenu && closeMobileMenu) {
-            closeMobileMenu();
-        }
-    };
-
+const SubmenuItem = ({ href, children, isActive, level = 1 }) => {
+    const activeClass = isActive 
+        ? 'text-accent-yellow font-bold bg-white/5 border-l-4 border-accent-yellow' 
+        : 'text-white hover:text-white hover:bg-white/5';
+    
     return (
-        <li className={!isMobile ? 'ml-[1.3rem]' : ''}>
-            <Tag
-                href={!hasSubmenu && href ? href : undefined}
-                type={Tag === 'button' ? 'button' : undefined}
-                onClick={handleClick}
-                className={`flex items-center justify-between w-full py-2 text-xs rounded-md transition-all ${activeClass} ${indentClass} ${isMobile ? 'px-3' : ''}`}
+        <li className="my-1">
+            <Link
+                href={href || '#'}
+                className={`flex items-center py-2.5 px-4 text-sm rounded-md transition-all duration-200 ml-4 ${activeClass}`}
             >
-                {children}
-                {hasSubmenu && (
-                     <ChevronRight size={14} className={`transform transition-transform duration-200 ${isOpen ? 'rotate-90' : ''} ml-auto ${isMobile ? 'mr-2' : 'mr-1'}`} />
-                )}
-            </Tag>
+                <span className="text-base">{children}</span>
+            </Link>
         </li>
     );
 };
@@ -81,7 +83,7 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
     const { auth, siteSettings } = usePage().props;
     const admin = auth?.admin;
     
-    // Fix image URL handling: use asset helper logic if path doesn't start with http or /
+    // Image URL handling with proper fallback
     const getAssetUrl = (path, fallback) => {
         if (!path) return fallback;
         if (path.startsWith('http') || path.startsWith('/')) return path;
@@ -91,57 +93,43 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
     const logoSekolah = getAssetUrl(siteSettings?.general?.site_logo, '/images/logo-sman1-baleendah.png');
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
 
-    const [openMenus, setOpenMenus] = useState({
-        konten_utama: true,
-        master_data: true,
-    });
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    const toggleMenu = (menuName) => (e) => {
-        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    // Auto-expand menu based on current route
+    const getDefaultOpenMenus = () => {
+        const currentRoute = route().current() || '';
+        const masterDataRoutes = ['admin.posts.*', 'admin.teachers.*', 'admin.extracurriculars.*', 'admin.alumni.*', 'admin.galleries.*', 'admin.faqs.*'];
+        const kontenUtamaRoutes = ['admin.landingpage.content.*', 'admin.spmb.*', 'admin.program-studi.*', 'admin.school-profile.*', 'admin.curriculum.*', 'admin.academic-calendar.*'];
+
+        const isMasterDataActive = masterDataRoutes.some(route => currentRoute.startsWith(route.replace('.*', '')));
+        const isKontenUtamaActive = kontenUtamaRoutes.some(route => currentRoute.startsWith(route.replace('.*', '')));
+
+        return {
+            konten_utama: isKontenUtamaActive,
+            master_data: isMasterDataActive,
+        };
+    };
+
+    const [openMenus, setOpenMenus] = useState(getDefaultOpenMenus);
+
+    const toggleMenu = (menuName) => {
         setOpenMenus(prev => ({ ...prev, [menuName]: !prev[menuName] }));
     };
 
-    const toggleMobileMenu = () => setMobileMenuOpen(prev => !prev);
     const closeMobileMenu = () => setMobileMenuOpen(false);
+    const toggleMobileMenu = () => setMobileMenuOpen(prev => !prev);
 
-
-    const renderNavItemsRecursive = (items, parentKey, currentLevel, isMobile) => {
-        return items.map(item => {
-            const ItemOrSubItemComponent = currentLevel === 0 ? SidebarItem : SubmenuItem;
-            const menuKey = item.submenuKey || item.title.toLowerCase().replace(/\s+/g, '_').replace(/[&()]/g, ''); // lebih aman untuk key
-            const hasSubmenu = !!item.sublinks && item.sublinks.length > 0;
-
-            return (
-                <React.Fragment key={`${parentKey}-${menuKey}`}>
-                    <ItemOrSubItemComponent
-                        href={!hasSubmenu ? item.href : undefined}
-                        icon={currentLevel === 0 ? item.icon : undefined}
-                        isActive={item.routeName ? route().current(item.routeName) : (item.href && item.href !== '#' && route().current(item.href))}
-                        hasSubmenu={hasSubmenu}
-                        isOpen={openMenus[menuKey]}
-                        onClick={hasSubmenu ? toggleMenu(menuKey) : undefined}
-                        isMobile={isMobile}
-                        level={currentLevel}
-                        closeMobileMenu={closeMobileMenu} // Teruskan fungsi closeMobileMenu
-                    >
-                        {item.title}
-                    </ItemOrSubItemComponent>
-                    {hasSubmenu && openMenus[menuKey] && (
-                        <ul className={`space-y-px ${isMobile ? '' : 'submenu-desktop-wrapper'}`}>
-                            {renderNavItemsRecursive(item.sublinks, menuKey, currentLevel + 1, isMobile)}
-                        </ul>
-                    )}
-                </React.Fragment>
-            );
-        });
-    };
-
+    // Navigation structure with clear labels for accessibility
     const navigationStructure = [
-        { title: "Dashboard Utama", href: route('admin.dashboard'), icon: LayoutDashboard, routeName: 'admin.dashboard' },
+        { 
+            title: "Dashboard Utama", 
+            href: route('admin.dashboard'), 
+            icon: 'LayoutDashboard', 
+            routeName: 'admin.dashboard' 
+        },
         {
             title: "Kelola Konten Utama",
-            icon: LayoutGrid,
+            icon: 'LayoutGrid',
             submenuKey: 'konten_utama',
             sublinks: [
                 { title: "Landing Page", href: route('admin.landingpage.content.index'), routeName: 'admin.landingpage.content.*' },
@@ -154,7 +142,7 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
         },
         {
             title: "Master Data & Berita",
-            icon: Newspaper,
+            icon: 'Newspaper',
             submenuKey: 'master_data',
             sublinks: [
                 { title: "Berita & Pengumuman", href: route('admin.posts.index'), routeName: 'admin.posts.*' },
@@ -166,63 +154,109 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
             ]
         },
         {
-            title: "Interaksi & Pesan",
-            icon: Mail,
+            title: "Pesan Kontak",
+            icon: 'Mail',
             href: route('admin.contact-messages.index'),
             routeName: 'admin.contact-messages.*',
         },
         {
             title: "Pengaturan Situs",
-            icon: Settings,
+            icon: 'Settings',
             href: route('admin.site-settings.index'),
             routeName: 'admin.site-settings.*',
         }
     ];
 
+    const renderNavItemsRecursive = (items, parentKey, currentLevel) => {
+        return items.map((item, index) => {
+            const menuKey = item.submenuKey || `${parentKey}-${index}`;
+            const hasSubmenu = !!item.sublinks && item.sublinks.length > 0;
+            const isActive = item.routeName 
+                ? route().current(item.routeName)
+                : (item.href && item.href !== '#' && route().current(item.href));
+
+            return (
+                <React.Fragment key={menuKey}>
+                    <SidebarItem
+                        href={!hasSubmenu ? item.href : undefined}
+                        icon={item.icon}
+                        isActive={isActive}
+                        hasSubmenu={hasSubmenu}
+                        isOpen={openMenus[menuKey]}
+                        onToggle={hasSubmenu ? () => toggleMenu(menuKey) : undefined}
+                        level={currentLevel}
+                    >
+                        {item.title}
+                    </SidebarItem>
+                    {hasSubmenu && openMenus[menuKey] && (
+                        <ul id={`submenu-${menuKey}`} className="space-y-1">
+                            {renderNavItemsRecursive(item.sublinks, menuKey, currentLevel + 1)}
+                        </ul>
+                    )}
+                </React.Fragment>
+            );
+        });
+    };
 
     return (
-        <div className="h-screen flex bg-gray-100 overflow-hidden">
+        <div className="h-screen flex bg-gray-100 overflow-hidden font-sans">
             <Head title={`${headerTitle} - Admin ${siteName}`} />
 
-            {/* Sidebar untuk Desktop */}
-            <aside className="w-72 bg-white border-r border-gray-200 hidden lg:flex lg:flex-col fixed h-screen transform-gpu">
-                <div className="p-4 border-b border-gray-200">
-                    <Link href={route('admin.dashboard')} className="flex items-center px-2">
-                        <img src={logoSekolah} alt={`Logo ${siteName}`} className="h-10 w-auto" />
-                        <span className="ml-3 text-lg font-semibold text-gray-800">{siteName}</span>
+            {/* Desktop Sidebar - Fixed position with clear visual hierarchy */}
+            <aside className="w-72 bg-primary border-r border-white/10 hidden lg:flex lg:flex-col fixed h-screen z-40 shadow-xl">
+                {/* Logo Section */}
+                <div className="p-4 border-b border-white/10 bg-primary-darker/50">
+                    <Link href={route('admin.dashboard')} className="flex items-center px-2 py-2 group">
+                        <div className="relative">
+                            <img src={logoSekolah} alt={`Logo ${siteName}`} className="h-12 w-auto rounded-lg shadow-sm" />
+                        </div>
+                        <div className="ml-3 flex-1 min-w-0">
+                            <span className="text-sm font-bold text-white block truncate">{siteName}</span>
+                            <span className="text-xs text-white/60 block">Panel Admin</span>
+                        </div>
                     </Link>
                 </div>
-                <nav className="flex-grow p-4 space-y-1 overflow-y-auto overflow-x-hidden no-scrollbar">
+                
+                {/* Navigation - Scrollable with clear item separation */}
+                <nav className="flex-grow p-3 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
                     <ul>
-                        {renderNavItemsRecursive(navigationStructure, 'sidebar', 0, false)}
+                        {renderNavItemsRecursive(navigationStructure, 'sidebar', 0)}
                     </ul>
                 </nav>
 
-                {/* Profile Section at Bottom */}
-                <div className="p-4 border-t border-gray-200 mt-auto bg-gray-50/50">
+                {/* Profile Section - Fixed at bottom with clear status indicator */}
+                <div className="p-4 border-t border-white/10 bg-primary-darker/50">
                     <Dropdown>
                         <Dropdown.Trigger>
-                            <button className="flex items-center w-full text-left text-sm font-medium text-gray-700 hover:bg-white p-2 rounded-xl transition-all border border-transparent hover:border-gray-200 hover:shadow-sm">
-                                <img src={logoSekolah} alt="Profil Admin" className="h-9 w-9 rounded-full mr-3 object-cover border border-gray-200 shadow-sm" />
-                                <div className="flex-grow min-w-0 mr-2">
-                                    <p className="font-bold text-gray-900 truncate">{admin ? admin.username : 'Admin'}</p>
-                                    <p className="text-xs text-gray-500 truncate capitalize">Administrator</p>
+                            <button className="flex items-center w-full text-left p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent-yellow">
+                                <div className="relative">
+                                    <img 
+                                        src={logoSekolah} 
+                                        alt="Profil Admin" 
+                                        className="h-11 w-11 rounded-full object-cover border-2 border-white/20" 
+                                    />
+                                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-primary rounded-full"></span>
                                 </div>
-                                <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
+                                <div className="ml-3 flex-1 min-w-0">
+                                    <p className="font-bold text-white text-sm truncate">
+                                        {admin ? admin.username : 'Admin'}
+                                    </p>
+                                    <p className="text-xs text-white/50 capitalize">Administrator</p>
+                                </div>
+                                <ChevronDown size={18} className="text-white/40 flex-shrink-0" />
                             </button>
                         </Dropdown.Trigger>
-                        <Dropdown.Content align="top" width="48" contentClasses="py-1 bg-white mb-2 shadow-2xl border border-gray-100 rounded-xl overflow-hidden">
-                            <div className="px-4 py-2 border-b border-gray-50 bg-gray-50/30 mb-1">
-                                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Status</p>
+                        <Dropdown.Content align="top" width="56" contentClasses="py-2 bg-white shadow-xl border border-gray-100 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                    <span className="text-xs font-medium text-gray-600">Online</span>
+                                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
+                                    <span className="text-sm font-medium text-gray-700">Status Online</span>
                                 </div>
                             </div>
-                            <Dropdown.Link href={route('admin.logout')} method="post" as="button" className="w-full text-left">
-                                <div className="flex items-center text-red-600 hover:text-red-700 transition-colors">
-                                    <LogOut size={16} className="mr-2" />
-                                    <span className="font-semibold">Keluar</span>
+                            <Dropdown.Link href={route('admin.logout')} method="post" as="button" className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors">
+                                <div className="flex items-center text-red-600">
+                                    <LogOut size={18} className="mr-2.5" />
+                                    <span className="font-semibold text-sm">Keluar / Logout</span>
                                 </div>
                             </Dropdown.Link>
                         </Dropdown.Content>
@@ -231,33 +265,42 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col lg:pl-72"> {/* Padding kiri hanya untuk desktop */}
-                {/* Mobile Header (Visible only on mobile/tablet) */}
-                <header className="lg:hidden bg-white border-b border-gray-200 h-16 flex items-center px-4 sticky top-0 z-40">
+            <div className="flex-1 flex flex-col lg:pl-72 min-w-0">
+                {/* Mobile Header */}
+                <header className="lg:hidden bg-white border-b border-gray-200 h-16 flex items-center px-4 sticky top-0 z-40 shadow-sm">
                     <button 
                         onClick={toggleMobileMenu} 
-                        className="p-2 -ml-2 text-gray-600 hover:text-primary focus:outline-none transition-colors"
-                        aria-label="Toggle Menu"
+                        className="p-2.5 -ml-2 text-gray-700 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                        aria-label="Buka menu navigasi"
                     >
                         <MenuIcon size={24} />
                     </button>
-                    <div className="ml-3 flex items-center gap-3 overflow-hidden">
-                        <img src={logoSekolah} alt="Logo" className="h-8 w-auto flex-shrink-0" />
-                        <h1 className="text-sm font-bold text-gray-800 truncate uppercase tracking-wider">{headerTitle}</h1>
+                    <div className="ml-3 flex items-center gap-3 min-w-0">
+                        <img src={logoSekolah} alt="Logo" className="h-9 w-auto flex-shrink-0" />
+                        <div className="min-w-0">
+                            <h1 className="text-sm font-bold text-gray-800 truncate uppercase tracking-wide">{headerTitle}</h1>
+                            <p className="text-xs text-gray-500 truncate">{siteName}</p>
+                        </div>
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto pt-4 sm:pt-6">
-                    {/* Page Header (Title) - Integrated into main area for desktop */}
-                    <div className="px-4 sm:px-6 mb-2 hidden lg:block">
-                        <h1 className="text-2xl font-bold text-gray-800 mb-4">{headerTitle}</h1>
+                {/* Page Content */}
+                <main className="flex-1 overflow-y-auto pt-2 sm:pt-4 bg-gray-100">
+                    {/* Desktop Page Header */}
+                    <div className="px-4 sm:px-6 lg:px-8 mb-4 hidden lg:block">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">{headerTitle}</h1>
+                            <p className="text-sm text-gray-500 mt-1">Kelola konten dan pengaturan sekolah dengan mudah</p>
+                        </div>
                     </div>
-                    {children}
+                    <div className="px-2 sm:px-4 lg:px-6 pb-6">
+                        {children}
+                    </div>
                 </main>
 
-                {/* Mobile Navigation Menu with Transition */}
+                {/* Mobile Navigation Drawer */}
                 <Transition show={mobileMenuOpen} as={React.Fragment}>
-                    <div className="lg:hidden fixed inset-0 z-[60] flex" role="dialog" aria-modal="true">
+                    <div className="lg:hidden fixed inset-0 z-[70] flex" role="dialog" aria-modal="true" aria-label="Menu navigasi">
                         <Transition.Child
                             as={React.Fragment}
                             enter="transition-opacity ease-linear duration-300"
@@ -267,7 +310,11 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                             leaveFrom="opacity-100"
                             leaveTo="opacity-0"
                         >
-                            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" onClick={toggleMobileMenu}></div>
+                            <div 
+                                className="fixed inset-0 bg-black/50 backdrop-blur-sm" 
+                                aria-hidden="true"
+                                onClick={closeMobileMenu}
+                            ></div>
                         </Transition.Child>
                         
                         <Transition.Child
@@ -279,40 +326,57 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                             leaveFrom="translate-x-0"
                             leaveTo="-translate-x-full"
                         >
-                            <div className="relative flex flex-col w-80 max-w-[calc(100%-3rem)] bg-white h-full shadow-2xl">
+                            <div className="relative flex flex-col w-80 max-w-[calc(100%-4rem)] bg-white h-full shadow-2xl">
+                                {/* Mobile Header */}
                                 <div className="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
-                                    <Link href={route('admin.dashboard')} className="flex items-center" onClick={closeMobileMenu}>
-                                        <img src={logoSekolah} alt={`Logo ${siteName}`} className="h-10 w-auto" />
-                                        <span className="ml-2 text-md font-bold text-gray-800">{siteName}</span>
+                                    <Link href={route('admin.dashboard')} className="flex items-center gap-3" onClick={closeMobileMenu}>
+                                        <img src={logoSekolah} alt={`Logo ${siteName}`} className="h-11 w-auto" />
+                                        <div>
+                                            <span className="text-sm font-bold text-gray-800 block">{siteName}</span>
+                                            <span className="text-xs text-gray-500">Admin Panel</span>
+                                        </div>
                                     </Link>
-                                    <button onClick={toggleMobileMenu} className="p-2 text-gray-500 hover:text-gray-700 bg-gray-50 rounded-full">
-                                        <XIcon size={20} />
+                                    <button 
+                                        onClick={closeMobileMenu} 
+                                        className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                                        aria-label="Tutup menu"
+                                    >
+                                        <XIcon size={22} />
                                     </button>
                                 </div>
-                                <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
+                                
+                                {/* Mobile Navigation */}
+                                <nav className="flex-grow p-3 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
                                     <ul>
-                                        {renderNavItemsRecursive(navigationStructure, 'mobile', 0, true)}
+                                        {renderNavItemsRecursive(navigationStructure, 'mobile', 0)}
                                     </ul>
                                 </nav>
                                 
-                                {/* Mobile Profile Section */}
-                                <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-                                    <div className="flex items-center justify-between p-3 bg-white rounded-2xl shadow-sm border border-gray-100">
-                                        <div className="flex items-center min-w-0">
-                                            <img src={logoSekolah} alt="Profil Admin" className="h-10 w-10 rounded-full mr-3 object-cover border-2 border-primary/10 shadow-sm" />
+                                {/* Mobile Profile */}
+                                <div className="p-4 border-t border-gray-100 bg-gray-50">
+                                    <div className="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm border border-gray-200">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="relative flex-shrink-0">
+                                                <img 
+                                                    src={logoSekolah} 
+                                                    alt="Profil Admin" 
+                                                    className="h-11 w-11 rounded-full object-cover border-2 border-primary/20" 
+                                                />
+                                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                                            </div>
                                             <div className="min-w-0">
-                                                <p className="font-bold text-gray-900 truncate text-sm">{admin ? admin.username : 'Admin'}</p>
-                                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Administrator</p>
+                                                <p className="font-bold text-gray-900 text-sm truncate">{admin ? admin.username : 'Admin'}</p>
+                                                <p className="text-xs text-gray-500 capitalize">Administrator</p>
                                             </div>
                                         </div>
                                         <Link 
                                             href={route('admin.logout')} 
                                             method="post" 
                                             as="button" 
-                                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                                            title="Logout"
+                                            className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                            title="Keluar"
                                         >
-                                            <LogOut size={20} />
+                                            <LogOut size={22} />
                                         </Link>
                                     </div>
                                 </div>

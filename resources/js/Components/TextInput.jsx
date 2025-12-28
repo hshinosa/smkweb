@@ -4,7 +4,7 @@ export default forwardRef(function TextInput(
     { type = 'text', className = '', isFocused = false, ...props },
     ref,
 ) {
-    const localRef = useRef(null);
+    const localRef = useRef();
 
     useImperativeHandle(ref, () => ({
         focus: () => localRef.current?.focus(),
@@ -21,7 +21,10 @@ export default forwardRef(function TextInput(
             {...props}
             type={type}
             className={
-                'text-sm sm:text-base rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ' +
+                'w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm sm:text-base shadow-sm transition-colors duration-150 ' +
+                'focus:outline-none focus:ring-2 focus:ring-offset-0 ' +
+                'focus:border-accent-yellow focus:ring-accent-yellow ' +
+                'placeholder:text-gray-400 ' +
                 className
             }
             ref={localRef}

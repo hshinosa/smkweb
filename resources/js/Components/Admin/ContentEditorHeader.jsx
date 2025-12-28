@@ -4,23 +4,29 @@ import PrimaryButton from '@/Components/PrimaryButton';
 
 export default function ContentEditorHeader({ title, description, icon: Icon, processing, onSave }) {
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 lg:p-6 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                    {Icon && <Icon size={32} className="text-primary p-1.5 bg-blue-50 rounded-lg" />}
+                <h2 className="text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-3">
+                    {Icon && (
+                        <div className="p-2.5 bg-accent-yellow/10 text-accent-yellow rounded-xl hidden sm:flex">
+                            <Icon size={26} />
+                        </div>
+                    )}
                     {title}
                 </h2>
-                <p className="text-gray-500 mt-1 ml-1">
-                    {description}
-                </p>
+                {description && (
+                    <p className="text-sm lg:text-base text-gray-500 mt-1 ml-1">
+                        {description}
+                    </p>
+                )}
             </div>
             <PrimaryButton 
                 onClick={onSave}
                 disabled={processing} 
-                className="px-4 py-2 flex items-center gap-2 shadow-md hover:shadow-lg transition-all !bg-accent-yellow hover:!bg-[#EAB308] border-0 text-sm !text-gray-900"
+                className="px-6 py-3 flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-base font-semibold"
             >
-                <Save size={16} />
-                <span className="font-bold">{processing ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
+                <Save size={20} />
+                <span>{processing ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
             </PrimaryButton>
         </div>
     );

@@ -364,6 +364,25 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
 
         Route::resource('extracurriculars', \App\Http\Controllers\Admin\ExtracurricularController::class);
+
+        // RAG Documents Management
+        Route::resource('rag-documents', \App\Http\Controllers\Admin\RagDocumentController::class);
+        Route::post('/rag-documents/{ragDocument}/reprocess', [\App\Http\Controllers\Admin\RagDocumentController::class, 'reprocess'])->name('rag-documents.reprocess');
+
+        // AI Settings Management
+        Route::get('/ai-settings', [\App\Http\Controllers\Admin\AiSettingController::class, 'index'])->name('ai-settings.index');
+        Route::post('/ai-settings', [\App\Http\Controllers\Admin\AiSettingController::class, 'update'])->name('ai-settings.update');
     });
 });
 // --- AKHIR RUTE ADMIN ---
+
+// --- API ROUTES FOR CHATBOT ---
+Route::prefix('api')->name('api.')->group(function () {
+    Route::post('/chat/send', [\App\Http\Controllers\Api\ChatController::class, 'sendMessage'])
+        ->middleware('throttle:30,1')
+        ->name('chat.send');
+    
+    Route::get('/chat/history', [\App\Http\Controllers\Api\ChatController::class, 'getHistory'])
+        ->name('chat.history');
+});
+// --- AKHIR API ROUTES ---

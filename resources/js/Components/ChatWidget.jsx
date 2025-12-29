@@ -1,50 +1,77 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, User, Bot, ChevronRight } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Trash2 } from 'lucide-react';
 import { router, usePage } from '@inertiajs/react';
+import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 export default function ChatWidget() {
     const page = usePage();
     if (!page) return null;
+    
     const { siteSettings } = page.props;
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
     const [isOpen, setIsOpen] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [isHidden, setIsHidden] = useState(false);
+    const [sessionId, setSessionId] = useState(null);
+    const [showSuggestions, setShowSuggestions] = useState(true);
     const messagesEndRef = useRef(null);
+    
+    // Common question suggestions
+    const suggestionChips = [
+        "Info PPDB?",
+        "Program studi?",
+        "Ekstrakurikuler?",
+        "Lokasi sekolah?",
+    ];
+
+    // Initialize or get session ID from localStorage
+    useEffect(() => {
+        let sid = localStorage.getItem('chat_session_id');
+        
+        // Generate unique session ID if not exists
+        if (!sid) {
+            // More robust unique ID: timestamp + random + user agent hash
+            const timestamp = Date.now();
+            const random = Math.random().toString(36).substr(2, 12);
+            const userAgentHash = navigator.userAgent.split('').reduce((a, b) => {
+                a = ((a << 5) - a) + b.charCodeAt(0);
+                return a & a;
+            }, 0);
+            
+            sid = `session_${timestamp}_${random}_${Math.abs(userAgentHash)}`;
+            localStorage.setItem('chat_session_id', sid);
+        }
+        
+        setSessionId(sid);
+    }, []);
 
     // Initial Messages
     const [messages, setMessages] = useState([
         {
             id: 1,
             sender: 'bot',
-            text: `Halo! 👋 Selamat datang di ${siteName}. Ada yang bisa kami bantu seputar PPDB atau Info Sekolah?`,
-            type: 'text'
+            text: `Halo! 👋 Selamat datang di ${siteName}. Saya adalah **AI SMANSA**, asisten virtual yang siap membantu menjawab pertanyaan seputar sekolah.`,
+            isRagEnhanced: false,
         },
         {
             id: 2,
             sender: 'bot',
-            type: 'chips',
-            options: [
-                "Info PPDB 2025",
-                "Program Studi",
-                "Biaya Masuk",
-                "Hubungi via WhatsApp"
-            ]
+            text: 'Silakan tanyakan apa saja tentang PPDB, program studi, ekstrakurikuler, informasi akademik, atau hal lain terkait SMANSA!',
+            isRagEnhanced: false,
         }
     ]);
 
     useEffect(() => {
         const checkHidden = () => {
             const path = window.location.pathname;
-            // Sembunyikan jika URL diawali dengan /admin atau /login (halaman login admin)
             setIsHidden(path.startsWith('/admin') || path.startsWith('/login'));
         };
 
-        // Cek saat pertama kali render
         checkHidden();
-
-        // Cek setiap kali navigasi Inertia selesai
         const removeListener = router.on('finish', checkHidden);
 
         return () => {
@@ -52,7 +79,6 @@ export default function ChatWidget() {
         };
     }, []);
 
-    // Auto-scroll to bottom
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -67,75 +93,172 @@ export default function ChatWidget() {
         return null;
     }
 
-    // Handle Quick Action Click
-    const handleChipClick = (option) => {
-        // 1. Add User Message
-        addMessage(option, 'user');
+    // Send message to RAG API with streaming
+    const sendMessageToAPIStream = async (userMessage) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Create a temporary message for streaming (this will replace typing indicator)
+                const botMessageId = 'bot_' + Date.now();
+                
+                // Turn off typing indicator immediately when streaming starts
+                setIsTyping(false);
+                
+                // Add empty bot message that will be filled during streaming
+                addMessage('', 'bot', false, botMessageId);
+                
+                let streamedText = '';
+                let isRagEnhanced = false;
 
-        // 2. Simulate Bot Response
-        setIsTyping(true);
-        
-        setTimeout(() => {
-            setIsTyping(false);
-            generateBotResponse(option);
-        }, 1000);
+                const response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream',
+                    },
+                    body: JSON.stringify({
+                        message: userMessage,
+                        session_id: sessionId,
+                        stream: true
+                    })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+
+                                if (data.type === 'metadata') {
+                                    isRagEnhanced = data.is_rag_enhanced;
+                                } else if (data.type === 'content') {
+                                    streamedText += data.content;
+                                    updateMessage(botMessageId, streamedText, isRagEnhanced);
+                                } else if (data.type === 'done') {
+                                    updateMessage(botMessageId, data.full_message, isRagEnhanced);
+                                    resolve({
+                                        text: data.full_message,
+                                        isRagEnhanced: isRagEnhanced
+                                    });
+                                    return;
+                                }
+                            } catch (err) {
+                                console.error('Error parsing SSE data:', err);
+                            }
+                        }
+                    }
+                }
+
+                resolve({ text: streamedText, isRagEnhanced });
+
+            } catch (error) {
+                console.error('Chat streaming error:', error);
+                setIsTyping(false);
+                reject(error);
+            }
+        });
     };
 
-    // Handle Text Input
-    const handleSend = (e) => {
+    // Handle Text Input with streaming
+    const handleSend = async (e) => {
         e.preventDefault();
-        if (!inputValue.trim()) return;
+        if (!inputValue.trim() || isTyping) return;
 
-        addMessage(inputValue, 'user');
+        const userMessage = inputValue.trim();
+        addMessage(userMessage, 'user');
         setInputValue("");
+        setShowSuggestions(false); // Hide suggestions after first message
         
-        setIsTyping(true);
-        setTimeout(() => {
+        setIsTyping(true); // Show typing indicator briefly
+
+        try {
+            await sendMessageToAPIStream(userMessage);
+            // Typing indicator is already turned off inside sendMessageToAPIStream
+        } catch (error) {
+            console.error('Send message error:', error);
             setIsTyping(false);
-            // Simple default response for free text
-            addMessage("Terima kasih atas pesan Anda. Admin kami akan segera membalas. Silakan gunakan menu cepat di atas untuk respon instan.", 'bot');
-        }, 1500);
+            addMessage('Maaf, saya sedang mengalami masalah koneksi. Silakan coba beberapa saat lagi.', 'bot', false);
+        }
+    };
+    
+    // Handle suggestion chip click
+    const handleChipClick = (suggestion) => {
+        setInputValue(suggestion);
+        setShowSuggestions(false);
+        
+        // Automatically send the message
+        addMessage(suggestion, 'user');
+        setIsTyping(true);
+        
+        sendMessageToAPIStream(suggestion).catch(error => {
+            console.error('Send message error:', error);
+            setIsTyping(false);
+            addMessage('Maaf, saya sedang mengalami masalah koneksi. Silakan coba beberapa saat lagi.', 'bot', false);
+        });
     };
 
-    const addMessage = (text, sender) => {
+    const addMessage = (text, sender, isRagEnhanced = false, id = null) => {
         setMessages(prev => [...prev, {
-            id: Date.now(),
+            id: id || Date.now(),
             sender,
             text,
-            type: 'text'
+            isRagEnhanced,
+            timestamp: new Date().toISOString(),
         }]);
     };
 
-    const generateBotResponse = (query) => {
-        let responseText = "";
-        let nextAction = null;
+    const updateMessage = (id, text, isRagEnhanced = false) => {
+        setMessages(prev => prev.map(msg => 
+            msg.id === id ? { ...msg, text, isRagEnhanced } : msg
+        ));
+    };
 
-        switch (query) {
-            case "Info PPDB 2025":
-                responseText = "Pendaftaran PPDB Tahun Ajaran 2025/2026 akan dibuka mulai bulan Juni 2025. Terdapat jalur Zonasi (50%), Prestasi (25%), Afirmasi (20%), dan Perpindahan Tugas (5%).";
-                break;
-            case "Program Studi":
-                responseText = `${siteName} memiliki 3 program peminatan unggulan: MIPA (Matematika & IPA), IPS (Ilmu Pengetahuan Sosial), dan Bahasa & Budaya.`;
-                break;
-            case "Biaya Masuk":
-                responseText = `Sesuai kebijakan Pemprov Jabar, ${siteName} tidak memungut biaya SPP bulanan (Gratis). Untuk biaya seragam dan kegiatan awal tahun, silakan hubungi Koperasi Sekolah.`;
-                break;
-            case "Hubungi via WhatsApp":
-                responseText = "Anda akan dialihkan ke WhatsApp Admin kami untuk konsultasi lebih lanjut...";
-                window.open('https://wa.me/6281234567890', '_blank');
-                break;
-            default:
-                responseText = "Maaf, saya tidak mengerti. Silakan pilih menu yang tersedia.";
-        }
-
-        addMessage(responseText, 'bot');
+    const clearConversation = () => {
+        // Clear messages except initial greeting
+        setMessages([
+            {
+                id: 1,
+                sender: 'bot',
+                text: `Halo! 👋 Selamat datang di ${siteName}. Saya adalah **AI SMANSA**, asisten virtual yang siap membantu menjawab pertanyaan seputar sekolah.`,
+                isRagEnhanced: false,
+            },
+            {
+                id: 2,
+                sender: 'bot',
+                text: 'Silakan tanyakan apa saja tentang PPDB, program studi, ekstrakurikuler, informasi akademik, atau hal lain terkait SMANSA!',
+                isRagEnhanced: false,
+            }
+        ]);
+        
+        // Show suggestions again
+        setShowSuggestions(true);
+        
+        // Generate new session ID for fresh start
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substr(2, 12);
+        const userAgentHash = navigator.userAgent.split('').reduce((a, b) => {
+            a = ((a << 5) - a) + b.charCodeAt(0);
+            return a & a;
+        }, 0);
+        
+        const newSessionId = `session_${timestamp}_${random}_${Math.abs(userAgentHash)}`;
+        localStorage.setItem('chat_session_id', newSessionId);
+        setSessionId(newSessionId);
     };
 
     return (
         <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end gap-4 font-sans">
-            {/* 1. Chat Dialog Card */}
+            {/* Chat Dialog Card */}
             {isOpen && (
-                <div className="w-[350px] h-[450px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-fade-in-up origin-bottom-right">
+                <div className="w-[420px] h-[600px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-fade-in-up origin-bottom-right">
                     {/* Header */}
                     <div className="bg-primary p-4 flex items-center justify-between shadow-md">
                         <div className="flex items-center gap-3">
@@ -143,19 +266,25 @@ export default function ChatWidget() {
                                 <Bot className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h3 className="text-white font-bold text-sm">Admin Smansa</h3>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                                    <span className="text-blue-100 text-xs">Online • Siap membantu</span>
-                                </div>
+                                <h3 className="text-white font-bold text-sm">AI Assistant</h3>
+                                <span className="text-blue-100 text-xs">AI SMANSA</span>
                             </div>
                         </div>
-                        <button 
-                            onClick={() => setIsOpen(false)}
-                            className="text-white/80 hover:text-white hover:bg-white/10 p-1 rounded-full transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button 
+                                onClick={clearConversation}
+                                className="text-white/80 hover:text-white hover:bg-white/10 p-1 rounded-full transition-colors"
+                                title="Mulai percakapan baru"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                            <button 
+                                onClick={() => setIsOpen(false)}
+                                className="text-white/80 hover:text-white hover:bg-white/10 p-1 rounded-full transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Chat Body */}
@@ -170,30 +299,52 @@ export default function ChatWidget() {
                                         </div>
                                     )}
 
-                                    <div className={`max-w-[80%] ${msg.type === 'chips' ? 'w-full' : ''}`}>
-                                        {msg.type === 'text' && (
-                                            <div className={`p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                                                msg.sender === 'user' 
-                                                ? 'bg-primary text-white rounded-tr-none' 
-                                                : 'bg-white text-gray-700 rounded-tl-none border border-gray-100'
-                                            }`}>
-                                                {msg.text}
-                                            </div>
-                                        )}
-
-                                        {msg.type === 'chips' && (
-                                            <div className="flex flex-wrap gap-2 mt-1">
-                                                {msg.options.map((opt, idx) => (
-                                                    <button
-                                                        key={idx}
-                                                        onClick={() => handleChipClick(opt)}
-                                                        className="bg-white border border-primary text-primary text-xs font-bold px-3 py-2 rounded-full hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95"
+                                    <div className="max-w-[80%]">
+                                        <div className={`p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                                            msg.sender === 'user' 
+                                            ? 'bg-primary text-white rounded-tr-none' 
+                                            : 'bg-white text-gray-700 rounded-tl-none border border-gray-100'
+                                        }`}>
+                                            {msg.sender === 'bot' ? (
+                                                msg.text === '' ? (
+                                                    // Show typing dots when message is empty (streaming not started yet)
+                                                    <div className="flex items-center gap-1.5 py-2 px-1">
+                                                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                                        <div className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
+                                                        <span className="text-[10px] text-gray-400 ml-1 font-medium italic">AI sedang mengetik...</span>
+                                                    </div>
+                                                ) : (
+                                                    <ReactMarkdown 
+                                                        remarkPlugins={[remarkGfm]}
+                                                        rehypePlugins={[rehypeRaw]}
+                                                        components={{
+                                                            h1: ({node, ...props}) => <h1 className="text-lg font-bold mb-2 text-gray-900" {...props} />,
+                                                            h2: ({node, ...props}) => <h2 className="text-base font-bold mb-2 text-gray-900" {...props} />,
+                                                            h3: ({node, ...props}) => <h3 className="text-sm font-semibold mb-1 text-gray-800" {...props} />,
+                                                            p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                                                            ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
+                                                            ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
+                                                            li: ({node, ...props}) => <li className="ml-2" {...props} />,
+                                                            a: ({node, ...props}) => <a className="text-primary underline hover:text-primary-darker" target="_blank" rel="noopener noreferrer" {...props} />,
+                                                            code: ({node, inline, ...props}) => 
+                                                                inline ? (
+                                                                    <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-gray-800" {...props} />
+                                                                ) : (
+                                                                    <code className="block bg-gray-100 p-2 rounded text-xs font-mono overflow-x-auto mb-2" {...props} />
+                                                                ),
+                                                            strong: ({node, ...props}) => <strong className="font-bold text-gray-900" {...props} />,
+                                                            em: ({node, ...props}) => <em className="italic" {...props} />,
+                                                            blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-gray-300 pl-3 italic text-gray-600 mb-2" {...props} />,
+                                                        }}
                                                     >
-                                                        {opt}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
+                                                        {msg.text}
+                                                    </ReactMarkdown>
+                                                )
+                                            ) : (
+                                                msg.text
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -204,10 +355,11 @@ export default function ChatWidget() {
                                     <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-2">
                                         <Bot size={16} className="text-primary" />
                                     </div>
-                                    <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm flex gap-1">
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-75"></span>
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></span>
+                                    <div className="bg-white border border-gray-100 p-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-1.5">
+                                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                        <div className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
+                                        <span className="text-[10px] text-gray-400 ml-1 font-medium italic">AI sedang menyiapkan jawaban...</span>
                                     </div>
                                 </div>
                             )}
@@ -216,28 +368,49 @@ export default function ChatWidget() {
                     </div>
 
                     {/* Footer Input */}
-                    <div className="bg-white p-3 border-t border-gray-100">
-                        <form onSubmit={handleSend} className="flex gap-2">
-                            <input
-                                type="text"
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                placeholder="Ketik pesan..."
-                                className="flex-1 bg-gray-100 border-0 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-primary focus:bg-white transition-all"
-                            />
-                            <button 
-                                type="submit"
-                                disabled={!inputValue.trim()}
-                                className="bg-primary text-white p-2 rounded-full hover:bg-primary-darker disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
-                            >
-                                <Send size={18} className={inputValue.trim() ? "ml-0.5" : ""} />
-                            </button>
-                        </form>
+                    <div className="bg-white border-t border-gray-100">
+                        {/* Suggestion Chips */}
+                        {showSuggestions && (
+                            <div className="p-3 pb-0">
+                                <div className="flex flex-wrap gap-2">
+                                    {suggestionChips.map((chip, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleChipClick(chip)}
+                                            disabled={isTyping}
+                                            className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {chip}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="p-3">
+                            <form onSubmit={handleSend} className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    placeholder="Tanya apa saja..."
+                                    disabled={isTyping}
+                                    className="flex-1 bg-gray-100 border-0 rounded-full px-4 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-primary focus:bg-white transition-all disabled:opacity-50"
+                                />
+                                <button 
+                                    type="submit"
+                                    disabled={!inputValue.trim() || isTyping}
+                                    className="bg-primary text-white p-2 rounded-full hover:bg-primary-darker disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+                                >
+                                    <Send size={18} className={inputValue.trim() ? "ml-0.5" : ""} />
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* 2. Floating Action Button (Trigger) */}
+            {/* Floating Action Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`${

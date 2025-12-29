@@ -7,7 +7,7 @@ import {
     ChevronDown, ChevronRight, LayoutDashboard, LogOut, Newspaper,
     CalendarDays, Info, FileText, Image as ImageIcon, LayoutGrid,
     Menu as MenuIcon, X as XIcon, UserCog, Star, Mail, Settings,
-    BookOpen, GraduationCap, Users, Award
+    BookOpen, GraduationCap, Users, Award, Sparkles, Database
 } from 'lucide-react';
 import Dropdown from '@/Components/Dropdown';
 import { Transition } from '@headlessui/react';
@@ -18,7 +18,7 @@ const getIconComponent = (iconName) => {
     const icons = {
         LayoutDashboard, LogOut, Newspaper, CalendarDays, Info, FileText,
         ImageIcon, LayoutGrid, MenuIcon, UserCog, Star, Mail, Settings,
-        BookOpen, GraduationCap, Users, Award
+        BookOpen, GraduationCap, Users, Award, Sparkles, Database
     };
     return icons[iconName] || LayoutGrid;
 };
@@ -100,13 +100,16 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
         const currentRoute = route().current() || '';
         const masterDataRoutes = ['admin.posts.*', 'admin.teachers.*', 'admin.extracurriculars.*', 'admin.alumni.*', 'admin.galleries.*', 'admin.faqs.*'];
         const kontenUtamaRoutes = ['admin.landingpage.content.*', 'admin.spmb.*', 'admin.program-studi.*', 'admin.school-profile.*', 'admin.curriculum.*', 'admin.academic-calendar.*'];
+        const aiRagRoutes = ['admin.rag-documents.*', 'admin.ai-settings.*'];
 
         const isMasterDataActive = masterDataRoutes.some(route => currentRoute.startsWith(route.replace('.*', '')));
         const isKontenUtamaActive = kontenUtamaRoutes.some(route => currentRoute.startsWith(route.replace('.*', '')));
+        const isAiRagActive = aiRagRoutes.some(route => currentRoute.startsWith(route.replace('.*', '')));
 
         return {
             konten_utama: isKontenUtamaActive,
             master_data: isMasterDataActive,
+            ai_rag: isAiRagActive,
         };
     };
 
@@ -158,6 +161,15 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
             icon: 'Mail',
             href: route('admin.contact-messages.index'),
             routeName: 'admin.contact-messages.*',
+        },
+        {
+            title: "AI & RAG System",
+            icon: 'Sparkles',
+            submenuKey: 'ai_rag',
+            sublinks: [
+                { title: "RAG Documents", href: route('admin.rag-documents.index'), routeName: 'admin.rag-documents.*' },
+                { title: "AI Settings", href: route('admin.ai-settings.index'), routeName: 'admin.ai-settings.*' },
+            ]
         },
         {
             title: "Pengaturan Situs",

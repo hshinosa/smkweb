@@ -17,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
 
+        // Exclude API routes from CSRF protection
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
+
         // Trust all proxies (Cloudflare, Nginx, etc.)
         $middleware->trustProxies(at: '*');
     })

@@ -14,6 +14,7 @@ export function getNavigationData(siteSettings = {}) {
         googleMapsEmbedUrl: general.google_maps_embed_url || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.8947!2d107.6298!3d-6.9876!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e62c87267923%3A0x7ef8aaa0fcd59ec9!2sSMAN%201%20Baleendah%2C%20Baleendah%2C%20Kabupaten%20Bandung%2C%20Jawa%20Barat!5e0!3m2!1sid!2sid!4v1746550004423!5m2!1sid!2sid",
         address: general.address || 'Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Kec. Baleendah, Kabupaten Bandung, Jawa Barat 40375',
         phone: general.phone || '(022) 5940262',
+        whatsapp: general.whatsapp || '+6281234567890',
         email: general.email || 'info@sman1baleendah.sch.id',
         
         profilLinks: [

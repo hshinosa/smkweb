@@ -4,16 +4,28 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Extracurricular;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 
 class ExtracurricularController extends Controller
 {
+    protected $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function index()
     {
+        $extracurriculars = Extracurricular::with('media')->orderBy('sort_order')->get();
+
         return Inertia::render('Admin/Extracurriculars/Index', [
-            'extracurriculars' => Extracurricular::orderBy('sort_order')->get()
+            'extracurriculars' => $extracurriculars->map(function ($extracurricular) {
+                return $this->imageService->transformModelWithMedia($extracurricular, ['images']);
+            })
         ]);
     }
 
@@ -23,7 +35,7 @@ class ExtracurricularController extends Controller
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'icon_name' => 'nullable|string|max:255',
             'schedule' => 'nullable|string|max:255',
             'coach_name' => 'nullable|string|max:255',
@@ -31,12 +43,16 @@ class ExtracurricularController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('extracurriculars', 'public');
-            $validated['image_url'] = Storage::url($path);
-        }
+        // Remove image from validated array
+        unset($validated['image']);
 
-        Extracurricular::create($validated);
+        $extracurricular = Extracurricular::create($validated);
+
+        // NEW: Use Media Library for automatic WebP + responsive variants
+        if ($request->hasFile('image')) {
+            $extracurricular->addMediaFromRequest('image')
+                     ->toMediaCollection('images');
+        }
 
         return redirect()->back()->with('success', 'Ekstrakurikuler berhasil ditambahkan');
     }
@@ -47,7 +63,7 @@ class ExtracurricularController extends Controller
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'icon_name' => 'nullable|string|max:255',
             'schedule' => 'nullable|string|max:255',
             'coach_name' => 'nullable|string|max:255',
@@ -55,27 +71,27 @@ class ExtracurricularController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        if ($request->hasFile('image')) {
-            if ($extracurricular->image_url) {
-                $oldPath = str_replace('/storage/', '', $extracurricular->image_url);
-                Storage::disk('public')->delete($oldPath);
-            }
-            $path = $request->file('image')->store('extracurriculars', 'public');
-            $validated['image_url'] = Storage::url($path);
-        }
+        // Remove image from validated array
+        unset($validated['image']);
 
         $extracurricular->update($validated);
+
+        // NEW: Update media if image provided
+        if ($request->hasFile('image')) {
+            // Clear old media
+            $extracurricular->clearMediaCollection('images');
+            
+            // Add new media
+            $extracurricular->addMediaFromRequest('image')
+                     ->toMediaCollection('images');
+        }
 
         return redirect()->back()->with('success', 'Ekstrakurikuler berhasil diperbarui');
     }
 
     public function destroy(Extracurricular $extracurricular)
     {
-        if ($extracurricular->image_url) {
-            $oldPath = str_replace('/storage/', '', $extracurricular->image_url);
-            Storage::disk('public')->delete($oldPath);
-        }
-
+        // NEW: Media Library automatically deletes associated media
         $extracurricular->delete();
 
         return redirect()->back()->with('success', 'Ekstrakurikuler berhasil dihapus');

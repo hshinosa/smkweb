@@ -181,6 +181,13 @@ class ChatController extends Controller
             'message' => $ragResponse['message'],
             'is_rag_enhanced' => $ragResponse['is_rag_enhanced'],
             'timestamp' => $botChat->created_at->toIso8601String(),
+            'site_settings' => [
+                'general' => [
+                    'whatsapp' => \App\Models\SiteSetting::get('whatsapp'),
+                    'phone' => \App\Models\SiteSetting::get('phone'),
+                    'site_name' => \App\Models\SiteSetting::get('site_name'),
+                ],
+            ],
         ]);
     }
 

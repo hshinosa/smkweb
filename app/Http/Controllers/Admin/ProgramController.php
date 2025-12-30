@@ -4,16 +4,25 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Program;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 
 class ProgramController extends Controller
 {
+    protected $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function index()
     {
+        $programs = Program::with('media')->orderBy('sort_order')->get();
         return Inertia::render('Admin/Programs/Index', [
-            'programs' => Program::orderBy('sort_order')->get()
+            'programs' => $this->imageService->transformCollectionWithMedia($programs, ['program_images'])
         ]);
     }
 
@@ -24,7 +33,7 @@ class ProgramController extends Controller
             'category' => 'required|string|max:255',
             'icon_name' => 'nullable|string|max:255',
             'image' => 'nullable|image|max:2048',
-            'image_url' => 'nullable|string|max:255',
+            'image_url' => 'nullable|string|max:255', // External URL input
             'color_class' => 'nullable|string|max:255',
             'description' => 'required|string',
             'link' => 'nullable|string|max:255',
@@ -32,12 +41,19 @@ class ProgramController extends Controller
             'sort_order' => 'integer',
         ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('programs', 'public');
-            $validated['image_url'] = Storage::url($path);
-        }
+        unset($validated['image']);
 
-        Program::create($validated);
+        $program = Program::create($validated);
+
+        if ($request->hasFile('image')) {
+            $program->addMediaFromRequest('image')->toMediaCollection('program_images');
+            
+            // Backward compatibility: store /storage/... URL
+            $media = $program->getMedia('program_images')->last();
+            if ($media) {
+                $program->update(['image_url' => '/storage/' . $media->id . '/' . $media->file_name]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Program berhasil ditambahkan');
     }
@@ -57,30 +73,27 @@ class ProgramController extends Controller
             'sort_order' => 'integer',
         ]);
 
-        if ($request->hasFile('image')) {
-            // Delete old image if exists
-            if ($program->image_url && !str_starts_with($program->image_url, 'http')) {
-                $oldPath = str_replace('/storage/', '', $program->image_url);
-                Storage::disk('public')->delete($oldPath);
-            }
-            
-            $path = $request->file('image')->store('programs', 'public');
-            $validated['image_url'] = Storage::url($path);
-        }
+        unset($validated['image']);
 
         $program->update($validated);
+
+        if ($request->hasFile('image')) {
+            $program->clearMediaCollection('program_images');
+            $program->addMediaFromRequest('image')->toMediaCollection('program_images');
+            
+            // Backward compatibility
+            $media = $program->getMedia('program_images')->last();
+            if ($media) {
+                $program->update(['image_url' => '/storage/' . $media->id . '/' . $media->file_name]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Program berhasil diperbarui');
     }
 
     public function destroy(Program $program)
     {
-        if ($program->image_url && !str_starts_with($program->image_url, 'http')) {
-            $oldPath = str_replace('/storage/', '', $program->image_url);
-            Storage::disk('public')->delete($oldPath);
-        }
-
-        $program->delete();
+        $program->delete(); // Media library handles deletion
 
         return redirect()->back()->with('success', 'Program berhasil dihapus');
     }

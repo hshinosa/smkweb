@@ -3,6 +3,8 @@ import { Head, usePage, Link } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import Modal from '@/Components/Modal';
+import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
+import SEOHead from '@/Components/SEOHead';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { Calendar, X, Download, FileText, ExternalLink, ChevronRight } from 'lucide-react';
@@ -45,7 +47,12 @@ export default function AcademicCalendarPage({
 
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
-            <Head title={`Kalender Akademik - ${siteName}`} description={`Informasi jadwal kegiatan akademik, ujian, dan hari libur resmi ${siteName}.`} />
+            <SEOHead 
+                title={`Kalender Akademik - ${siteName}`}
+                description={`Kalender akademik tahun ajaran ${siteName}. Jadwal kegiatan, ujian, libur, dan event penting sepanjang tahun akademik.`}
+                keywords={`kalender akademik, jadwal sekolah, tahun ajaran, jadwal ujian, libur sekolah, ${siteName}`}
+                image="/images/calendar-banner.jpg"
+            />
             
             <Navbar 
                 logoSman1={navigationData.logoSman1}
@@ -58,10 +65,15 @@ export default function AcademicCalendarPage({
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
+                    {/* Static image for now - can be replaced with Media Library later */}
                     <img 
                         src="/images/hero-bg-sman1-baleendah.jpeg" 
                         alt="Background Kalender Akademik" 
                         className="w-full h-full object-cover"
+                        loading="eager"
+                        fetchpriority="high"
+                        width="1920"
+                        height="1080"
                     />
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
@@ -170,10 +182,12 @@ export default function AcademicCalendarPage({
                                         className="relative aspect-[3/4] md:aspect-[4/3] overflow-hidden rounded-2xl cursor-zoom-in"
                                         onClick={() => openImageModal(selectedCalendar)}
                                     >
-                                        <img 
+                                        <ResponsiveImage 
+                                            media={selectedCalendar.calendarImagesImage}
                                             src={selectedCalendar.calendar_image_url} 
                                             alt={selectedCalendar.title} 
                                             className="w-full h-full object-contain bg-gray-50 transform group-hover:scale-[1.02] transition-transform duration-700"
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 800px"
                                         />
                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300 flex items-center justify-center">
                                             <div className="bg-white/90 backdrop-blur-sm p-4 rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-opacity transform scale-90 group-hover:scale-100 duration-300">

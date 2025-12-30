@@ -193,7 +193,7 @@ class FaqsCrudTest extends TestCase
         $this->post(route('admin.faqs.store'), $data);
 
         $faq = Faq::where('question', 'Complex Question?')->first();
-        $this->assertEquals($longAnswer, $faq->answer);
+        $this->assertEquals(trim($longAnswer), $faq->answer);
     }
 
     public function test_can_create_faq_in_different_categories(): void

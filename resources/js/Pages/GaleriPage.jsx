@@ -128,19 +128,56 @@ export default function GaleriPage({ galleries = [] }) {
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [lightboxOpen, filteredData.length]);
 
+    // Helper to render thumbnail based on item type
+    const renderThumbnail = (item) => {
+        const url = item.url || '';
+        
+        // For photos, just show the image
+        if (item.type === 'photo') {
+            return (
+                <img 
+                    src={url} 
+                    alt={item.title}
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                />
+            );
+        }
+        
+        // For videos, check if YouTube
+        const youtubeMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        if (youtubeMatch) {
+            return (
+                <img 
+                    src={`https://img.youtube.com/vi/${youtubeMatch[1]}/hqdefault.jpg`}
+                    alt={item.title}
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                />
+            );
+        }
+        
+        // For uploaded videos, use video element as thumbnail
+        return (
+            <video 
+                src={url}
+                className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
+                muted
+                playsInline
+                preload="metadata"
+                onLoadedMetadata={(e) => { e.target.currentTime = 0.1; }}
+            />
+        );
+    };
+
     const GalleryItem = ({ item, index }) => (
         <div 
             className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer"
             onClick={() => openLightbox(item, index)}
         >
             {/* Image Wrapper */}
-            <div className="relative aspect-[4/3] overflow-hidden">
-                <img 
-                    src={item.url} 
-                    alt={item.title}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
-                    loading="lazy"
-                />
+            <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                {renderThumbnail(item)}
                 {/* Overlay Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
@@ -325,22 +362,48 @@ export default function GaleriPage({ galleries = [] }) {
 
                         {/* Content Container */}
                         <div className="flex-grow flex items-center justify-center overflow-hidden rounded-lg bg-black">
-                            {currentItem.type === 'photo' ? (
-                                <img 
-                                    src={currentItem.url} 
-                                    alt={currentItem.title}
-                                    className="max-w-full max-h-[70vh] object-contain"
-                                />
-                            ) : (
-                                <video 
-                                    src={currentItem.url}
-                                    controls
-                                    className="max-w-full max-h-[70vh] w-full"
-                                    autoPlay
-                                >
-                                    Your browser does not support the video tag.
-                                </video>
-                            )}
+                            {(() => {
+                                const url = currentItem.url || '';
+                                
+                                // Photo
+                                if (currentItem.type === 'photo') {
+                                    return (
+                                        <img 
+                                            src={url} 
+                                            alt={currentItem.title}
+                                            className="max-w-full max-h-[70vh] object-contain"
+                                        />
+                                    );
+                                }
+                                
+                                // YouTube video
+                                const youtubeMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+                                if (youtubeMatch) {
+                                    return (
+                                        <div className="w-[90vw] max-w-5xl aspect-video">
+                                            <iframe 
+                                                src={`https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=1`}
+                                                className="w-full h-full"
+                                                allowFullScreen
+                                                allow="autoplay"
+                                            />
+                                        </div>
+                                    );
+                                }
+                                
+                                // Uploaded video
+                                return (
+                                    <video 
+                                        src={url}
+                                        controls
+                                        className="max-w-full max-h-[70vh]"
+                                        autoPlay
+                                        playsInline
+                                    >
+                                        Your browser does not support the video tag.
+                                    </video>
+                                );
+                            })()}
                         </div>
 
                         {/* Caption / Info */}

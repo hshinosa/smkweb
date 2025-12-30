@@ -29,7 +29,9 @@ import {
 
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
 import Modal from '@/Components/Modal';
+import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { getPageMetadata } from '@/Utils/academicData';
@@ -141,10 +143,11 @@ const ActivityDetailModal = ({ show, onClose, activity, categoryTheme }) => {
                 {/* Modal Header Banner */}
                 <div className="h-48 relative overflow-hidden bg-gray-900">
                     {/* Image */}
-                    <img 
+                    <ResponsiveImage 
                         src={activity.image_url || "/images/hero-bg-sman1-baleendah.jpeg"} 
                         alt={activity.name} 
                         className="absolute inset-0 w-full h-full object-cover"
+                        loading="lazy"
                     />
                     
                     <div className="absolute bottom-0 left-0 p-8 w-full bg-gradient-to-t from-black/80 to-transparent">
@@ -316,7 +319,12 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
 
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
-            <Head title={pageMetadata.ekstrakurikuler.title} description={pageMetadata.ekstrakurikuler.description} />
+            <SEOHead 
+                title={pageMetadata.ekstrakurikuler.title}
+                description={pageMetadata.ekstrakurikuler.description}
+                keywords={`ekstrakurikuler, ekskul, kegiatan sekolah, OSIS, pramuka, basket, futsal, musik, sains, robotika, ${siteName}`}
+                image="/images/ekskul-banner.jpg"
+            />
             
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -329,10 +337,9 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
+                    <HeroImage 
                         src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
                         alt={`Background Ekstrakurikuler ${siteName}`} 
-                        className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>

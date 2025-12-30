@@ -52,4 +52,13 @@ class FaqController extends Controller
         $faq->delete();
         return redirect()->route('admin.faqs.index')->with('success', 'FAQ berhasil dihapus.');
     }
+
+    public function reorder(Request $request)
+    {
+        $request->validate(['items' => 'required|array']);
+        foreach ($request->input('items') as $index => $id) {
+            Faq::where('id', $id)->update(['sort_order' => $index + 1]);
+        }
+        return back()->with('success', 'Urutan berhasil diperbarui.');
+    }
 }

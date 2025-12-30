@@ -12,21 +12,27 @@ export default function ChatWidget() {
     
     const { siteSettings } = page.props;
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    
+    // Get initial WhatsApp number from site settings (state for dynamic updates from API)
+    const [whatsappNumber, setWhatsappNumber] = useState(() => {
+        const general = siteSettings?.general || {};
+        const wa = general.whatsapp || '+6281234567890';
+        return wa.replace('+', '');
+    });
+    
     const [isOpen, setIsOpen] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [isHidden, setIsHidden] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const [showSuggestions, setShowSuggestions] = useState(true);
-    const messagesEndRef = useRef(null);
-    
-    // Common question suggestions
-    const suggestionChips = [
+    const [suggestionChips, setSuggestionChips] = useState([
         "Info PPDB?",
         "Program studi?",
         "Ekstrakurikuler?",
         "Lokasi sekolah?",
-    ];
+    ]);
+    const messagesEndRef = useRef(null);
 
     // Initialize or get session ID from localStorage
     useEffect(() => {
@@ -64,6 +70,14 @@ export default function ChatWidget() {
             isRagEnhanced: false,
         }
     ]);
+
+    useEffect(() => {
+        // Load site settings from first message or use props
+        if (messages.length === 2) {
+            // Use siteSettings from props initially
+            // WhatsApp number will be from siteSettings.general.whatsapp in sendMessageToAPIStream
+        }
+    }, [messages.length]);
 
     useEffect(() => {
         const checkHidden = () => {
@@ -144,6 +158,12 @@ export default function ChatWidget() {
                                     updateMessage(botMessageId, streamedText, isRagEnhanced);
                                 } else if (data.type === 'done') {
                                     updateMessage(botMessageId, data.full_message, isRagEnhanced);
+                                    
+                                    // Update WhatsApp number from site settings if provided
+                                    if (data.site_settings?.general?.whatsapp) {
+                                        setWhatsappNumber(data.site_settings.general.whatsapp.replace('+', ''));
+                                    }
+                                    
                                     resolve({
                                         text: data.full_message,
                                         isRagEnhanced: isRagEnhanced
@@ -167,20 +187,129 @@ export default function ChatWidget() {
         });
     };
 
+    // Generate smart follow-up questions based on last bot response
+    const generateFollowUpQuestions = (botResponse) => {
+        const response = botResponse.toLowerCase();
+        
+        // Define contextual follow-ups based on keywords
+        const followUpMap = {
+            ppdb: [
+                "Syarat pendaftaran?",
+                "Jadwal PPDB?",
+                "Cara daftar online?",
+                "Jalur zonasi?",
+            ],
+            program: [
+                "Peminatan IPA?",
+                "Peminatan IPS?",
+                "Peminatan Bahasa?",
+                "Mata pelajaran?",
+            ],
+            ekstra: [
+                "Jadwal ekskul?",
+                "Cara daftar ekskul?",
+                "Prestasi ekskul?",
+                "Biaya ekskul?",
+            ],
+            lokasi: [
+                "Jam operasional?",
+                "Akses transportasi?",
+                "Kontak sekolah?",
+                "Fasilitas sekolah?",
+            ],
+            fasilitas: [
+                "Lab komputer?",
+                "Perpustakaan?",
+                "Lapangan olahraga?",
+                "Ruang kelas?",
+            ],
+            prestasi: [
+                "Prestasi akademik?",
+                "Prestasi non-akademik?",
+                "Alumni berprestasi?",
+                "Lomba yang diikuti?",
+            ],
+            guru: [
+                "Jumlah guru?",
+                "Kualifikasi guru?",
+                "Guru bimbingan?",
+                "Staff sekolah?",
+            ]
+        };
+        
+        // Check which context matches
+        for (const [key, questions] of Object.entries(followUpMap)) {
+            if (response.includes(key) || 
+                response.includes(key.replace('ekstra', 'ekstrakurikuler')) ||
+                response.includes('peminatan') && key === 'program' ||
+                response.includes('jurusan') && key === 'program') {
+                return questions;
+            }
+        }
+        
+        // Default follow-ups if no specific context
+        return [
+            "Info PPDB?",
+            "Program studi?",
+            "Ekstrakurikuler?",
+            "Lokasi sekolah?",
+        ];
+    };
+
+    const openWhatsApp = () => {
+        const waNumber = whatsappNumber; // Ambil dari site settings
+        const waMessage = encodeURIComponent("Halo, saya butuh bantuan informasi sekolah.");
+        window.open(`https://wa.me/${waNumber}?text=${waMessage}`, '_blank');
+    };
+
     // Handle Text Input with streaming
     const handleSend = async (e) => {
         e.preventDefault();
         if (!inputValue.trim() || isTyping) return;
 
-        const userMessage = inputValue.trim();
-        addMessage(userMessage, 'user');
+        const userMessage = inputValue.trim().toLowerCase();
+        
+        // Check if user wants to chat via WhatsApp
+        const waKeywords = ['ke wa', 'chat wa', 'whatsapp', 'kontak via wa', 'hubungi via wa', 'admin wa'];
+        if (waKeywords.some(keyword => userMessage.includes(keyword))) {
+            addMessage(inputValue.trim(), 'user');
+            
+            // Show typing briefly then open WA
+            setIsTyping(true);
+            setTimeout(() => {
+                setIsTyping(false);
+                
+                // Add bot message about WhatsApp
+                addMessage(
+                    `Baik, saya akan arahkankan Anda langsung ke admin sekolah via WhatsApp.
+
+Silakan klik tombol di bawah ini untuk langsung chat:`,
+                    'bot', false, 'wa-' + Date.now()
+                );
+                
+                setSuggestionChips(["Info PPDB?", "Biaya sekolah?"]);
+                setShowSuggestions(false);
+            }, 500);
+            setInputValue("");
+            return;
+        }
+        
+        addMessage(inputValue.trim(), 'user');
         setInputValue("");
-        setShowSuggestions(false); // Hide suggestions after first message
+        setShowSuggestions(false); // Hide suggestions during response
         
         setIsTyping(true); // Show typing indicator briefly
 
         try {
-            await sendMessageToAPIStream(userMessage);
+            const result = await sendMessageToAPIStream(inputValue.trim());
+            
+            // Generate smart follow-up questions based on response
+            if (result && result.text) {
+                const followUps = generateFollowUpQuestions(result.text);
+                setSuggestionChips(followUps);
+                setShowSuggestions(true); // Show new suggestions
+            }
+            
             // Typing indicator is already turned off inside sendMessageToAPIStream
         } catch (error) {
             console.error('Send message error:', error);
@@ -198,16 +327,25 @@ export default function ChatWidget() {
         addMessage(suggestion, 'user');
         setIsTyping(true);
         
-        sendMessageToAPIStream(suggestion).catch(error => {
-            console.error('Send message error:', error);
-            setIsTyping(false);
-            addMessage('Maaf, saya sedang mengalami masalah koneksi. Silakan coba beberapa saat lagi.', 'bot', false);
-        });
+        sendMessageToAPIStream(suggestion)
+            .then(result => {
+                // Generate smart follow-up questions
+                if (result && result.text) {
+                    const followUps = generateFollowUpQuestions(result.text);
+                    setSuggestionChips(followUps);
+                    setShowSuggestions(true);
+                }
+            })
+            .catch(error => {
+                console.error('Send message error:', error);
+                setIsTyping(false);
+                addMessage('Maaf, saya sedang mengalami masalah koneksi. Silakan coba beberapa saat lagi.', 'bot', false);
+            });
     };
 
     const addMessage = (text, sender, isRagEnhanced = false, id = null) => {
         setMessages(prev => [...prev, {
-            id: id || Date.now(),
+            id: id ? String(id) : 'msg_' + Date.now(),
             sender,
             text,
             isRagEnhanced,
@@ -343,6 +481,19 @@ export default function ChatWidget() {
                                                 )
                                             ) : (
                                                 msg.text
+                                            )}
+                                            
+                                            {/* WhatsApp Button for WA redirect messages */}
+                                            {msg.sender === 'bot' && msg.id && String(msg.id).startsWith('wa-') && (
+                                                <button
+                                                    onClick={openWhatsApp}
+                                                    className="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.099-.307-.058-.468.075-.643.127-.161.297-.297.466-.466.594-.173.127-.347.223-.644.15-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.099-.307-.058-.468.075-.643.127-.161.297-.297.466-.466.594-.173.127-.347.223-.644.15-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.099-.307-.058-.468.075-.643.127-.161.297-.297.466-.466.594-.173.127-.347.223-.644.15-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.099-.307-.058-.468.075-.643.127-.161.297-.297.466-.466.594-.173.127-.347.223-.644.15-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.099-.307-.058-.468.075-.643.127-.161.297-.297.466-.466.594-.173.127-.347.223-.644.15-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059zm-5.472 8.617c-5.947 0-10.774-4.827-10.774-10.774 0-5.947 4.827-10.774 10.774-10.774 5.947 0 10.774 4.827 10.774 10.774 0 5.947-4.827 10.774-10.774 10.774zm-18.472 0c0-10.188 8.284-18.472 18.472-18.472 10.188 0 18.472 8.284 18.472 18.472 0 10.188-8.284 18.472-18.472 18.472-10.188 0-18.472-8.284-18.472-18.472z"/>
+                                                    </svg>
+                                                    Chat WhatsApp
+                                                </button>
                                             )}
                                         </div>
                                     </div>

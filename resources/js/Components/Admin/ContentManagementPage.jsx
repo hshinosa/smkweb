@@ -19,9 +19,12 @@ export default function ContentManagementPage({
     success, 
     errors = {}, 
     extraHeader,
+    noForm = false,
     children 
 }) {
     const activeTabData = tabs.find(t => t.key === activeTab);
+    const Wrapper = noForm ? 'div' : 'form';
+    const wrapperProps = noForm ? {} : { onSubmit: onSave };
 
     return (
         <AdminLayout headerTitle={headerTitle}>
@@ -70,7 +73,7 @@ export default function ContentManagementPage({
 
                     {/* Content Area */}
                     <div className="lg:col-span-3 space-y-6">
-                        <form onSubmit={onSave}>
+                        <Wrapper {...wrapperProps}>
                             {/* Header Content */}
                             <ContentEditorHeader 
                                 title={activeTabData?.label}
@@ -84,7 +87,7 @@ export default function ContentManagementPage({
                             <div className="animate-fade-in">
                                 {children}
                             </div>
-                        </form>
+                        </Wrapper>
                     </div>
                 </div>
             </div>

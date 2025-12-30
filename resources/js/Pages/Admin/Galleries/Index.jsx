@@ -12,24 +12,100 @@ import { Plus, Edit2, Trash2, X, Image as ImageIcon, Video, Star } from 'lucide-
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import Modal from '@/Components/Modal';
 
+const GalleryMedia = ({ item }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    const getImageUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http') || url.startsWith('/')) return url;
+        return `/storage/${url}`;
+    };
+
+    const url = getImageUrl(item.url);
+
+    if (item.type === 'photo') {
+        return <img src={url} alt={item.title} className="w-full h-full object-cover" loading="lazy" />;
+    }
+
+    // YouTube
+    const youtubeMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    if (youtubeMatch) {
+         return <img src={`https://img.youtube.com/vi/${youtubeMatch[1]}/hqdefault.jpg`} alt={item.title} className="w-full h-full object-cover" />;
+    }
+
+    return (
+        <div className="w-full h-full bg-slate-100 relative overflow-hidden flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+             {/* Fallback Icon - always visible underneath */}
+             <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-2">
+                <Video size={32} className="opacity-50" />
+                <span className="text-[10px] font-medium opacity-50">Video</span>
+             </div>
+             
+             <video 
+                 src={url} 
+                 className="w-full h-full object-cover relative z-10"
+                 muted
+                 playsInline
+                 loop
+                 preload="auto"
+                 onLoadedMetadata={(e) => { 
+                    e.target.currentTime = 0.1; 
+                 }}
+                 onMouseEnter={(e) => {
+                     e.target.play().catch(() => {});
+                 }}
+                 onMouseLeave={(e) => { 
+                     e.target.pause(); 
+                     e.target.currentTime = 0.1; 
+                 }}
+             />
+        </div>
+    );
+};
+
 export default function Index({ galleries }) {
     const { success } = usePage().props;
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentId, setCurrentId] = useState(null);
     const [activeTab, setActiveTab] = useState('list');
+    const [formKey, setFormKey] = useState(0);
 
-    const { data, setData, post, delete: destroy, processing, errors, reset } = useForm({
-        title: '', description: '', type: 'photo', file: null, url: '', is_external: false, category: '', date: new Date().toISOString().split('T')[0], is_featured: true,
+    const categories = ['Kegiatan Sekolah', 'Prestasi', 'Fasilitas', 'Alumni', 'Lainnya'];
+
+    const { data, setData, post, put, delete: destroy, processing, errors, reset } = useForm({
+        title: '', description: '', type: 'photo', file: null, url: '', is_external: false, category: '', is_featured: true,
     });
 
     const tabs = [{ key: 'list', label: 'Galeri Foto & Video', description: 'Kelola dokumentasi visual.', icon: ImageIcon }];
 
     const openModal = (gallery = null) => {
+        setFormKey(prev => prev + 1);
         if (gallery) {
             setEditMode(true); setCurrentId(gallery.id);
-            setData({ title: gallery.title || '', description: gallery.description || '', type: gallery.type || 'photo', file: null, url: gallery.url || '', is_external: !!gallery.is_external, category: gallery.category || '', date: gallery.date || new Date().toISOString().split('T')[0], is_featured: !!gallery.is_featured });
-        } else { setEditMode(false); setCurrentId(null); reset(); }
+            setData({ 
+                title: gallery.title || '', 
+                description: gallery.description || '', 
+                type: gallery.type || 'photo', 
+                file: null, 
+                url: gallery.url || '', 
+                is_external: !!gallery.is_external, 
+                category: gallery.category || '', 
+                is_featured: !!gallery.is_featured 
+            });
+        } else { 
+            setEditMode(false); setCurrentId(null); 
+            setData({
+                title: '', 
+                description: '', 
+                type: 'photo', 
+                file: null, 
+                url: '', 
+                is_external: false, 
+                category: '', 
+                is_featured: true
+            });
+        }
         setIsModalOpen(true);
     };
 
@@ -37,15 +113,45 @@ export default function Index({ galleries }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (editMode) { post(route('admin.galleries.update', currentId), { forceFormData: true, onSuccess: () => closeModal(), _method: 'PUT' }); }
+        if (editMode) { 
+            if (data.file) {
+                post(route('admin.galleries.update', currentId), { 
+                    forceFormData: true, 
+                    onSuccess: () => closeModal(), 
+                    transform: (data) => ({ ...data, _method: 'PUT' }),
+                }); 
+            } else {
+                put(route('admin.galleries.update', currentId), { 
+                    onSuccess: () => closeModal(), 
+                }); 
+            }
+        }
         else { post(route('admin.galleries.store'), { onSuccess: () => closeModal() }); }
     };
 
-    const handleDelete = (id) => { if (confirm('Hapus item ini?')) destroy(route('admin.galleries.destroy', id)); };
+    const handleDelete = (id) => { 
+        if (confirm('Hapus item ini?')) {
+            destroy(route('admin.galleries.destroy', id), { preserveScroll: true });
+        }
+    };
 
+    const getImageUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http') || url.startsWith('/')) return url;
+        return `/storage/${url}`;
+    };
+
+    
     return (
-        <ContentManagementPage headerTitle="Kelola Galeri" headTitle="Galeri Sekolah" tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} onSave={() => openModal()}
-            extraHeader={<div className="flex justify-end"><PrimaryButton onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah Item</PrimaryButton></div>}>
+        <ContentManagementPage 
+            headerTitle="Kelola Galeri" 
+            headTitle="Galeri Sekolah" 
+            tabs={tabs} 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            noForm={true}
+            extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah Item</PrimaryButton></div>}
+        >
             {success && <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3"><div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0"><svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg></div><p className="text-green-800 text-sm font-medium">{success}</p></div>}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
                 {galleries.length > 0 ? (
@@ -53,15 +159,15 @@ export default function Index({ galleries }) {
                         {galleries.map((item) => (
                             <div key={item.id} className="group bg-white border border-gray-100 rounded-lg sm:rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
                                 <div className="aspect-square bg-gray-100 relative">
-                                    {item.type === 'photo' ? <img src={item.url} alt={item.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-slate-800 text-white"><Video size={24} className="sm:w-8 sm:h-8" /></div>}
-                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <GalleryMedia item={item} />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-20">
                                         <button onClick={() => openModal(item)} className="p-2 bg-white/90 rounded-full text-accent-yellow hover:bg-white"><Edit2 size={16} /></button>
                                         <button onClick={() => handleDelete(item.id)} className="p-2 bg-white/90 rounded-full text-red-600 hover:bg-white"><Trash2 size={16} /></button>
                                     </div>
                                     {item.is_featured && <div className="absolute top-2 left-2 px-2 py-1 bg-yellow-500 text-white text-[10px] sm:text-xs font-bold rounded flex items-center gap-1"><Star size={10} className="sm:size-3" /> Featured</div>}
                                     {item.type === 'video' && <div className="absolute top-2 right-2 px-2 py-1 bg-red-600 text-white text-[10px] sm:text-xs font-bold rounded">Video</div>}
                                 </div>
-                                <div className="p-2 sm:p-3"><h4 className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{item.title}</h4><div className="flex justify-between items-center mt-1"><span className="text-[10px] sm:text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{item.category || '-'}</span><span className="text-[10px] sm:text-xs text-gray-400">{item.date}</span></div></div>
+                                <div className="p-2 sm:p-3"><h4 className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{item.title}</h4><div className="flex justify-between items-center mt-1"><span className="text-[10px] sm:text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{item.category || '-'}</span><span className="text-[10px] sm:text-xs text-gray-400">{item.date ? new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span></div></div>
                             </div>
                         ))}
                     </div>
@@ -72,12 +178,18 @@ export default function Index({ galleries }) {
             <Modal show={isModalOpen} onClose={closeModal} maxWidth="2xl">
                 <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto">
                     <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10"><h3 className="text-lg sm:text-xl font-bold text-gray-900">{editMode ? 'Edit Item' : 'Tambah Item'}</h3><button onClick={closeModal} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
-                    <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+                    <form key={formKey} onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><InputLabel htmlFor="title" value="Judul" /><TextInput id="title" type="text" className="mt-1 block w-full" value={data.title} onChange={(e) => setData('title', e.target.value)} required placeholder="Judul..." /><InputError message={errors.title} className="mt-2" /></div><div><InputLabel htmlFor="type" value="Tipe" /><select id="type" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" value={data.type} onChange={(e) => setData('type', e.target.value)}><option value="photo">Foto</option><option value="video">Video</option></select></div></div>
                         <div><InputLabel htmlFor="description" value="Deskripsi (Opsional)" /><textarea id="description" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" rows="2" value={data.description} onChange={(e) => setData('description', e.target.value)}></textarea></div>
-                        <div className="p-4 bg-gray-50 rounded-xl space-y-3"><label className="flex items-center gap-2"><input type="checkbox" id="is_external" checked={data.is_external} onChange={(e) => setData('is_external', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-accent-yellow focus:ring-accent-yellow" /><span className="text-sm font-medium">URL Eksternal</span></label>{data.is_external ? <div><InputLabel htmlFor="url" value="URL" /><TextInput id="url" type="url" className="mt-1 block w-full" value={data.url} onChange={(e) => setData('url', e.target.value)} placeholder="https://..." /><InputError message={errors.url} className="mt-2" /></div> : <FileUploadField id="gallery_file" label="Upload File" previewUrl={data.url && !data.file ? data.url : (data.file ? URL.createObjectURL(data.file) : '')} onChange={(file) => setData('file', file)} error={errors.file} />}
+                        <div className="p-4 bg-gray-50 rounded-xl space-y-3"><label className="flex items-center gap-2"><input type="checkbox" id="is_external" checked={data.is_external} onChange={(e) => setData('is_external', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-accent-yellow focus:ring-accent-yellow" /><span className="text-sm font-medium">{data.type === 'video' ? 'Gunakan URL Eksternal (YouTube dll)' : 'Gunakan URL Eksternal'}</span></label>{data.is_external ? <div><InputLabel htmlFor="url" value="URL" /><TextInput id="url" type="url" className="mt-1 block w-full" value={data.url} onChange={(e) => setData('url', e.target.value)} placeholder="https://..." /><InputError message={errors.url} className="mt-2" /></div> : <FileUploadField id="gallery_file" label={data.type === 'video' ? 'Upload Video' : 'Upload Foto'} accept={data.type === 'video' ? 'video/mp4,video/webm,video/quicktime' : 'image/*'} fileType={data.type === 'video' ? 'video' : 'image'} previewUrl={data.url && !data.file ? getImageUrl(data.url) : (data.file ? URL.createObjectURL(data.file) : '')} onChange={(file) => setData('file', file)} error={errors.file} />}
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><InputLabel htmlFor="category" value="Kategori" /><TextInput id="category" type="text" className="mt-1 block w-full" value={data.category} onChange={(e) => setData('category', e.target.value)} placeholder="Kategori..." /></div><div><InputLabel htmlFor="date" value="Tanggal" /><TextInput id="date" type="date" className="mt-1 block w-full" value={data.date} onChange={(e) => setData('date', e.target.value)} /></div></div>
+                        <div className="grid grid-cols-1 gap-4">
+                            <div>
+                                <InputLabel htmlFor="category" value="Kategori" />
+                                <TextInput id="category" type="text" list="category-options" className="mt-1 block w-full" value={data.category} onChange={(e) => setData('category', e.target.value)} placeholder="Kategori..." />
+                                <datalist id="category-options">{categories.map(c => <option key={c} value={c} />)}</datalist>
+                            </div>
+                        </div>
                         <label className="flex items-center gap-2"><input type="checkbox" id="is_featured_gallery" checked={data.is_featured} onChange={(e) => setData('is_featured', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-accent-yellow focus:ring-accent-yellow" /><span className="text-sm text-gray-700">Featured</span></label>
                         <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200"><button type="button" onClick={closeModal} className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium">Batal</button><PrimaryButton type="submit" disabled={processing} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500">{processing ? '...' : (editMode ? 'Simpan' : 'Tambah')}</PrimaryButton></div>
                     </form>

@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class LandingPageSetting extends Model
+class LandingPageSetting extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'section_key',
@@ -17,6 +20,41 @@ class LandingPageSetting extends Model
     protected $casts = [
         'content' => 'array',
     ];
+
+    /**
+     * Register media conversions
+     */
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('mobile')
+            ->width(375)
+            ->format('webp')
+            ->quality(80)
+            ->nonQueued();
+
+        $this->addMediaConversion('tablet')
+            ->width(768)
+            ->format('webp')
+            ->quality(85)
+            ->nonQueued();
+
+        $this->addMediaConversion('desktop')
+            ->width(1280)
+            ->format('webp')
+            ->quality(90)
+            ->nonQueued();
+
+        $this->addMediaConversion('large')
+            ->width(1920)
+            ->format('webp')
+            ->quality(90)
+            ->nonQueued();
+
+        $this->addMediaConversion('webp')
+            ->format('webp')
+            ->quality(95)
+            ->nonQueued();
+    }
 
     // Definisikan field yang valid untuk setiap section di sini juga
     public static function getSectionFields(): array

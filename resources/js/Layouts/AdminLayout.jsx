@@ -397,7 +397,7 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                     </div>
                 </Transition>
 
-                <ChatWidget />
+                {/* <ChatWidget /> */}
             </div>
         </div>
     );

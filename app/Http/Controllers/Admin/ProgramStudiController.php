@@ -21,7 +21,7 @@ class ProgramStudiController extends Controller
         }
 
         try {
-            $settingsFromDb = ProgramStudiSetting::where("program_name", $programName)
+            $settingsFromDb = ProgramStudiSetting::with('media')->where("program_name", $programName)
                 ->get()
                 ->keyBy("section_key");
             
@@ -60,14 +60,19 @@ class ProgramStudiController extends Controller
             if (!$request->has($sectionKey)) continue;
 
             $content = $request->input($sectionKey);
+            $setting = ProgramStudiSetting::firstOrNew(['program_name' => $programName, 'section_key' => $sectionKey]);
             
             // Handle top-level files
             foreach ($fields as $fieldKey => $fieldType) {
                 if ($fieldType === "image") {
                     if ($request->hasFile("{$sectionKey}.{$fieldKey}")) {
-                        $file = $request->file("{$sectionKey}.{$fieldKey}");
-                        $path = $file->store("program-studi", "public");
-                        $content[$fieldKey] = "/storage/" . $path;
+                        $collection = $sectionKey . '_' . $fieldKey;
+                        $setting->clearMediaCollection($collection);
+                        $setting->addMediaFromRequest("{$sectionKey}.{$fieldKey}")->toMediaCollection($collection);
+                        $media = $setting->getMedia($collection)->last();
+                        if ($media) {
+                            $content[$fieldKey] = '/storage/' . $media->id . '/' . $media->file_name;
+                        }
                     }
                 }
             }
@@ -78,33 +83,37 @@ class ProgramStudiController extends Controller
                     foreach ($content["items"] as $index => &$item) {
                         // Core Subjects Icon
                         if ($sectionKey === "core_subjects" && $request->hasFile("{$sectionKey}.items.{$index}.icon")) {
-                             $file = $request->file("{$sectionKey}.items.{$index}.icon");
-                             $path = $file->store("program-studi/icons", "public");
-                             $item["icon"] = "/storage/" . $path;
+                             $collection = "{$sectionKey}_item_{$index}_icon";
+                             $setting->clearMediaCollection($collection);
+                             $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.icon")->toMediaCollection($collection);
+                             $media = $setting->getMedia($collection)->last();
+                             if ($media) $item["icon"] = '/storage/' . $media->id . '/' . $media->file_name;
                         }
                         
                         // Facilities Image
                         if ($sectionKey === "facilities" && $request->hasFile("{$sectionKey}.items.{$index}.image")) {
-                             $file = $request->file("{$sectionKey}.items.{$index}.image");
-                             $path = $file->store("program-studi/facilities", "public");
-                             $item["image"] = "/storage/" . $path;
+                             $collection = "{$sectionKey}_item_{$index}_image";
+                             $setting->clearMediaCollection($collection);
+                             $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.image")->toMediaCollection($collection);
+                             $media = $setting->getMedia($collection)->last();
+                             if ($media) $item["image"] = '/storage/' . $media->id . '/' . $media->file_name;
                         }
 
                         // Career Paths Icon (if image)
                         if ($sectionKey === "career_paths" && $request->hasFile("{$sectionKey}.items.{$index}.icon")) {
-                             $file = $request->file("{$sectionKey}.items.{$index}.icon");
-                             $path = $file->store("program-studi/icons", "public");
-                             $item["icon"] = "/storage/" . $path;
+                             $collection = "{$sectionKey}_item_{$index}_icon";
+                             $setting->clearMediaCollection($collection);
+                             $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.icon")->toMediaCollection($collection);
+                             $media = $setting->getMedia($collection)->last();
+                             if ($media) $item["icon"] = '/storage/' . $media->id . '/' . $media->file_name;
                         }
                     }
                 }
             }
 
             // Save to DB
-            ProgramStudiSetting::updateOrCreate(
-                ["program_name" => $programName, "section_key" => $sectionKey],
-                ["content" => $content]
-            );
+            $setting->content = $content;
+            $setting->save();
         }
 
         return back()->with("success", "Data berhasil disimpan.");

@@ -14,9 +14,11 @@ import {
 
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { usePage } from '@inertiajs/react';
+import { ThumbnailImage, ContentImage } from '@/Components/ResponsiveImage';
 
 // --- MOCK DATA ---
 const alumniStats = [
@@ -36,9 +38,10 @@ const AlumniCard = ({ alumni }) => (
             {/* Header */}
             <div className="flex items-center gap-4 mb-4">
                 <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-gray-100 flex-shrink-0">
-                    {alumni.image_url ? (
-                        <img 
-                            src={`/storage/${alumni.image_url}`} 
+                    {alumni.avatarsImage || alumni.image_url ? (
+                        <ThumbnailImage 
+                            src={alumni.image_url ? `/storage/${alumni.image_url}` : null}
+                            media={alumni.avatarsImage}
                             alt={alumni.name} 
                             className="w-full h-full object-cover"
                         />
@@ -121,7 +124,12 @@ export default function AlumniPage({ auth, alumnis = [] }) {
 
     return (
         <div className="bg-secondary font-sans text-gray-800">
-            <Head title={`Jejak Alumni - ${siteName}`} />
+            <SEOHead 
+                title={`Jejak Alumni - ${siteName}`}
+                description={`Profil alumni sukses ${siteName}. Testimoni, kisah sukses, dan jaringan alumni di berbagai bidang profesi.`}
+                keywords={`alumni, lulusan, alumni sukses, testimoni alumni, ${siteName}`}
+                image="/images/alumni-banner.jpg"
+            />
             
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -131,23 +139,25 @@ export default function AlumniPage({ auth, alumnis = [] }) {
             />
 
             <main>
-                {/* 1. HERO SECTION */}
-                <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden pt-20">
+                {/* 1. HERO SECTION (Consistent with AcademicCalendarPage) */}
+                <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                     {/* Background Image */}
                     <div className="absolute inset-0 z-0">
                         <img 
                             src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
                             alt="Background" 
                             className="w-full h-full object-cover"
+                            loading="eager"
+                            fetchpriority="high"
                         />
                         <div className="absolute inset-0 bg-black/60"></div>
                     </div>
 
-                    <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-                        <h1 className={`${TYPOGRAPHY.heroTitle} mb-6 max-w-4xl mx-auto`}>
+                    <div className="relative z-10 container mx-auto px-4 text-center text-white">
+                        <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
                             {renderHighlightedTitle(heroSettings.title || 'Jejak Alumni')}
                         </h1>
-                        <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto mb-10 opacity-90`}>
+                        <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
                             {heroSettings.subtitle || `Ribuan cerita sukses bermula dari sini. Tersebar di berbagai Universitas Top dan Perusahaan Multinasional, membawa nama baik almamater.`}
                         </p>
                     </div>
@@ -161,9 +171,10 @@ export default function AlumniPage({ auth, alumnis = [] }) {
                                 <div className="flex flex-col lg:flex-row">
                                     {/* Image Side */}
                                     <div className="lg:w-2/5 relative min-h-[400px]">
-                                        {featuredAlumniData.image_url ? (
-                                            <img 
-                                                src={`/storage/${featuredAlumniData.image_url}`} 
+                                        {featuredAlumniData.avatarsImage || featuredAlumniData.image_url ? (
+                                            <ContentImage 
+                                                src={featuredAlumniData.image_url ? `/storage/${featuredAlumniData.image_url}` : null}
+                                                media={featuredAlumniData.avatarsImage}
                                                 alt={featuredAlumniData.name} 
                                                 className="absolute inset-0 w-full h-full object-cover"
                                             />

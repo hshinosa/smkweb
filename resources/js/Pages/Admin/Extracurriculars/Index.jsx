@@ -40,7 +40,17 @@ export default function Index({ extracurriculars }) {
         else { post(route('admin.extracurriculars.store'), { onSuccess: () => closeModal() }); }
     };
 
-    const handleDelete = (id) => { if (confirm('Hapus ekskul ini?')) destroy(route('admin.extracurriculars.destroy', id)); };
+    const handleDelete = (id) => { 
+        if (confirm('Hapus ekskul ini?')) {
+            destroy(route('admin.extracurriculars.destroy', id), { preserveScroll: true }); 
+        }
+    };
+
+    const getImageUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http') || url.startsWith('/')) return url;
+        return `/storage/${url}`;
+    };
 
     const getCategoryColor = (cat) => {
         const colors = { 'Olahraga': 'bg-green-100 text-green-700', 'Seni & Budaya': 'bg-purple-100 text-purple-700', 'Akademik & Sains': 'bg-blue-100 text-blue-700', 'Keagamaan & Sosial': 'bg-yellow-100 text-yellow-700', 'Organisasi & Kepemimpinan': 'bg-red-100 text-red-700', 'Teknologi & Inovasi': 'bg-cyan-100 text-cyan-700' };
@@ -48,8 +58,15 @@ export default function Index({ extracurriculars }) {
     };
 
     return (
-        <ContentManagementPage headerTitle="Kelola Ekskul" headTitle="Ekstrakurikuler" tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} onSave={() => openModal()}
-            extraHeader={<div className="flex justify-end"><PrimaryButton onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah Ekskul</PrimaryButton></div>}>
+        <ContentManagementPage 
+            headerTitle="Kelola Ekskul" 
+            headTitle="Ekstrakurikuler" 
+            tabs={tabs} 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            noForm={true}
+            extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah Ekskul</PrimaryButton></div>}
+        >
             {success && <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3"><div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg></div><p className="text-green-800 text-sm font-medium">{success}</p></div>}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {extracurriculars.length > 0 ? (
@@ -67,7 +84,7 @@ export default function Index({ extracurriculars }) {
                             <tbody className="divide-y divide-gray-100">
                                 {extracurriculars.map((item) => (
                                     <tr key={item.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3 whitespace-nowrap"><div className="h-12 w-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">{item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Star className="text-gray-400 w-6 h-6" /></div>}</div></td>
+                                        <td className="px-4 py-3 whitespace-nowrap"><div className="h-12 w-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">{item.image_url ? <img src={getImageUrl(item.image_url)} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Star className="text-gray-400 w-6 h-6" /></div>}</div></td>
                                         <td className="px-4 py-3"><p className="font-semibold text-gray-900 text-sm">{item.name}</p>{item.description && <p className="text-xs text-gray-500 line-clamp-1 mt-0.5 hidden sm:block">{item.description}</p>}</td>
                                         <td className="px-4 py-3 hidden sm:table-cell"><span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getCategoryColor(item.category)}`}>{item.category}</span></td>
                                         <td className="px-4 py-3"><span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{item.is_active ? 'Aktif' : 'Nonaktif'}</span></td>

@@ -6,6 +6,7 @@ use App\Helpers\ActivityLogger;
 use App\Helpers\HtmlSanitizer;
 use App\Http\Controllers\Controller;
 use App\Models\LandingPageSetting;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -14,19 +15,44 @@ use Inertia\Inertia;
 
 class LandingPageContentController extends Controller
 {
+    protected $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
     // Tidak perlu getDefaults() lagi di sini, kita pakai dari model
 
     public function index()
     {
         try {
-            $settingsFromDb = LandingPageSetting::all()->keyBy('section_key');
+            $settingsFromDb = LandingPageSetting::with('media')->get()->keyBy('section_key');
             $pageData = [];
             $sectionKeys = array_keys(LandingPageSetting::getSectionFields());
 
             foreach ($sectionKeys as $key) {
                 $dbRow = $settingsFromDb->get($key);
                 $dbContent = ($dbRow && isset($dbRow['content']) && is_array($dbRow['content'])) ? $dbRow['content'] : null;
-                $pageData[$key] = LandingPageSetting::getContent($key, $dbContent);
+                $content = LandingPageSetting::getContent($key, $dbContent);
+
+                // Inject Media Library data if available
+                if ($dbRow) {
+                    if ($key === 'hero') {
+                        $bgMedia = $this->imageService->getFirstMediaData($dbRow, 'hero_background');
+                        if ($bgMedia) $content['backgroundImage'] = $bgMedia;
+
+                        $studentMedia = $this->imageService->getFirstMediaData($dbRow, 'hero_student');
+                        if ($studentMedia) $content['studentImage'] = $studentMedia;
+                    } elseif ($key === 'about_lp') {
+                        $aboutMedia = $this->imageService->getFirstMediaData($dbRow, 'about_image');
+                        if ($aboutMedia) $content['aboutImage'] = $aboutMedia;
+                    } elseif ($key === 'kepsek_welcome_lp') {
+                        $kepsekMedia = $this->imageService->getFirstMediaData($dbRow, 'kepsek_image');
+                        if ($kepsekMedia) $content['kepsekImage'] = $kepsekMedia;
+                    }
+                }
+
+                $pageData[$key] = $content;
             }
             // Log::info('Admin Landing Page Data to View:', $pageData);
 
@@ -134,79 +160,59 @@ class LandingPageContentController extends Controller
 
         try {
             foreach ($finalDataToSave as $sectionKey => $content) {
+                // Find or create setting first to attach media
+                $setting = LandingPageSetting::firstOrNew(['section_key' => $sectionKey]);
+                
                 // Handle file uploads for each section
                 if ($sectionKey === 'hero') {
                     if ($request->hasFile('hero.background_image')) {
-                        $file = $request->file('hero.background_image');
-                        $fileName = time().'_hero_bg_'.$file->getClientOriginalName();
-                        $filePath = $file->storeAs('landing-page', $fileName, 'public');
-
-                        // Delete old file if exists
-                        $existingContent = LandingPageSetting::where('section_key', $sectionKey)->first();
-                        if ($existingContent && isset($existingContent->content['background_image_url'])) {
-                            $oldFilePath = str_replace('/storage/', '', $existingContent->content['background_image_url']);
-                            Storage::disk('public')->delete($oldFilePath);
+                        $setting->clearMediaCollection('hero_background');
+                        $setting->addMediaFromRequest('hero.background_image')
+                                        ->toMediaCollection('hero_background');
+                        $media = $setting->getMedia('hero_background')->last();
+                        if ($media) {
+                            $content['background_image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
                         }
-
-                        $content['background_image_url'] = '/storage/'.$filePath;
                     }
 
                     if ($request->hasFile('hero.student_image')) {
-                        $file = $request->file('hero.student_image');
-                        $fileName = time().'_hero_student_'.$file->getClientOriginalName();
-                        $filePath = $file->storeAs('landing-page', $fileName, 'public');
-
-                        // Delete old file if exists
-                        $existingContent = LandingPageSetting::where('section_key', $sectionKey)->first();
-                        if ($existingContent && isset($existingContent->content['student_image_url'])) {
-                            $oldFilePath = str_replace('/storage/', '', $existingContent->content['student_image_url']);
-                            Storage::disk('public')->delete($oldFilePath);
+                        $setting->clearMediaCollection('hero_student');
+                        $setting->addMediaFromRequest('hero.student_image')
+                                        ->toMediaCollection('hero_student');
+                        $media = $setting->getMedia('hero_student')->last();
+                        if ($media) {
+                            $content['student_image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
                         }
-
-                        $content['student_image_url'] = '/storage/'.$filePath;
                     }
                 } elseif ($sectionKey === 'about_lp' && $request->hasFile('about_lp.image')) {
-                    $file = $request->file('about_lp.image');
-                    $fileName = time().'_about_'.$file->getClientOriginalName();
-                    $filePath = $file->storeAs('landing-page', $fileName, 'public');
-
-                    // Delete old file if exists
-                    $existingContent = LandingPageSetting::where('section_key', $sectionKey)->first();
-                    if ($existingContent && isset($existingContent->content['image_url'])) {
-                        $oldFilePath = str_replace('/storage/', '', $existingContent->content['image_url']);
-                        Storage::disk('public')->delete($oldFilePath);
+                    $setting->clearMediaCollection('about_image');
+                    $setting->addMediaFromRequest('about_lp.image')
+                                    ->toMediaCollection('about_image');
+                    $media = $setting->getMedia('about_image')->last();
+                    if ($media) {
+                        $content['image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
                     }
-
-                    $content['image_url'] = '/storage/'.$filePath;
                 } elseif ($sectionKey === 'kepsek_welcome_lp' && $request->hasFile('kepsek_welcome_lp.kepsek_image')) {
-                    $file = $request->file('kepsek_welcome_lp.kepsek_image');
-                    $fileName = time().'_kepsek_'.$file->getClientOriginalName();
-                    $filePath = $file->storeAs('landing-page', $fileName, 'public');
-
-                    // Delete old file if exists
-                    $existingContent = LandingPageSetting::where('section_key', $sectionKey)->first();
-                    if ($existingContent && isset($existingContent->content['kepsek_image_url'])) {
-                        $oldFilePath = str_replace('/storage/', '', $existingContent->content['kepsek_image_url']);
-                        Storage::disk('public')->delete($oldFilePath);
+                    $setting->clearMediaCollection('kepsek_image');
+                    $setting->addMediaFromRequest('kepsek_welcome_lp.kepsek_image')
+                                    ->toMediaCollection('kepsek_image');
+                    $media = $setting->getMedia('kepsek_image')->last();
+                    if ($media) {
+                        $content['kepsek_image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
                     }
-
-                    $content['kepsek_image_url'] = '/storage/'.$filePath;
                 }
 
                 // Pastikan content adalah array dan bukan null sebelum menyimpan
                 if (is_array($content)) {
-                    $existing = LandingPageSetting::where('section_key', $sectionKey)->first();
                     $finalContent = $content;
                     
-                    if ($existing && is_array($existing->content)) {
+                    if ($setting->exists && is_array($setting->content)) {
                         // Merge to preserve fields not in the request (like items or images)
-                        $finalContent = array_merge($existing->content, $content);
+                        $finalContent = array_merge($setting->content, $content);
                     }
 
-                    LandingPageSetting::updateOrCreate(
-                        ['section_key' => $sectionKey],
-                        ['content' => $finalContent]
-                    );
+                    $setting->content = $finalContent;
+                    $setting->save();
                 } else {
                     Log::warning("Konten untuk section {$sectionKey} bukan array, tidak disimpan.", ['content' => $content]);
                 }

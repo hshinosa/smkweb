@@ -77,12 +77,27 @@ export default function Index({ programs }) {
     };
 
     const handleDelete = (id) => {
-        if (confirm('Hapus program ini?')) destroy(route('admin.programs.destroy', id));
+        if (confirm('Hapus program ini?')) {
+            destroy(route('admin.programs.destroy', id), { preserveScroll: true });
+        }
+    };
+
+    const getImageUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http') || url.startsWith('/')) return url;
+        return `/storage/${url}`;
     };
 
     return (
-        <ContentManagementPage headerTitle="Kelola Program Sekolah" headTitle="Program Sekolah" tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} onSave={() => openModal()}
-            extraHeader={<div className="flex justify-end"><PrimaryButton onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} /><span className="hidden xs:inline">Tambah</span> Program</PrimaryButton></div>}>
+        <ContentManagementPage 
+            headerTitle="Kelola Program Sekolah" 
+            headTitle="Program Sekolah" 
+            tabs={tabs} 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            noForm={true}
+            extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} /><span className="hidden xs:inline">Tambah</span> Program</PrimaryButton></div>}
+        >
             {success && <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3"><div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0"><svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg></div><p className="text-green-800 text-sm font-medium">{success}</p></div>}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {programs.length > 0 ? (
@@ -102,7 +117,7 @@ export default function Index({ programs }) {
                                         <td className="px-4 py-3 sm:py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${program.color_class || 'bg-gray-100 text-gray-600'}`}>
-                                                    {program.image_url ? <img src={program.image_url} alt={program.title} className="w-full h-full object-cover rounded-lg" /> : <Star size={20} className="sm:w-6 sm:h-6" />}
+                                                    {program.image_url ? <img src={getImageUrl(program.image_url)} alt={program.title} className="w-full h-full object-cover rounded-lg" /> : <Star size={20} className="sm:w-6 sm:h-6" />}
                                                 </div>
                                                 <div className="min-w-0 flex-1"><p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{program.title}</p>{program.description && <p className="text-xs text-gray-500 line-clamp-1 mt-0.5 hidden sm:block">{program.description}</p>}</div>
                                             </div>

@@ -7,6 +7,8 @@ import { Head, Link } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import Modal from '@/Components/Modal';
+import SEOHead from '@/Components/SEOHead';
+import { HeroImage, ContentImage } from '@/Components/ResponsiveImage';
 import { X } from 'lucide-react';
 // Import typography constants
 import { TYPOGRAPHY } from '@/Utils/typography';
@@ -49,7 +51,12 @@ export default function StrukturOrganisasiPage({ auth, organization, hero }) {
 
     return (
         <div className="bg-white font-sans text-gray-800">
-            <Head title={`${hero?.title || 'Struktur Organisasi'} - SMAN 1 Baleendah`} description="Bagan struktur organisasi SMA Negeri 1 Baleendah." />
+            <SEOHead 
+                title={`${hero?.title || 'Struktur Organisasi'} - SMAN 1 Baleendah`}
+                description="Struktur organisasi dan manajemen SMAN 1 Baleendah. Kepala sekolah, wakil kepala, koordinator, dan tim manajemen sekolah."
+                keywords="struktur organisasi, manajemen sekolah, kepala sekolah, organisasi sekolah, SMAN 1 Baleendah"
+                image="/images/struktur-organisasi.jpg"
+            />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -62,11 +69,14 @@ export default function StrukturOrganisasiPage({ auth, organization, hero }) {
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
-                        alt="Background Struktur Organisasi" 
-                        className="w-full h-full object-cover"
-                    />
+                    {hero?.backgroundImage ? (
+                        <HeroImage media={hero.backgroundImage} alt="Background Struktur Organisasi" />
+                    ) : (
+                        <HeroImage 
+                            src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            alt="Background Struktur Organisasi" 
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 
@@ -82,12 +92,21 @@ export default function StrukturOrganisasiPage({ auth, organization, hero }) {
             <section className="py-20 bg-secondary">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl max-w-6xl mx-auto border border-gray-100">
-                        <img
-                            src={imagePath}
-                            alt="Bagan Struktur Organisasi SMA Negeri 1 Baleendah - Klik untuk memperbesar"
-                            className="w-full h-auto rounded-xl border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01]"
-                            onClick={openImageModal}
-                        />
+                        {organization?.backgroundImage ? (
+                            <ContentImage
+                                media={organization.backgroundImage}
+                                alt="Bagan Struktur Organisasi SMA Negeri 1 Baleendah - Klik untuk memperbesar"
+                                className="w-full h-auto rounded-xl border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01]"
+                                onClick={openImageModal}
+                            />
+                        ) : (
+                            <img
+                                src={imagePath}
+                                alt="Bagan Struktur Organisasi SMA Negeri 1 Baleendah - Klik untuk memperbesar"
+                                className="w-full h-auto rounded-xl border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01]"
+                                onClick={openImageModal}
+                            />
+                        )}
                         <p className={`${TYPOGRAPHY.smallText} text-center mt-6 italic`}>
                             Klik pada gambar untuk memperbesar tampilan.
                         </p>

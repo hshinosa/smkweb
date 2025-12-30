@@ -15,6 +15,8 @@ import {
 
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
+import { ContentImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { usePage } from '@inertiajs/react';
@@ -88,10 +90,26 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
     const navigationData = getNavigationData(siteSettings);
     
     if (!post) return null;
+    
+    // Extract excerpt from content (first 160 characters)
+    const getExcerpt = (content) => {
+        const textOnly = content.replace(/<[^>]*>/g, ''); // Remove HTML tags
+        return textOnly.substring(0, 160) + (textOnly.length > 160 ? '...' : '');
+    };
 
     return (
         <div className="bg-white font-sans text-gray-800">
-            <Head title={`${post.title} - Berita ${siteName}`} />
+            <SEOHead 
+                title={`${post.title} - Berita ${siteName}`}
+                description={post.excerpt || getExcerpt(post.content)}
+                keywords={`berita, ${post.category || 'pengumuman'}, ${post.title}, ${siteName}, sekolah`}
+                image={post.featured_image || "/images/hero-bg-sman1-baleendah.jpeg"}
+                type="article"
+                author={post.author?.name || 'Admin'}
+                publishedTime={post.published_at || post.created_at}
+                modifiedTime={post.updated_at}
+                canonical={`https://sman1baleendah.sch.id/berita/${post.slug}`}
+            />
             
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -159,17 +177,30 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
 
                             {/* Featured Image */}
                             <div className="rounded-2xl overflow-hidden shadow-lg mb-4">
-                                <img 
-                                    src={post.featured_image || "/images/hero-bg-sman1-baleendah.jpeg"} 
-                                    alt={post.title} 
-                                    className="w-full h-auto object-cover"
-                                />
+                                {post.featuredImage ? (
+                                    // NEW: Use ResponsiveImage component with Media Library data
+                                    <ContentImage 
+                                        media={post.featuredImage}
+                                        alt={post.title}
+                                    />
+                                ) : (
+                                    // Fallback for old system
+                                    <img 
+                                        src={post.featured_image || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                                        alt={post.title} 
+                                        className="w-full h-auto object-cover"
+                                        loading="eager"
+                                        fetchpriority="high"
+                                        width="1200"
+                                        height="675"
+                                    />
+                                )}
+                                {post.caption && (
+                                    <p className="text-center text-sm text-gray-500 italic mb-0 mt-2 px-4">
+                                        {post.caption}
+                                    </p>
+                                )}
                             </div>
-                            {post.caption && (
-                                <p className="text-center text-sm text-gray-500 italic mb-12">
-                                    {post.caption}
-                                </p>
-                            )}
 
                             {/* Article Body */}
                             <article className="prose prose-lg prose-blue max-w-none font-serif text-gray-700 leading-relaxed mb-12">
@@ -209,6 +240,7 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
                                                             src={news.featured_image || "/images/hero-bg-sman1-baleendah.jpeg"} 
                                                             alt={news.title} 
                                                             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                                                            loading="lazy"
                                                         />
                                                     </div>
                                                     <div className="flex-1 flex flex-col justify-center">

@@ -7,6 +7,8 @@ import { Head, Link } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import Modal from '@/Components/Modal';
+import SEOHead from '@/Components/SEOHead';
+import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { usePage } from '@inertiajs/react';
@@ -24,6 +26,7 @@ export default function ProgramSekolahPage({ programs = [] }) {
     const [selectedProgram, setSelectedProgram] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const heroSettings = siteSettings?.hero_program || {};
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
 
     // Map icon names to Lucide components
@@ -81,7 +84,12 @@ export default function ProgramSekolahPage({ programs = [] }) {
 
     return (
         <div className="bg-white font-sans text-gray-800 min-h-screen flex flex-col">
-            <Head title="Program Unggulan - SMAN 1 Baleendah" description="Program dan kegiatan unggulan di SMAN 1 Baleendah." />
+            <SEOHead 
+                title="Program Unggulan - SMAN 1 Baleendah"
+                description="Berbagai program unggulan SMAN 1 Baleendah untuk mengembangkan potensi akademik dan non-akademik siswa secara maksimal."
+                keywords="program sekolah, program unggulan, kegiatan sekolah, program pengembangan siswa, SMAN 1 Baleendah"
+                image="/images/program-sekolah.jpg"
+            />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -94,20 +102,24 @@ export default function ProgramSekolahPage({ programs = [] }) {
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src="/images/hero-bg-sman1-baleendah.jpeg" 
-                        alt="Background Program Sekolah" 
-                        className="w-full h-full object-cover"
-                    />
+                    {/* If Media Library adds backgroundImage property in the future: */}
+                    {heroSettings?.backgroundImage ? (
+                        <HeroImage media={heroSettings.backgroundImage} alt="Background Program Sekolah" />
+                    ) : (
+                        <HeroImage 
+                            src="/images/hero-bg-sman1-baleendah.jpeg" 
+                            alt="Background Program Sekolah" 
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 
                 <div className="relative z-10 container mx-auto px-4 text-center text-white">
                     <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
-                        {renderHighlightedTitle('Program Unggulan')}
+                        {renderHighlightedTitle(heroSettings.title || 'Program Unggulan')}
                     </h1>
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
-                        Membangun karakter dan kompetensi siswa melalui berbagai inisiatif positif.
+                        {heroSettings.subtitle || "Membangun karakter dan kompetensi siswa melalui berbagai inisiatif positif."}
                     </p>
                 </div>
             </section>

@@ -6,6 +6,8 @@ import { Head, Link } from '@inertiajs/react';
 // Import Components
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
+import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
 import { Check, Star, Target, MapPin, Building, Trophy, Users } from 'lucide-react';
 // Import typography constants
 import { TYPOGRAPHY } from '@/Utils/typography';
@@ -92,7 +94,12 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
 
     return (
         <div className="bg-white font-sans text-gray-800">
-            <Head title={`${hero?.title || 'Profil & Sejarah'} - ${siteName}`} description={`Mengenal lebih dekat sejarah, visi, misi, dan fasilitas ${siteName}.`} />
+            <SEOHead 
+                title={`${hero?.title || 'Profil & Sejarah'} - ${siteName}`}
+                description={`Mengenal lebih dekat sejarah, visi, misi, dan fasilitas ${siteName}. Sekolah unggulan dengan tradisi akademik yang kuat sejak 1975.`}
+                keywords="profil sekolah, sejarah SMAN 1 Baleendah, visi misi, fasilitas sekolah, tentang sekolah"
+                image={hero?.background_image || "/images/profile-banner.jpg"}
+            />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -105,11 +112,14 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
-                        alt={`Gedung ${siteName}`} 
-                        className="w-full h-full object-cover"
-                    />
+                    {hero?.backgroundImage ? (
+                        <HeroImage media={hero.backgroundImage} alt={`Gedung ${siteName}`} />
+                    ) : (
+                        <HeroImage 
+                            src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            alt={`Gedung ${siteName}`} 
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 
@@ -185,10 +195,11 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
                         {facilityList.map((facility, idx) => (
                             <div key={idx} className="group relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3] cursor-pointer">
                                 {facility.image_url ? (
-                                    <img 
+                                    <ResponsiveImage 
                                         src={formatImagePath(facility.image_url)} 
                                         alt={facility.title} 
                                         className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                        loading="lazy"
                                     />
                                 ) : (
                                     <div className="w-full h-full bg-blue-600 flex items-center justify-center text-white">

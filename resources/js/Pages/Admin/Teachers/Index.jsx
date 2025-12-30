@@ -99,7 +99,7 @@ export default function Index({ teachers, currentSettings }) {
 
     const handleDelete = (id) => {
         if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-            destroy(route('admin.teachers.destroy', id));
+            destroy(route('admin.teachers.destroy', id), { preserveScroll: true });
         }
     };
 
@@ -111,6 +111,12 @@ export default function Index({ teachers, currentSettings }) {
             formData.append('image_file', selectedFiles.image_file);
         }
         handleSettingsSubmit(e, formData);
+    };
+
+    const getImageUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http') || url.startsWith('/')) return url;
+        return `/storage/${url}`;
     };
 
     // Filter teachers by type
@@ -197,9 +203,10 @@ export default function Index({ teachers, currentSettings }) {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             processing={settingsProcessing}
-            onSave={handleSaveSettings}
+            onSave={activeTab === 'hero' ? handleSaveSettings : undefined}
             success={localSuccess}
             errors={settingsErrors}
+            noForm={true}
         >
             <div className="space-y-6">
                 {renderTabContent()}
@@ -375,7 +382,7 @@ function TeachersListSection({ teachers, title, onEdit, onDelete, onAdd }) {
                                     <td className="px-4 py-3 sm:px-6 whitespace-nowrap">
                                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                                             {teacher.image_url ? (
-                                                <img src={teacher.image_url} alt={teacher.name} className="w-full h-full object-cover" />
+                                                <img src={getImageUrl(teacher.image_url)} alt={teacher.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-gray-400">
                                                     <User size={20} className="sm:w-6 sm:h-6" />

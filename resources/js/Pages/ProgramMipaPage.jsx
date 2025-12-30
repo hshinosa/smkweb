@@ -18,6 +18,8 @@ import {
 
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
+import ResponsiveImage, { HeroImage, ThumbnailImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { programStudyData, getPageMetadata } from '@/Utils/academicData';
@@ -49,7 +51,12 @@ export default function ProgramMipaPage({ content }) {
 
     return (
         <div className="bg-white font-sans text-gray-800">
-            <Head title={hero?.title || pageMetadata.mipa.title} description={hero?.description || pageMetadata.mipa.description} />
+            <SEOHead 
+                title={hero?.title || pageMetadata.mipa.title}
+                description={hero?.description || pageMetadata.mipa.description}
+                keywords="peminatan MIPA, IPA, matematika, fisika, kimia, biologi, jurusan IPA, SMAN 1 Baleendah"
+                image={formatImagePath(hero?.background_image) || "/images/program-mipa.jpg"}
+            />
             
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -58,27 +65,27 @@ export default function ProgramMipaPage({ content }) {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            {/* 1. HERO SECTION (Immersive) */}
-            <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden pt-20">
+            {/* 1. HERO SECTION (Consistent with AcademicCalendarPage) */}
+            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src={formatImagePath(hero?.background_image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
-                        alt={programData.subtitle} 
-                        className="w-full h-full object-cover"
-                    />
+                    {hero?.backgroundImage ? (
+                        // If Media Library is implemented
+                        <HeroImage media={hero.backgroundImage} alt={programData.subtitle} />
+                    ) : (
+                        // Current/old system
+                        <HeroImage 
+                            src={formatImagePath(hero?.background_image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            alt={programData.subtitle} 
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 
-                <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm mb-6 animate-fade-in-up">
-                        <span className="text-white font-bold text-sm tracking-wide uppercase">Terakreditasi A (Unggul)</span>
-                    </div>
-                    
-                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-6 max-w-4xl mx-auto`}>
+                <div className="relative z-10 container mx-auto px-4 text-center text-white">
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
                         {renderHighlightedTitle(programData.subtitle)}
                     </h1>
-                    
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
                         {hero?.description || "Mencetak ilmuwan muda dan inovator masa depan melalui penguasaan sains, teknologi, dan metode ilmiah yang komprehensif."}
                     </p>
@@ -108,7 +115,7 @@ export default function ProgramMipaPage({ content }) {
                                 <div key={idx} className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 transition-all duration-300">
                                     <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 overflow-hidden">
                                         {item.icon ? (
-                                            <img src={item.icon} alt={item.title} className="w-full h-full object-cover" />
+                                            <ThumbnailImage src={item.icon} alt={item.title} />
                                         ) : (
                                             <Calculator className="w-8 h-8 text-primary transition-colors" />
                                         )}
@@ -171,6 +178,7 @@ export default function ProgramMipaPage({ content }) {
                                 src={facilities?.main_image || "/images/hero-bg-sman1-baleendah.jpeg"} 
                                 alt={facilities?.main_title || "Fasilitas Utama"} 
                                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                loading="lazy"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90"></div>
                             <div className="absolute bottom-0 left-0 p-8">
@@ -229,7 +237,7 @@ export default function ProgramMipaPage({ content }) {
                                     career_paths.items.map((item, idx) => (
                                         <div key={idx} className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm transition-all duration-300">
                                             <div className="p-3 bg-red-50 text-red-600 rounded-lg overflow-hidden w-12 h-12 flex items-center justify-center">
-                                                {item.icon ? <img src={item.icon} className="w-full h-full object-cover" /> : <Stethoscope className="w-6 h-6" />}
+                                                {item.icon ? <ThumbnailImage src={item.icon} /> : <Stethoscope className="w-6 h-6" />}
                                             </div>
                                             <div>
                                                 <h4 className="font-bold text-gray-900 text-lg">{item.title}</h4>

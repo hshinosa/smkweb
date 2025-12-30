@@ -364,6 +364,114 @@ class RagService
     }
 
     /**
+     * Get quick reply from database for common questions
+     */
+    protected function getDatabaseQuickReply(string $query): ?array
+    {
+        $query = strtolower($query);
+        
+        // Check for specific keywords and search database
+        $keywordMap = [
+            'ppdb' => ['title' => ['ppdb', 'penerimaan peserta didik baru', 'pendaftaran'],
+                      'table' => 'posts',
+                      'category' => 'PPDB'],
+            'biaya' => ['title' => ['biaya', 'spp', 'uang sekolah', 'pembayaran'],
+                        'table' => 'posts',
+                        'category' => 'Informasi'],
+            'jadwal' => ['title' => ['jadwal', 'kalender', 'tanggal'],
+                         'table' => 'posts',
+                         'category' => 'Jadwal'],
+            'fasilitas' => ['title' => ['fasilitas', 'laboratorium', 'perpustakaan', 'ruang'],
+                           'table' => 'posts',
+                           'category' => 'Fasilitas'],
+            'ekstra' => ['title' => ['ekstra', 'ekskul', 'kegiatan', 'organisasi'],
+                        'table' => 'posts',
+                        'category' => 'Ekstrakurikuler'],
+            'program' => ['title' => ['peminatan', 'jurusan', 'ipa', 'ips', 'bahasa'],
+                          'table' => 'programs',
+                          'category' => null],
+            'prestasi' => ['title' => ['prestasi', 'juara', 'lomba', 'penghargaan'],
+                          'table' => 'posts',
+                          'category' => 'Prestasi'],
+        ];
+
+        foreach ($keywordMap as $key => $config) {
+            // Check if query contains any of the keywords
+            $hasKeyword = false;
+            foreach ($config['title'] as $keyword) {
+                if (str_contains($query, $keyword)) {
+                    $hasKeyword = true;
+                    break;
+                }
+            }
+
+            if ($hasKeyword) {
+                try {
+                    if ($config['table'] === 'posts') {
+                        $post = \App\Models\Post::where('status', 'published')
+                            ->where(function ($q) use ($config) {
+                                foreach ($config['title'] as $keyword) {
+                                    $q->orWhere('title', 'like', "%{$keyword}%")
+                                      ->orWhere('content', 'like', "%{$keyword}%");
+                                }
+                                if ($config['category']) {
+                                    $q->where('category', $config['category']);
+                                }
+                            })
+                            ->latest()
+                            ->first();
+
+                        if ($post) {
+                            $excerpt = strip_tags($post->content);
+                            $excerpt = substr($excerpt, 0, 300) . '...';
+                            
+                            return [
+                                'found' => true,
+                                'source' => 'post',
+                                'message' => sprintf(
+                                    "**%s**\n\n%s\n\n\n📌 Baca selengkapnya di: %s",
+                                    $post->title,
+                                    $excerpt,
+                                    url("/info-{$post->slug}") // Gunakan route yang sesuai
+                                )
+                            ];
+                        }
+                    } elseif ($config['table'] === 'programs') {
+                        $program = \App\Models\Program::where('is_featured', true)
+                            ->where(function ($q) use ($config) {
+                                foreach ($config['title'] as $keyword) {
+                                    $q->orWhere('title', 'like', "%{$keyword}%")
+                                      ->orWhere('description', 'like', "%{$keyword}%");
+                                }
+                            })
+                            ->first();
+
+                        if ($program) {
+                            return [
+                                'found' => true,
+                                'source' => 'program',
+                                'message' => sprintf(
+                                    "**%s**\n\n%s\n\n%s",
+                                    $program->title,
+                                    $program->description,
+                                    $program->link ? "📖 Info lengkap: " . url($program->link) : ""
+                                )
+                            ];
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Database quick reply search failed', [
+                        'keyword' => $key,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        return ['found' => false];
+    }
+
+    /**
      * Generate RAG-enhanced response
      */
     /**
@@ -385,6 +493,17 @@ class RagService
                 'message' => 'Maaf, saya hanya dapat menjawab pertanyaan terkait SMAN 1 Baleendah seperti PPDB, program studi, ekstrakurikuler, dan informasi akademik. Silakan tanyakan hal yang berhubungan dengan sekolah.',
                 'is_rag_enhanced' => false,
                 'retrieved_documents' => [],
+            ];
+        }
+
+        // 2. Try quick database reply for common keywords (faster than full RAG search)
+        $quickReply = $this->getDatabaseQuickReply($userQuery);
+        if ($quickReply['found'] ?? false) {
+            return [
+                'success' => true,
+                'message' => $quickReply['message'],
+                'is_rag_enhanced' => true,
+                'retrieved_documents' => [$quickReply['source']],
             ];
         }
 
@@ -468,27 +587,29 @@ class RagService
      */
     protected function generateSimpleResponse(string $userQuery, array $conversationHistory = []): array
     {
-        $systemPrompt = "Anda adalah AI SMANSA, asisten virtual untuk SMAN 1 Baleendah.
+        // Try quick database reply first (faster response)
+        $quickReply = $this->getDatabaseQuickReply($userQuery);
+        if ($quickReply['found'] ?? false) {
+            return [
+                'success' => true,
+                'message' => $quickReply['message'],
+                'is_rag_enhanced' => true,
+                'retrieved_documents' => [$quickReply['source']],
+            ];
+        }
 
-INFORMASI PENTING:
-- SMAN 1 Baleendah memiliki peminatan (MIPA, IPS, Bahasa) di kelas 11-12
-- Jika ditanya tentang \"jurusan\" atau \"program studi\", jawab dengan menjelaskan tentang peminatan yang tersedia
-- Gunakan istilah \"peminatan\" atau \"program studi\" secara fleksibel
+        $systemPrompt = "Anda adalah AI SMANSA, asisten virtual ramah untuk SMAN 1 Baleendah.
 
-BIAYA PENDIDIKAN (PENTING):
-- SMA Negeri se-Jawa Barat 100% GRATIS (kebijakan Pemprov Jabar)
-- TIDAK ADA biaya pendaftaran PPDB
-- TIDAK ADA SPP/uang sekolah bulanan
-- TIDAK ADA pungutan wajib
-- Hanya ada iuran sukarela untuk kegiatan ekstrakurikuler (optional)
-- Jika ditanya biaya/SPP → jawab GRATIS
+PANDUAN INTERAKSI:
+1. **Ramah & Luwes**: Jawablah pertanyaan dengan sopan dan natural. Boleh berbasa-basi sebentar jika disapa.
+2. **Topik Sekolah**: Prioritaskan menjawab hal seputar sekolah.
+3. **Di Luar Topik**: Jika ditanya hal aneh/jauh dari konteks sekolah, jawab sopan lalu arahkan kembali ke topik sekolah (misal: 'Maaf saya kurang tahu soal itu, tapi kalau soal PPDB saya siap bantu!').
 
-ATURAN:
-- HANYA jawab pertanyaan yang berkaitan dengan sekolah (PPDB, akademik, peminatan, ekstrakurikuler, fasilitas, dll)
-- JANGAN jawab hal di luar topik sekolah
-- Jika pertanyaan tidak berhubungan dengan sekolah, katakan: \"Maaf, saya hanya dapat menjawab pertanyaan terkait SMAN 1 Baleendah\"
+INFORMASI DASAR SEKOLAH:
+- **Peminatan**: MIPA, IPS, Bahasa.
+- **Biaya**: SMA Negeri GRATIS (Jabar). Tidak ada SPP wajib.
 
-Jawab dengan ramah, informatif, dan dalam bahasa Indonesia.";
+Jawablah dengan bahasa Indonesia yang baik dan membantu.";
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
@@ -634,40 +755,30 @@ Jawab dengan ramah, informatif, dan dalam bahasa Indonesia.";
     protected function buildRagSystemPrompt(string $context): string
     {
         return <<<PROMPT
-Anda adalah AI SMANSA, asisten virtual untuk SMAN 1 Baleendah. 
+Anda adalah AI SMANSA, asisten virtual ramah dan cerdas untuk SMAN 1 Baleendah.
 
-Tugas Anda adalah menjawab pertanyaan pengunjung dengan akurat berdasarkan informasi dari dokumen sekolah yang tersedia.
+PERAN DAN KEPRIBADIAN:
+- Anda ramah, sopan, dan sangat membantu.
+- Anda boleh berinteraksi santai (small talk) jika pengguna menyapa atau bertanya kabar.
+- Tujuan utama Anda adalah memberikan informasi akurat tentang sekolah.
 
 KONTEKS DOKUMEN:
 {$context}
 
-INFORMASI PENTING TENTANG SMAN 1 BALEENDAH:
-- SMAN 1 Baleendah memiliki peminatan (MIPA, IPS, Bahasa) di kelas 11-12
-- Jika ditanya tentang "jurusan" atau "program studi", jawab dengan menjelaskan tentang peminatan yang tersedia
-- Gunakan istilah "peminatan" atau "program studi" secara fleksibel sesuai konteks pertanyaan
-
-INFORMASI BIAYA PENDIDIKAN (SANGAT PENTING):
-- Pendidikan di SMA Negeri se-Jawa Barat 100% GRATIS berdasarkan kebijakan Pemprov Jawa Barat
-- TIDAK ADA biaya pendaftaran PPDB
-- TIDAK ADA SPP/uang sekolah bulanan
-- TIDAK ADA pungutan wajib dari sekolah
-- Yang mungkin ada: iuran sukarela untuk kegiatan ekstrakurikuler atau OSIS (bersifat optional)
-- Jika ditanya tentang "biaya", "SPP", "uang sekolah", "biaya pendaftaran" → jelaskan bahwa SMA Negeri GRATIS
-
-ATURAN PENTING:
-- HANYA jawab pertanyaan yang berkaitan dengan sekolah (PPDB, akademik, peminatan, ekstrakurikuler, fasilitas, dll)
-- JANGAN jawab pertanyaan di luar topik sekolah (seperti resep makanan, tutorial coding, berita umum, dll)
-- Jika pertanyaan tidak berhubungan dengan sekolah, katakan: "Maaf, saya hanya dapat menjawab pertanyaan terkait SMAN 1 Baleendah"
-
 PANDUAN MENJAWAB:
-1. Gunakan HANYA informasi dari konteks dokumen di atas untuk menjawab
-2. Jika informasi tidak tersedia di konteks, katakan dengan jujur "Maaf, informasi tersebut belum tersedia dalam dokumen kami"
-3. Jawab dengan bahasa Indonesia yang ramah dan profesional
-4. Berikan jawaban yang singkat, jelas, dan to-the-point
-5. Jika ada nomor kontak atau link, sebutkan dengan jelas
-6. Untuk pertanyaan umum (salam, terima kasih), jawab dengan natural tanpa harus mengacu dokumen
+1. **Prioritas Konteks**: Gunakan informasi dari dokumen di atas untuk menjawab pertanyaan teknis sekolah.
+2. **Fleksibilitas**: Jika ditanya hal umum (sapaan, kabar, ucapan terima kasih), jawablah dengan natural dan hangat. Tidak perlu kaku.
+3. **Di Luar Topik**: Jika pertanyaan sangat melenceng dari sekolah (misal: politik, resep masakan, game):
+   - Jawab dengan sopan dan humoris jika perlu.
+   - Arahkan kembali pembicaraan ke topik sekolah dengan halus.
+   - Contoh: "Wah, menarik sekali pertanyaannya! Tapi saya lebih jago ngobrolin soal PPDB atau kegiatan di SMAN 1 Baleendah nih. Ada yang bisa saya bantu soal sekolah?"
+4. **Ketidaktahuan**: Jika info sekolah tidak ada di dokumen, katakan jujur bahwa info tersebut belum tersedia, tapi tawarkan untuk menghubungi kontak sekolah.
 
-Jawab pertanyaan berikut dengan mengikuti panduan di atas:
+INFORMASI PENTING SEKOLAH:
+- **Akademik**: Ada peminatan MIPA, IPS, Bahasa. Gunakan istilah "jurusan" atau "prodi" jika pengguna menggunakannya.
+- **Biaya**: SMA Negeri di Jawa Barat GRATIS (Kebijakan Pemprov). Tidak ada SPP/uang gedung wajib. Hanya sumbangan sukarela (jika ada).
+
+Jawablah pertanyaan berikut dengan gaya bahasa Indonesia yang natural dan profesional:
 PROMPT;
     }
 
@@ -676,39 +787,12 @@ PROMPT;
      */
     protected function isSchoolRelatedQuery(string $query): bool
     {
-        $schoolKeywords = [
-            'sekolah', 'sman', 'sma', 'ppdb', 'penerimaan', 'pendaftaran',
-            'jurusan', 'prodi', 'program studi', 'peminatan', 'akademik',
-            'ekstrakurikuler', 'eskul', 'giatan', 'kegiatan',
-            'guru', 'tenaga pengajar', 'staff', 'karyawan',
-            'fasilitas', 'laboratorium', 'lab', 'perpustakaan',
-            'biaya', 'uang', 'spp', 'pembayaran',
-            'jadwal', 'waktu', 'kalender',
-            'prestasi', 'beasiswa',
-            'alamat', 'kontak', 'lokasi',
-            'nilai', 'raport', 'ujian',
-            'absen', 'kehadiran',
-            'alumni', 'lulusan'
-        ];
-
-        $queryLower = strtolower($query);
+        // Guardrails yang lebih luwes/fleksibel
+        // Kita izinkan hampir semua percakapan wajar agar chatbot tidak kaku.
+        // Filter hanya akan memblokir jika input benar-benar spam atau berbahaya (bisa ditambahkan nanti).
+        // Untuk sekarang, kita return true agar System Prompt yang menangani pembatasan topik secara halus.
         
-        // Check if query contains school-related keywords
-        foreach ($schoolKeywords as $keyword) {
-            if (strpos($queryLower, $keyword) !== false) {
-                return true;
-            }
-        }
-
-        // Check common greetings (these are always allowed)
-        $greetings = ['halo', 'hai', 'selamat pagi', 'selamat siang', 'selamat sore', 'selamat malam', 'hi', 'hello'];
-        foreach ($greetings as $greeting) {
-            if (strpos($queryLower, $greeting) !== false && strlen(trim($query)) <= 50) {
-                return true; // Short greetings are always allowed
-            }
-        }
-
-        return false;
+        return true; 
     }
 
     /**
@@ -716,15 +800,15 @@ PROMPT;
      */
     protected function isNonSchoolResponse(string $response): bool
     {
+        // Relaxed Post-Filter
+        // Kita percayakan pada System Prompt untuk menolak dengan sopan.
+        // Filter ini hanya untuk menangkap jika LLM benar-benar 'berhalusinasi' menjadi assistant umum yang tidak mau membahas sekolah sama sekali.
+        // Untuk sekarang, kita buat sangat minimal atau disable agar jawaban 'basa-basi' tidak terblokir.
+        
         $nonSchoolIndicators = [
-            'bisa membantu hal lain',
-            'tentukan hal lain',
-            'di luar topik',
-            'tidak terkait sekolah',
-            'general knowledge',
-            'umum saja',
-            'saya tahu tapi',
-            'sebagai ai saya'
+            // 'di luar topik', // Disabled: Allow polite refusal like "Itu di luar topik sekolah..."
+            // 'tidak terkait sekolah',
+            'saya tidak bisa menjawab apapun tentang sekolah', // Extreme case
         ];
 
         $responseLower = strtolower($response);

@@ -20,14 +20,16 @@ export default function ContentEditorHeader({ title, description, icon: Icon, pr
                     </p>
                 )}
             </div>
-            <PrimaryButton 
-                onClick={onSave}
-                disabled={processing} 
-                className="px-6 py-3 flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-base font-semibold"
-            >
-                <Save size={20} />
-                <span>{processing ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
-            </PrimaryButton>
+            {onSave && (
+                <PrimaryButton 
+                    onClick={onSave}
+                    disabled={processing} 
+                    className="px-6 py-3 flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-base font-semibold"
+                >
+                    <Save size={20} />
+                    <span>{processing ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
+                </PrimaryButton>
+            )}
         </div>
     );
 }

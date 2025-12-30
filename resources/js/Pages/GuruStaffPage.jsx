@@ -6,6 +6,8 @@ import { Search, MapPin, GraduationCap, X, Phone, Mail, User } from 'lucide-reac
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import Modal from '@/Components/Modal';
+import SEOHead from '@/Components/SEOHead';
+import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
 
 // Import utilities
 import { TYPOGRAPHY } from '@/Utils/typography';
@@ -189,7 +191,7 @@ export default function GuruStaffPage({ teachers = [] }) {
             onClick={() => openModal(teacher)}
         >
             <div className="relative aspect-square overflow-hidden bg-gray-100">
-                <img 
+                <ResponsiveImage 
                     src={getTeacherPhoto(teacher)} 
                     alt={teacher.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -237,10 +239,11 @@ export default function GuruStaffPage({ teachers = [] }) {
                             <X className="w-6 h-6" />
                         </button>
                         <div className="absolute -bottom-16 left-8 p-1 bg-white rounded-full shadow-lg">
-                            <img 
+                            <ResponsiveImage 
                                 src={getTeacherPhoto(selectedTeacher)} 
                                 alt={selectedTeacher.name}
                                 className="w-32 h-32 rounded-full object-cover border-4 border-white"
+                                loading="lazy"
                             />
                         </div>
                     </div>
@@ -297,7 +300,12 @@ export default function GuruStaffPage({ teachers = [] }) {
 
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
-            <Head title={`Guru & Staff - ${siteName}`} description={`Profil Guru dan Staff Pengajar ${siteName}.`} />
+            <SEOHead 
+                title={`Guru & Staff - ${siteName}`}
+                description={`Profil guru dan tenaga kependidikan ${siteName}. Tim pengajar berkualitas dengan pengalaman dan dedikasi tinggi untuk pendidikan siswa.`}
+                keywords={`guru, tenaga pengajar, staff sekolah, tenaga kependidikan, ${siteName}`}
+                image="/images/teachers-banner.jpg"
+            />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -310,10 +318,9 @@ export default function GuruStaffPage({ teachers = [] }) {
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
+                    <HeroImage 
                         src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
                         alt="Background Guru & Staff" 
-                        className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>

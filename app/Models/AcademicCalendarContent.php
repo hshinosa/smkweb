@@ -4,14 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class AcademicCalendarContent extends Model
+class AcademicCalendarContent extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'title',
-        'calendar_image_url',
+        'calendar_image_url', // Backward compat
         'semester',
         'academic_year_start',
         'is_active',
@@ -24,6 +27,20 @@ class AcademicCalendarContent extends Model
         'academic_year_start' => 'integer',
         'sort_order' => 'integer',
     ];
+
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('large')
+            ->width(1920)
+            ->format('webp')
+            ->quality(90)
+            ->nonQueued();
+
+        $this->addMediaConversion('webp')
+            ->format('webp')
+            ->quality(95)
+            ->nonQueued();
+    }
 
     public static function getDefaults(): array
     {

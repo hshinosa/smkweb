@@ -39,11 +39,22 @@ export default function Index({ alumnis }) {
         else { post(route('admin.alumni.store'), { onSuccess: () => closeModal() }); }
     };
 
-    const handleDelete = (id) => { if (confirm('Hapus data ini?')) destroy(route('admin.alumni.destroy', id)); };
+    const handleDelete = (id) => { 
+        if (confirm('Hapus data ini?')) {
+            destroy(route('admin.alumni.destroy', id), { preserveScroll: true });
+        }
+    };
 
     return (
-        <ContentManagementPage headerTitle="Kelola Alumni" headTitle="Jejak Alumni" tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} onSave={() => openModal()}
-            extraHeader={<div className="flex justify-end"><PrimaryButton onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah Alumni</PrimaryButton></div>}>
+        <ContentManagementPage 
+            headerTitle="Kelola Alumni" 
+            headTitle="Jejak Alumni" 
+            tabs={tabs} 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            noForm={true}
+            extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah Alumni</PrimaryButton></div>}
+        >
             {success && <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3"><div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg></div><p className="text-green-800 text-sm font-medium">{success}</p></div>}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {alumnis.length > 0 ? (

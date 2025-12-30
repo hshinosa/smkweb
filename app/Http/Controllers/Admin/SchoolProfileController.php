@@ -5,20 +5,39 @@ namespace App\Http\Controllers\Admin;
 use App\Helpers\HtmlSanitizer;
 use App\Http\Controllers\Controller;
 use App\Models\SchoolProfileSetting;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class SchoolProfileController extends Controller
 {
+    protected $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function index()
     {
-        $settings = SchoolProfileSetting::all()->keyBy('section_key');
+        $settings = SchoolProfileSetting::with('media')->get()->keyBy('section_key');
         $sections = [];
         foreach (array_keys(SchoolProfileSetting::getSectionFields()) as $key) {
             $dbRow = $settings->get($key);
             $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
-            $sections[$key] = SchoolProfileSetting::getContent($key, $dbContent);
+            $content = SchoolProfileSetting::getContent($key, $dbContent);
+            
+            // Append responsive image data if exists
+            if ($dbRow) {
+                // Check if we have media for this section
+                $media = $this->imageService->getFirstMediaData($dbRow, $key);
+                if ($media) {
+                    $content['backgroundImage'] = $media;
+                }
+            }
+            
+            $sections[$key] = $content;
         }
 
         return Inertia::render('Admin/SchoolProfile/Index', [
@@ -32,34 +51,48 @@ class SchoolProfileController extends Controller
         $sectionKey = $request->input('section');
         $content = $request->input('content');
 
-        // Extract image paths if not uploaded but already exist
-        $existing = SchoolProfileSetting::where('section_key', $sectionKey)->first();
-        $existingContent = $existing ? $existing->content : [];
+        // Find or create setting
+        $setting = SchoolProfileSetting::firstOrNew(['section_key' => $sectionKey]);
+        $existingContent = $setting->content ?? [];
 
-        // Handle file uploads if any
+        // Handle file uploads with Media Library
         if ($request->hasFile('content')) {
             $files = $request->file('content');
             foreach ($files as $field => $file) {
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
-                    $path = $file->store('profile', 'public');
-                    $content[$field] = '/storage/' . $path;
+                    // Only process 'image_url' or 'image' field for Media Library
+                    if ($field === 'image_url' || $field === 'image') {
+                        // Clear old media in this collection (using section_key as collection name)
+                        $setting->clearMediaCollection($sectionKey);
+                        
+                        // Add new media
+                        $media = $setting->addMedia($file)
+                                        ->toMediaCollection($sectionKey);
+                        
+                        // Set URL for backward compatibility
+                        $content['image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
+                        
+                        // Remove temporary 'image' field if exists
+                        if (isset($content['image'])) unset($content['image']);
+                    } else {
+                        // Other files (like timeline items)
+                        $collectionName = $sectionKey . '_' . $field;
+                        $setting->clearMediaCollection($collectionName);
+                        $media = $setting->addMedia($file)->toMediaCollection($collectionName);
+                        $content[$field] = '/storage/' . $media->id . '/' . $media->file_name;
+                    }
                 }
             }
         }
 
-        // Preserve existing images if no new one was uploaded and no field exists in request
-        if (isset($existingContent['image_url']) && !isset($content['image'])) {
+        // Preserve existing images if no new one was uploaded
+        if (isset($existingContent['image_url']) && !isset($content['image_url']) && !isset($content['image'])) {
             $content['image_url'] = $existingContent['image_url'];
-        } elseif (isset($content['image'])) {
-            // "image" was the temporary key from frontend FileUploadField
-            $content['image_url'] = $content['image'];
-            unset($content['image']);
         }
 
-        SchoolProfileSetting::updateOrCreate(
-            ['section_key' => $sectionKey],
-            ['content' => HtmlSanitizer::sanitizeSection($sectionKey, $content)]
-        );
+        // Save content
+        $setting->content = HtmlSanitizer::sanitizeSection($sectionKey, $content);
+        $setting->save();
 
         return redirect()->back()->with('success', 'Konten profil berhasil diperbarui.');
     }

@@ -73,7 +73,11 @@ class ProgramsCrudTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('programs', ['title' => 'Program Kreatif']);
-        Storage::disk('public')->assertExists('programs/' . $file->hashName());
+        
+        $program = Program::where('title', 'Program Kreatif')->first();
+        $this->assertTrue($program->hasMedia('program_images'));
+        $media = $program->getFirstMedia('program_images');
+        Storage::disk('public')->assertExists($media->getPathRelativeToRoot());
     }
 
     public function test_can_create_program_with_link(): void
@@ -138,9 +142,11 @@ class ProgramsCrudTest extends TestCase
     {
         Storage::fake('public');
 
-        $program = Program::factory()->create([
-            'image_url' => '/storage/programs/old.jpg',
-        ]);
+        $program = Program::factory()->create();
+        $oldFile = \Illuminate\Http\UploadedFile::fake()->image('old.jpg');
+        $program->addMedia($oldFile)->toMediaCollection('program_images');
+        $oldMedia = $program->getFirstMedia('program_images');
+        $program->update(['image_url' => $oldMedia->getUrl()]);
 
         $newFile = \Illuminate\Http\UploadedFile::fake()->image('new-program.jpg');
 
@@ -154,8 +160,13 @@ class ProgramsCrudTest extends TestCase
         $response = $this->put(route('admin.programs.update', $program), $data);
 
         $response->assertRedirect();
-        Storage::disk('public')->assertMissing('programs/old.jpg');
-        Storage::disk('public')->assertExists('programs/' . $newFile->hashName());
+        
+        $program->refresh();
+        $this->assertDatabaseMissing('media', ['id' => $oldMedia->id]);
+        
+        $newMedia = $program->getFirstMedia('program_images');
+        $this->assertEquals('new-program.jpg', $newMedia->file_name);
+        Storage::disk('public')->assertExists($newMedia->getPathRelativeToRoot());
     }
 
     public function test_can_delete_program(): void
@@ -174,14 +185,14 @@ class ProgramsCrudTest extends TestCase
         Storage::fake('public');
 
         $file = \Illuminate\Http\UploadedFile::fake()->image('program.jpg');
-        $path = $file->store('programs', 'public');
-
-        $program = Program::factory()->create([
-            'image_url' => '/storage/' . $path,
-        ]);
+        $program = Program::factory()->create();
+        $program->addMedia($file)->toMediaCollection('program_images');
+        $media = $program->getFirstMedia('program_images');
+        $path = $media->getPathRelativeToRoot();
 
         $this->delete(route('admin.programs.destroy', $program));
 
+        $this->assertDatabaseMissing('media', ['id' => $media->id]);
         Storage::disk('public')->assertMissing($path);
     }
 

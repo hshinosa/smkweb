@@ -13,6 +13,8 @@ import {
 
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
+import { HeroImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { usePage } from '@inertiajs/react';
@@ -186,7 +188,12 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
 
     return (
         <div className="bg-secondary font-sans text-gray-800">
-            <Head title={`${heroSettings.title || 'Berita & Pengumuman'} - ${siteName}`} />
+            <SEOHead 
+                title={`${heroSettings.title || 'Berita & Pengumuman'} - ${siteName}`}
+                description={`Berita terbaru, pengumuman, dan informasi penting dari ${siteName}. Update kegiatan, prestasi, dan event sekolah.`}
+                keywords={`berita, pengumuman, informasi sekolah, update, event, ${siteName}`}
+                image={heroSettings.background_image || "/images/news-banner.jpg"}
+            />
             
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -195,24 +202,32 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            {/* HERO SECTION (Immersive) */}
-            <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden pt-20">
+            {/* HERO SECTION (Consistent with AcademicCalendarPage) */}
+            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
-                        alt={`Berita ${siteName}`} 
-                        className="w-full h-full object-cover"
-                    />
+                    {heroSettings.image ? (
+                        // If Media Library is implemented in the future
+                        <HeroImage media={heroSettings.image} alt={`Berita ${siteName}`} />
+                    ) : (
+                        // Current/old system
+                        <img 
+                            src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            alt={`Berita ${siteName}`} 
+                            className="w-full h-full object-cover"
+                            loading="eager"
+                            fetchpriority="high"
+                            width="1920"
+                            height="1080"
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 
-                <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-                    
-                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-6 max-w-4xl mx-auto`}>
+                <div className="relative z-10 container mx-auto px-4 text-center text-white">
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
                         {renderHighlightedTitle(heroSettings.title || 'Berita & Pengumuman')}
                     </h1>
-                    
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
                         {heroSettings.subtitle || `Dapatkan informasi terkini seputar prestasi siswa, agenda sekolah, dan berita terbaru dari ${siteName}.`}
                     </p>

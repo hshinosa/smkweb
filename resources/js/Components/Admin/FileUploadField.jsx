@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Upload, Image as ImageIcon, Video as VideoIcon, X } from 'lucide-react';
 import InputLabel from '@/Components/InputLabel';
 
-export default function FileUploadField({ id, label, onChange, previewUrl, error, description }) {
+export default function FileUploadField({ id, label, onChange, previewUrl, error, description, accept = 'image/*', fileType = 'image' }) {
     const [isDragging, setIsDragging] = useState(false);
     const [localPreview, setLocalPreview] = useState(null);
+    const [localFileType, setLocalFileType] = useState(null);
 
     // Cleanup local preview URL when component unmounts or localPreview changes
     useEffect(() => {
@@ -41,19 +42,17 @@ export default function FileUploadField({ id, label, onChange, previewUrl, error
     };
 
     const processFile = (file) => {
-        if (file.type.startsWith('image/')) {
-            const objectUrl = URL.createObjectURL(file);
-            setLocalPreview(objectUrl);
-            onChange(file);
-        } else {
-            onChange(file);
-        }
+        const objectUrl = URL.createObjectURL(file);
+        setLocalPreview(objectUrl);
+        setLocalFileType(file.type.startsWith('video/') ? 'video' : 'image');
+        onChange(file);
     };
 
     const handleClear = (e) => {
         e.preventDefault();
         e.stopPropagation();
         setLocalPreview(null);
+        setLocalFileType(null);
         onChange(null);
         // Reset input file value
         const input = document.getElementById(id);
@@ -62,6 +61,7 @@ export default function FileUploadField({ id, label, onChange, previewUrl, error
 
     // Priority: localPreview (newly selected) > previewUrl (from parent/props)
     const displayUrl = localPreview || previewUrl;
+    const currentType = localFileType || fileType;
 
     return (
         <div 
@@ -76,13 +76,22 @@ export default function FileUploadField({ id, label, onChange, previewUrl, error
             <div className="flex flex-col sm:flex-row gap-6 items-start">
                 {displayUrl ? (
                     <div className="relative group shrink-0">
-                        <img 
-                            src={displayUrl} 
-                            alt={`Preview ${label}`} 
-                            className="w-40 h-40 object-cover rounded-xl shadow-md ring-4 ring-white"
-                        />
+                        {currentType === 'video' ? (
+                            <video 
+                                src={displayUrl} 
+                                className="w-40 h-40 object-cover rounded-xl shadow-md ring-4 ring-white bg-black"
+                                muted
+                                playsInline
+                            />
+                        ) : (
+                            <img 
+                                src={displayUrl} 
+                                alt={`Preview ${label}`} 
+                                className="w-40 h-40 object-cover rounded-xl shadow-md ring-4 ring-white"
+                            />
+                        )}
                         <div className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
-                            {localPreview ? 'Preview Baru' : 'Gambar Saat Ini'}
+                            {localPreview ? 'Preview Baru' : (currentType === 'video' ? 'Video Saat Ini' : 'Gambar Saat Ini')}
                         </div>
                         {localPreview && (
                             <button
@@ -96,8 +105,8 @@ export default function FileUploadField({ id, label, onChange, previewUrl, error
                     </div>
                 ) : (
                     <div className="w-40 h-40 bg-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400 border-2 border-slate-300 border-dashed shrink-0">
-                        <ImageIcon size={32} className="mb-2 opacity-50" />
-                        <span className="text-[10px] uppercase tracking-wider font-bold">No Image</span>
+                        {accept.includes('video') ? <VideoIcon size={32} className="mb-2 opacity-50" /> : <ImageIcon size={32} className="mb-2 opacity-50" />}
+                        <span className="text-[10px] uppercase tracking-wider font-bold">{accept.includes('video') ? 'No Video' : 'No Image'}</span>
                     </div>
                 )}
                 
@@ -107,17 +116,17 @@ export default function FileUploadField({ id, label, onChange, previewUrl, error
                         className="inline-flex items-center px-5 py-2.5 bg-white border border-slate-300 rounded-xl font-bold text-xs text-slate-700 uppercase tracking-widest shadow-sm hover:bg-slate-50 hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
                     >
                         <Upload size={16} className="mr-2 text-primary" />
-                        Pilih atau Drag Gambar
+                        {accept.includes('video') ? 'Pilih atau Drag Video' : 'Pilih atau Drag Gambar'}
                     </label>
                     <input
                         id={id}
                         type="file"
-                        accept="image/*"
+                        accept={accept}
                         className="hidden"
                         onChange={handleFileChange}
                     />
                     <p className="mt-4 text-sm text-slate-500 leading-relaxed">
-                        {description || 'Format: JPEG, PNG, JPG, GIF, SVG. Maksimal 2MB. Bisa drag & drop file ke sini.'}
+                        {description || (accept.includes('video') ? 'Format: MP4, WebM. Maksimal 20MB.' : 'Format: JPEG, PNG, JPG, GIF, SVG. Maksimal 5MB. Bisa drag & drop file ke sini.')}
                     </p>
                     {error && (
                         <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">

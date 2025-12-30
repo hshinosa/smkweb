@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 
 import Navbar from '@/Components/Navbar';
+import SEOHead from '@/Components/SEOHead';
+import { HeroImage } from '@/Components/ResponsiveImage';
 import Footer from '@/Components/Footer';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
@@ -206,7 +208,12 @@ export default function InformasiSpmbPage({ spmbData }) {
 
     return (
         <div className="bg-white font-sans text-gray-800">
-            <Head title={`${pengaturan_umum?.title || "Informasi SPMB"} - ${siteName}`} />
+            <SEOHead 
+                title={`${pengaturan_umum?.title || "Informasi PPDB"} 2025 - ${siteName}`}
+                description="Informasi lengkap Penerimaan Peserta Didik Baru (PPDB) 2025 SMAN 1 Baleendah. Jadwal, syarat, jalur pendaftaran (zonasi, prestasi, afirmasi, perpindahan), prosedur, dan FAQ."
+                keywords="PPDB 2025, PPDB Bandung, pendaftaran SMA, jalur zonasi, jalur prestasi, PPDB online, SMAN 1 Baleendah"
+                image={pengaturan_umum?.hero_background_image || "/images/ppdb-2025-banner.jpg"}
+            />
             
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -220,11 +227,19 @@ export default function InformasiSpmbPage({ spmbData }) {
                 <section className="relative min-h-screen flex items-center justify-center overflow-hidden pb-32">
                     {/* Background Image with Overlay */}
                     <div className="absolute inset-0 z-0">
+                    {pengaturan_umum?.backgroundImage ? (
+                        <HeroImage media={pengaturan_umum.backgroundImage} alt={`Siswa ${siteName}`} />
+                    ) : (
                         <img 
                             src={formatImagePath(pengaturan_umum?.banner_image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
                             alt={`Siswa ${siteName}`} 
                             className="w-full h-full object-cover"
+                            loading="eager"
+                            fetchpriority="high"
+                            width="1920"
+                            height="1080"
                         />
+                    )}
                         <div className="absolute inset-0 bg-black/60"></div>
                     </div>
 

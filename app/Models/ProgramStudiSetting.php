@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class ProgramStudiSetting extends Model
+class ProgramStudiSetting extends Model implements HasMedia
 {
     use \Illuminate\Database\Eloquent\Factories\HasFactory;
+    use InteractsWithMedia;
 
     protected $fillable = [
         'program_name',
@@ -17,6 +21,26 @@ class ProgramStudiSetting extends Model
     protected $casts = [
         'content' => 'array',
     ];
+
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('mobile')
+            ->width(375)
+            ->format('webp')
+            ->quality(80)
+            ->nonQueued();
+
+        $this->addMediaConversion('desktop')
+            ->width(1280)
+            ->format('webp')
+            ->quality(90)
+            ->nonQueued();
+
+        $this->addMediaConversion('webp')
+            ->format('webp')
+            ->quality(90)
+            ->nonQueued();
+    }
 
     public static function getSectionFields()
     {

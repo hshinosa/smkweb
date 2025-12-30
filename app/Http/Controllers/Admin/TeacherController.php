@@ -5,19 +5,27 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Teacher;
 use App\Models\SiteSetting;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 
 class TeacherController extends Controller
 {
+    protected $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function index()
     {
         $settings = SiteSetting::where('section_key', 'hero_teachers')->first();
         $hero = SiteSetting::getContent('hero_teachers', $settings ? $settings->content : null);
 
         return Inertia::render('Admin/Teachers/Index', [
-            'teachers' => Teacher::orderBy('sort_order')->get(),
+            'teachers' => Teacher::with('media')->latest()->get(),
             'currentSettings' => $hero
         ]);
     }
@@ -59,7 +67,7 @@ class TeacherController extends Controller
             'type' => 'required|in:guru,staff',
             'position' => 'required|string|max:255',
             'department' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'nip' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
@@ -68,12 +76,17 @@ class TeacherController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('teachers', 'public');
-            $validated['image_url'] = Storage::url($path);
-        }
+        // Remove image from validated array
+        unset($validated['image']);
 
-        Teacher::create($validated);
+        // Create teacher
+        $teacher = Teacher::create($validated);
+
+        // NEW: Use Media Library for automatic WebP + responsive variants
+        if ($request->hasFile('image')) {
+            $teacher->addMediaFromRequest('image')
+                     ->toMediaCollection('photos');
+        }
 
         return redirect()->back()->with('success', 'Data Guru/Staff berhasil ditambahkan');
     }
@@ -85,7 +98,7 @@ class TeacherController extends Controller
             'type' => 'required|in:guru,staff',
             'position' => 'required|string|max:255',
             'department' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'nip' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
@@ -94,27 +107,28 @@ class TeacherController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        if ($request->hasFile('image')) {
-            if ($teacher->image_url) {
-                $oldPath = str_replace('/storage/', '', $teacher->image_url);
-                Storage::disk('public')->delete($oldPath);
-            }
-            $path = $request->file('image')->store('teachers', 'public');
-            $validated['image_url'] = Storage::url($path);
-        }
+        // Remove image from validated array
+        unset($validated['image']);
 
+        // Update teacher data
         $teacher->update($validated);
+
+        // NEW: Update media if image provided
+        if ($request->hasFile('image')) {
+            // Clear old media
+            $teacher->clearMediaCollection('photos');
+            
+            // Add new media
+            $teacher->addMediaFromRequest('image')
+                     ->toMediaCollection('photos');
+        }
 
         return redirect()->back()->with('success', 'Data Guru/Staff berhasil diperbarui');
     }
 
     public function destroy(Teacher $teacher)
     {
-        if ($teacher->image_url) {
-            $oldPath = str_replace('/storage/', '', $teacher->image_url);
-            Storage::disk('public')->delete($oldPath);
-        }
-
+        // NEW: Media Library automatically deletes associated media
         $teacher->delete();
 
         return redirect()->back()->with('success', 'Data Guru/Staff berhasil dihapus');

@@ -20,14 +20,14 @@ export const mockGalleryData = [
         thumbnail: "https://picsum.photos/300/200?random=2",
         category: "Olahraga",
         date: "2024-01-20",
-        tags: ["basket", "lomba", "olahraga", "kelas"]
+        tags: ["basket", "lomba", "OLAHRAGA", "kelas"]
     },
     {
         id: 3,
         title: "Pentas Seni Budaya",
         description: "Pertunjukan seni dan budaya siswa dalam acara tahunan sekolah",
-        type: "video",
-        url: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+        type: "photo",
+        url: "https://picsum.photos/800/600?random=3",
         thumbnail: "https://picsum.photos/300/200?random=3",
         category: "Seni & Budaya",
         date: "2024-02-10",
@@ -46,8 +46,8 @@ export const mockGalleryData = [
     },
     {
         id: 5,
-        title: "Juara Olimpiade Matematika",
-        description: "Siswa meraih juara 1 Olimpiade Matematika tingkat Kabupaten",
+        title: "Juara OlimpiMAtematika",
+        description: "Siswa meraih juara 1 OlimpiMAtematika tingkat Kabupaten",
         type: "photo",
         url: "https://picsum.photos/800/600?random=5",
         thumbnail: "https://picsum.photos/300/200?random=5",
@@ -81,8 +81,8 @@ export const mockGalleryData = [
         id: 8,
         title: "Festival Band Sekolah",
         description: "Kompetisi band antar sekolah se-Kabupaten Bandung yang diadakan di sekolah",
-        type: "video",
-        url: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4",
+        type: "photo",
+        url: "https://picsum.photos/800/600?random=8",
         thumbnail: "https://picsum.photos/300/200?random=8",
         category: "Seni & Budaya",
         date: "2024-04-12",
@@ -97,7 +97,7 @@ export const mockGalleryData = [
         thumbnail: "https://picsum.photos/300/200?random=9",
         category: "Olahraga",
         date: "2024-03-05",
-        tags: ["futsal", "turnamen", "olahraga", "kelas"]
+        tags: ["futsal", "turnamen", "OLAHRAGA", "kelas"]
     },
     {
         id: 10,
@@ -125,8 +125,8 @@ export const mockGalleryData = [
         id: 12,
         title: "Pelatihan Robotika",
         description: "Workshop dan pelatihan robotika untuk siswa program MIPA",
-        type: "video",
-        url: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_5mb.mp4",
+        type: "photo",
+        url: "https://picsum.photos/800/600?random=12",
         thumbnail: "https://picsum.photos/300/200?random=12",
         category: "Kegiatan Akademik",
         date: "2024-04-08",

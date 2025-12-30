@@ -6,6 +6,8 @@ import { Head, Link } from '@inertiajs/react';
 // Import Components
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
+import { HeroImage } from '@/Components/ResponsiveImage';
 import { Check, Star, Target } from 'lucide-react';
 // Import typography constants
 import { TYPOGRAPHY } from '@/Utils/typography';
@@ -38,7 +40,12 @@ export default function VisiMisiPage({ auth, visionMission, hero }) {
 
     return (
         <div className="bg-white font-sans text-gray-800">
-            <Head title={`${hero?.title || 'Visi & Misi'} - SMAN 1 Baleendah`} description="Visi dan Misi SMA Negeri 1 Baleendah. Membentuk peserta didik berakhlak mulia, berprestasi akademik tinggi, bercarakter kuat, dan berwawasan global." />
+            <SEOHead 
+                title={`${hero?.title || 'Visi & Misi'} - SMAN 1 Baleendah`}
+                description="Visi dan Misi SMA Negeri 1 Baleendah. Membentuk peserta didik berakhlak mulia, berprestasi akademik tinggi, bercarakter kuat, dan berwawasan global."
+                keywords="visi misi, tujuan sekolah, nilai nilai sekolah, SMAN 1 Baleendah"
+                image={hero?.background_image || "/images/visi-misi-banner.jpg"}
+            />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -51,11 +58,14 @@ export default function VisiMisiPage({ auth, visionMission, hero }) {
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
-                        alt="Background Visi Misi" 
-                        className="w-full h-full object-cover"
-                    />
+                    {hero?.backgroundImage ? (
+                        <HeroImage media={hero.backgroundImage} alt="Background Visi Misi" />
+                    ) : (
+                        <HeroImage 
+                            src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            alt="Background Visi Misi" 
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 

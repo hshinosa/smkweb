@@ -28,7 +28,15 @@ Route::get('/', function () {
 
     // Helper untuk mendapatkan konten atau default
     $getContentOrDefault = function ($key, $defaults) use ($settings) {
-        return $settings->get($key)['content'] ?? $defaults;
+        $content = $settings->get($key)?->content;
+        
+        // Handle JSON string or array
+        if (is_string($content)) {
+            $decoded = json_decode($content, true);
+            return is_array($decoded) ? $decoded : $defaults;
+        }
+        
+        return $content ?? $defaults;
     };
 
     // Definisikan default di sini jika diperlukan (atau bisa juga di controller jika lebih kompleks)
@@ -83,7 +91,7 @@ Route::get('/', function () {
         'aboutLpContent' => $getContentOrDefault('about_lp', $defaultAbout),
         'kepsekWelcomeLpContent' => $getContentOrDefault('kepsek_welcome_lp', $defaultKepsek),
         'programsLpContent' => array_merge($getContentOrDefault('programs_lp', $defaultPrograms), ['items' => $featuredPrograms]),
-        'galleryLpContent' => array_merge($getContentOrDefault('gallery_lp', $defaultGallery), ['images' => $featuredGalleries->pluck('url')->toArray()]),
+        'galleryLpContent' => array_merge($getContentOrDefault('gallery_lp', $defaultGallery), ['images' => Gallery::where('type', 'photo')->latest()->pluck('url')->toArray()]),
         'ctaLpContent' => $getContentOrDefault('cta_lp', $defaultCta),
         'latestPosts' => $latestPosts,
         // ... props lain yang sudah Anda kirim ke LandingPage.jsx
@@ -117,9 +125,20 @@ Route::get('/alumni', function () {
 
 Route::get('/profil-sekolah', function () {
     $settings = \App\Models\SchoolProfileSetting::all()->keyBy('section_key');
-    $hero = \App\Models\SchoolProfileSetting::getContent('hero_history', $settings->get('hero_history')['content'] ?? null);
-    $history = \App\Models\SchoolProfileSetting::getContent('history', $settings->get('history')['content'] ?? null);
-    $facilities = \App\Models\SchoolProfileSetting::getContent('facilities', $settings->get('facilities')['content'] ?? null);
+    
+    // Helper untuk mendapatkan konten dari settings
+    $getSettingContent = function($key) use ($settings) {
+        $content = $settings->get($key)?->content;
+        if (is_string($content)) {
+            $decoded = json_decode($content, true);
+            return is_array($decoded) ? $decoded : null;
+        }
+        return $content;
+    };
+    
+    $hero = \App\Models\SchoolProfileSetting::getContent('hero_history', $getSettingContent('hero_history'));
+    $history = \App\Models\SchoolProfileSetting::getContent('history', $getSettingContent('history'));
+    $facilities = \App\Models\SchoolProfileSetting::getContent('facilities', $getSettingContent('facilities'));
     
     return Inertia::render('ProfilSekolahPage', [
         'hero' => $hero,
@@ -130,8 +149,18 @@ Route::get('/profil-sekolah', function () {
 
 Route::get('/visi-misi', function () {
     $settings = \App\Models\SchoolProfileSetting::all()->keyBy('section_key');
-    $hero = \App\Models\SchoolProfileSetting::getContent('hero_vision_mission', $settings->get('hero_vision_mission')['content'] ?? null);
-    $visionMission = \App\Models\SchoolProfileSetting::getContent('vision_mission', $settings->get('vision_mission')['content'] ?? null);
+    
+    $getSettingContent = function($key) use ($settings) {
+        $content = $settings->get($key)?->content;
+        if (is_string($content)) {
+            $decoded = json_decode($content, true);
+            return is_array($decoded) ? $decoded : null;
+        }
+        return $content;
+    };
+    
+    $hero = \App\Models\SchoolProfileSetting::getContent('hero_vision_mission', $getSettingContent('hero_vision_mission'));
+    $visionMission = \App\Models\SchoolProfileSetting::getContent('vision_mission', $getSettingContent('vision_mission'));
     
     return Inertia::render('VisiMisiPage', [
         'hero' => $hero,
@@ -141,8 +170,18 @@ Route::get('/visi-misi', function () {
 
 Route::get('/struktur-organisasi', function () {
     $settings = \App\Models\SchoolProfileSetting::all()->keyBy('section_key');
-    $hero = \App\Models\SchoolProfileSetting::getContent('hero_organization', $settings->get('hero_organization')['content'] ?? null);
-    $organization = \App\Models\SchoolProfileSetting::getContent('organization', $settings->get('organization')['content'] ?? null);
+    
+    $getSettingContent = function($key) use ($settings) {
+        $content = $settings->get($key)?->content;
+        if (is_string($content)) {
+            $decoded = json_decode($content, true);
+            return is_array($decoded) ? $decoded : null;
+        }
+        return $content;
+    };
+    
+    $hero = \App\Models\SchoolProfileSetting::getContent('hero_organization', $getSettingContent('hero_organization'));
+    $organization = \App\Models\SchoolProfileSetting::getContent('organization', $getSettingContent('organization'));
     
     return Inertia::render('StrukturOrganisasiPage', [
         'hero' => $hero,
@@ -350,6 +389,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('teachers', \App\Http\Controllers\Admin\TeacherController::class);
         Route::resource('posts', \App\Http\Controllers\Admin\PostController::class);
         Route::resource('alumni', \App\Http\Controllers\Admin\AlumniController::class);
+        Route::post('/faqs/reorder', [\App\Http\Controllers\Admin\FaqController::class, 'reorder'])->name('faqs.reorder');
         Route::resource('faqs', \App\Http\Controllers\Admin\FaqController::class);
         Route::get('/school-profile', [\App\Http\Controllers\Admin\SchoolProfileController::class, 'index'])->name('school-profile.index');
         Route::post('/school-profile', [\App\Http\Controllers\Admin\SchoolProfileController::class, 'update'])->name('school-profile.update');
@@ -386,3 +426,8 @@ Route::prefix('api')->name('api.')->group(function () {
         ->name('chat.history');
 });
 // --- AKHIR API ROUTES ---
+
+// --- SEO ROUTES ---
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
+Route::get('/robots.txt', [\App\Http\Controllers\SitemapController::class, 'robots'])->name('robots');
+// --- AKHIR SEO ROUTES ---

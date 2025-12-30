@@ -79,7 +79,11 @@ class TeachersCrudTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('teachers', ['name' => 'Siti Rahayu']);
-        Storage::disk('public')->assertExists('teachers/' . $file->hashName());
+        
+        $teacher = Teacher::where('name', 'Siti Rahayu')->first();
+        $this->assertTrue($teacher->hasMedia('photos'));
+        $media = $teacher->getFirstMedia('photos');
+        Storage::disk('public')->assertExists($media->getPathRelativeToRoot());
     }
 
     public function test_validation_requires_name_and_position(): void
@@ -139,9 +143,11 @@ class TeachersCrudTest extends TestCase
     {
         Storage::fake('public');
 
-        $teacher = Teacher::factory()->create([
-            'image_url' => '/storage/teachers/old_image.jpg',
-        ]);
+        // Create teacher with initial image
+        $teacher = Teacher::factory()->create();
+        $oldFile = \Illuminate\Http\UploadedFile::fake()->image('old.jpg');
+        $teacher->addMedia($oldFile)->toMediaCollection('photos');
+        $oldMedia = $teacher->getFirstMedia('photos');
 
         $newFile = \Illuminate\Http\UploadedFile::fake()->image('new_teacher.jpg');
 
@@ -156,7 +162,13 @@ class TeachersCrudTest extends TestCase
         $response = $this->put(route('admin.teachers.update', $teacher), $data);
 
         $response->assertRedirect();
-        Storage::disk('public')->assertExists('teachers/' . $newFile->hashName());
+        
+        $teacher->refresh();
+        $this->assertDatabaseMissing('media', ['id' => $oldMedia->id]);
+        
+        $newMedia = $teacher->getFirstMedia('photos');
+        $this->assertEquals('new_teacher.jpg', $newMedia->file_name);
+        Storage::disk('public')->assertExists($newMedia->getPathRelativeToRoot());
     }
 
     public function test_can_delete_teacher(): void
@@ -175,14 +187,14 @@ class TeachersCrudTest extends TestCase
         Storage::fake('public');
 
         $file = \Illuminate\Http\UploadedFile::fake()->image('teacher.jpg');
-        $path = $file->store('teachers', 'public');
-
-        $teacher = Teacher::factory()->create([
-            'image_url' => '/storage/' . $path,
-        ]);
+        $teacher = Teacher::factory()->create();
+        $teacher->addMedia($file)->toMediaCollection('photos');
+        $media = $teacher->getFirstMedia('photos');
+        $path = $media->getPathRelativeToRoot();
 
         $this->delete(route('admin.teachers.destroy', $teacher));
 
+        $this->assertDatabaseMissing('media', ['id' => $media->id]);
         Storage::disk('public')->assertMissing($path);
     }
 

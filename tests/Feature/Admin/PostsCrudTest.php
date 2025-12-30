@@ -95,8 +95,13 @@ class PostsCrudTest extends TestCase
 
         $response->assertRedirect();
         $post = Post::where('title', 'Post with Image')->first();
-        $this->assertNotNull($post->featured_image);
-        Storage::disk('public')->assertExists('posts/' . $file->hashName());
+        
+        // Assert Media Library attached the file
+        $this->assertTrue($post->hasMedia('featured'));
+        
+        // Assert the file exists in the storage (Media Library path structure)
+        $media = $post->getFirstMedia('featured');
+        Storage::disk('public')->assertExists($media->getPathRelativeToRoot());
     }
 
     public function test_validation_requires_title_content_and_category(): void
@@ -177,7 +182,11 @@ class PostsCrudTest extends TestCase
     {
         Storage::fake('public');
 
-        $post = Post::factory()->create(['featured_image' => '/storage/posts/old.jpg']);
+        // Create post with initial image
+        $post = Post::factory()->create();
+        $oldFile = \Illuminate\Http\UploadedFile::fake()->image('old.jpg');
+        $post->addMedia($oldFile)->toMediaCollection('featured');
+        $oldMedia = $post->getFirstMedia('featured');
 
         $newFile = \Illuminate\Http\UploadedFile::fake()->image('new-featured.jpg');
 
@@ -192,8 +201,15 @@ class PostsCrudTest extends TestCase
         $response = $this->put(route('admin.posts.update', $post), $data);
 
         $response->assertRedirect();
-        Storage::disk('public')->assertMissing('posts/old.jpg');
-        Storage::disk('public')->assertExists('posts/' . $newFile->hashName());
+        
+        // Assert old media is gone
+        $post->refresh();
+        $this->assertDatabaseMissing('media', ['id' => $oldMedia->id]);
+        
+        // Assert new media exists
+        $newMedia = $post->getFirstMedia('featured');
+        $this->assertEquals('new-featured.jpg', $newMedia->file_name);
+        Storage::disk('public')->assertExists($newMedia->getPathRelativeToRoot());
     }
 
     public function test_can_delete_post(): void
@@ -212,12 +228,14 @@ class PostsCrudTest extends TestCase
         Storage::fake('public');
 
         $file = \Illuminate\Http\UploadedFile::fake()->image('featured.jpg');
-        $path = $file->store('posts', 'public');
-
-        $post = Post::factory()->create(['featured_image' => '/storage/' . $path]);
+        $post = Post::factory()->create();
+        $post->addMedia($file)->toMediaCollection('featured');
+        $media = $post->getFirstMedia('featured');
+        $path = $media->getPathRelativeToRoot();
 
         $this->delete(route('admin.posts.destroy', $post));
 
+        $this->assertDatabaseMissing('media', ['id' => $media->id]);
         Storage::disk('public')->assertMissing($path);
     }
 

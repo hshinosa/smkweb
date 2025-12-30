@@ -48,11 +48,18 @@ class CurriculumController extends Controller
                 'points' => $request->input('fase_e_points', []),
                 'image' => $request->input('fase_e_image_url'),
             ];
+            
+            $faseESetting = CurriculumSetting::firstOrNew(['section_key' => 'fase_e']);
             if ($request->hasFile("fase_e_image")) {
-                $path = $request->file("fase_e_image")->store('kurikulum', 'public');
-                $faseEContent['image'] = '/storage/' . $path;
+                $faseESetting->clearMediaCollection('fase_e_image');
+                $faseESetting->addMediaFromRequest("fase_e_image")->toMediaCollection('fase_e_image');
+                $media = $faseESetting->getMedia('fase_e_image')->last();
+                if ($media) {
+                    $faseEContent['image'] = '/storage/' . $media->id . '/' . $media->file_name;
+                }
             }
-            CurriculumSetting::updateOrCreate(['section_key' => 'fase_e'], ['content' => $faseEContent]);
+            $faseESetting->content = $faseEContent;
+            $faseESetting->save();
 
             // Handle Fase F
             $faseFContent = [
@@ -61,22 +68,37 @@ class CurriculumController extends Controller
                 'points' => $request->input('fase_f_points', []),
                 'image' => $request->input('fase_f_image_url'),
             ];
+            
+            $faseFSetting = CurriculumSetting::firstOrNew(['section_key' => 'fase_f']);
             if ($request->hasFile("fase_f_image")) {
-                $path = $request->file("fase_f_image")->store('kurikulum', 'public');
-                $faseFContent['image'] = '/storage/' . $path;
+                $faseFSetting->clearMediaCollection('fase_f_image');
+                $faseFSetting->addMediaFromRequest("fase_f_image")->toMediaCollection('fase_f_image');
+                $media = $faseFSetting->getMedia('fase_f_image')->last();
+                if ($media) {
+                    $faseFContent['image'] = '/storage/' . $media->id . '/' . $media->file_name;
+                }
             }
-            CurriculumSetting::updateOrCreate(['section_key' => 'fase_f'], ['content' => $faseFContent]);
+            $faseFSetting->content = $faseFContent;
+            $faseFSetting->save();
 
         } elseif ($section === 'hero') {
             $content = $request->input('content');
+            $heroSetting = CurriculumSetting::firstOrNew(['section_key' => 'hero']);
+            
             if ($request->hasFile("content.image")) {
-                $path = $request->file("content.image")->store('kurikulum', 'public');
-                $content['image'] = '/storage/' . $path;
+                $heroSetting->clearMediaCollection('hero_image');
+                $heroSetting->addMediaFromRequest("content.image")->toMediaCollection('hero_image');
+                $media = $heroSetting->getMedia('hero_image')->last();
+                if ($media) {
+                    $content['image'] = '/storage/' . $media->id . '/' . $media->file_name;
+                }
             } else {
                 $content['image'] = $content['image_url'] ?? null;
             }
             unset($content['image_url']);
-            CurriculumSetting::updateOrCreate(['section_key' => 'hero'], ['content' => $content]);
+            
+            $heroSetting->content = $content;
+            $heroSetting->save();
 
         } else {
             // Handle Grading System, Learning Goals, and Metode

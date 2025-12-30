@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Helpers\HtmlSanitizer;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -13,10 +14,21 @@ use Illuminate\Support\Facades\Auth;
 
 class PostController extends Controller
 {
+    protected $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function index()
     {
+        $posts = Post::with(['author', 'media'])->latest()->get();
+
         return Inertia::render('Admin/Posts/Index', [
-            'posts' => Post::with('author')->latest()->get()
+            'posts' => $posts->map(function ($post) {
+                return $this->imageService->transformModelWithMedia($post, ['featured']);
+            })
         ]);
     }
 
@@ -26,7 +38,7 @@ class PostController extends Controller
             'title' => 'required|string|max:255',
             'excerpt' => 'nullable|string|max:500',
             'content' => 'required|string',
-            'featured_image' => 'nullable|image|max:2048',
+            'featured_image' => 'nullable|image|max:5120', // 5MB
             'category' => 'required|string|max:255',
             'status' => 'required|in:draft,published',
             'is_featured' => 'boolean',
@@ -41,12 +53,16 @@ class PostController extends Controller
             $validated['published_at'] = now();
         }
 
-        if ($request->hasFile('featured_image')) {
-            $path = $request->file('featured_image')->store('posts', 'public');
-            $validated['featured_image'] = Storage::url($path);
-        }
+        // Remove featured_image from validated array (will use Media Library instead)
+        unset($validated['featured_image']);
+        
+        $post = Post::create($validated);
 
-        Post::create($validated);
+        // NEW: Use Media Library for automatic WebP + responsive variants generation
+        if ($request->hasFile('featured_image')) {
+            $post->addMediaFromRequest('featured_image')
+                 ->toMediaCollection('featured');
+        }
 
         return redirect()->route('admin.posts.index')->with('success', 'Berita berhasil dibuat');
     }
@@ -57,7 +73,7 @@ class PostController extends Controller
             'title' => 'required|string|max:255',
             'excerpt' => 'nullable|string|max:500',
             'content' => 'required|string',
-            'featured_image' => 'nullable|image|max:2048',
+            'featured_image' => 'nullable|image|max:5120',
             'category' => 'required|string|max:255',
             'status' => 'required|in:draft,published',
             'is_featured' => 'boolean',
@@ -70,13 +86,17 @@ class PostController extends Controller
             $validated['slug'] = Str::slug($request->title) . '-' . uniqid();
         }
 
+        // Remove featured_image from validated array
+        unset($validated['featured_image']);
+
+        // NEW: Use Media Library
         if ($request->hasFile('featured_image')) {
-            if ($post->featured_image) {
-                $oldPath = str_replace('/storage/', '', $post->featured_image);
-                Storage::disk('public')->delete($oldPath);
-            }
-            $path = $request->file('featured_image')->store('posts', 'public');
-            $validated['featured_image'] = Storage::url($path);
+            // Clear old media (Media Library handles cleanup)
+            $post->clearMediaCollection('featured');
+            
+            // Add new media
+            $post->addMediaFromRequest('featured_image')
+                 ->toMediaCollection('featured');
         }
 
         $post->update($validated);
@@ -86,11 +106,7 @@ class PostController extends Controller
 
     public function destroy(Post $post)
     {
-        if ($post->featured_image) {
-            $oldPath = str_replace('/storage/', '', $post->featured_image);
-            Storage::disk('public')->delete($oldPath);
-        }
-
+        // Media Library automatically deletes associated media
         $post->delete();
 
         return redirect()->back()->with('success', 'Berita berhasil dihapus');

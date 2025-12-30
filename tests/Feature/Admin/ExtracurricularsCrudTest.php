@@ -76,7 +76,11 @@ class ExtracurricularsCrudTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('extracurriculars', ['name' => 'Basket']);
-        Storage::disk('public')->assertExists('extracurriculars/' . $file->hashName());
+        
+        $extracurricular = Extracurricular::where('name', 'Basket')->first();
+        $this->assertTrue($extracurricular->hasMedia('images'));
+        $media = $extracurricular->getFirstMedia('images');
+        Storage::disk('public')->assertExists($media->getPathRelativeToRoot());
     }
 
     public function test_validation_requires_name_category_and_description(): void
@@ -126,9 +130,11 @@ class ExtracurricularsCrudTest extends TestCase
     {
         Storage::fake('public');
 
-        $extracurricular = Extracurricular::factory()->create([
-            'image_url' => '/storage/extracurriculars/old.jpg',
-        ]);
+        // Create with initial image
+        $extracurricular = Extracurricular::factory()->create();
+        $oldFile = \Illuminate\Http\UploadedFile::fake()->image('old.jpg');
+        $extracurricular->addMedia($oldFile)->toMediaCollection('images');
+        $oldMedia = $extracurricular->getFirstMedia('images');
 
         $newFile = \Illuminate\Http\UploadedFile::fake()->image('new-activity.jpg');
 
@@ -143,8 +149,13 @@ class ExtracurricularsCrudTest extends TestCase
         $response = $this->put(route('admin.extracurriculars.update', $extracurricular), $data);
 
         $response->assertRedirect();
-        Storage::disk('public')->assertMissing('extracurriculars/old.jpg');
-        Storage::disk('public')->assertExists('extracurriculars/' . $newFile->hashName());
+        
+        $extracurricular->refresh();
+        $this->assertDatabaseMissing('media', ['id' => $oldMedia->id]);
+        
+        $newMedia = $extracurricular->getFirstMedia('images');
+        $this->assertEquals('new-activity.jpg', $newMedia->file_name);
+        Storage::disk('public')->assertExists($newMedia->getPathRelativeToRoot());
     }
 
     public function test_can_delete_extracurricular(): void
@@ -163,14 +174,14 @@ class ExtracurricularsCrudTest extends TestCase
         Storage::fake('public');
 
         $file = \Illuminate\Http\UploadedFile::fake()->image('activity.jpg');
-        $path = $file->store('extracurriculars', 'public');
-
-        $extracurricular = Extracurricular::factory()->create([
-            'image_url' => '/storage/' . $path,
-        ]);
+        $extracurricular = Extracurricular::factory()->create();
+        $extracurricular->addMedia($file)->toMediaCollection('images');
+        $media = $extracurricular->getFirstMedia('images');
+        $path = $media->getPathRelativeToRoot();
 
         $this->delete(route('admin.extracurriculars.destroy', $extracurricular));
 
+        $this->assertDatabaseMissing('media', ['id' => $media->id]);
         Storage::disk('public')->assertMissing($path);
     }
 

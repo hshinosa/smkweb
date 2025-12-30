@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Post extends Model
+class Post extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'title',
@@ -32,4 +35,75 @@ class Post extends Model
     {
         return $this->belongsTo(Admin::class, 'author_id');
     }
+
+    /**
+     * Register media conversions for responsive images and WebP
+     */
+    public function registerMediaConversions(Media $media = null): void
+    {
+        // Mobile size (375px) - WebP
+        $this
+            ->addMediaConversion('mobile')
+            ->width(375)
+            ->format('webp')
+            ->quality(80)
+            ->performOnCollections('featured')
+            ->nonQueued();
+
+        // Tablet size (768px) - WebP
+        $this
+            ->addMediaConversion('tablet')
+            ->width(768)
+            ->format('webp')
+            ->quality(80)
+            ->performOnCollections('featured')
+            ->nonQueued();
+
+        // Desktop size (1280px) - WebP
+        $this
+            ->addMediaConversion('desktop')
+            ->width(1280)
+            ->format('webp')
+            ->quality(85)
+            ->performOnCollections('featured')
+            ->nonQueued();
+
+        // Large/HD size (1920px) - WebP
+        $this
+            ->addMediaConversion('large')
+            ->width(1920)
+            ->format('webp')
+            ->quality(85)
+            ->performOnCollections('featured')
+            ->nonQueued();
+
+        // Original as WebP (for modern browsers)
+        $this
+            ->addMediaConversion('webp')
+            ->format('webp')
+            ->quality(90)
+            ->performOnCollections('featured')
+            ->nonQueued();
+
+        // Thumbnail for admin (200px)
+        $this
+            ->addMediaConversion('thumb')
+            ->width(200)
+            ->height(200)
+            ->format('webp')
+            ->quality(75)
+            ->nonQueued();
+    }
+
+    /**
+     * Register media collections
+     */
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('featured')
+            ->singleFile() // Only one featured image
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+    }
 }
+

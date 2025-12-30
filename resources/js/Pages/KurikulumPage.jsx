@@ -17,6 +17,8 @@ import {
 // Import Components
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
+import { HeroImage } from '@/Components/ResponsiveImage';
 
 // Import utilities
 import { TYPOGRAPHY } from '@/Utils/typography';
@@ -65,7 +67,12 @@ export default function KurikulumPage({ programs = [], curriculumData }) {
 
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
-            <Head title={pageMetadata.kurikulum.title} description={pageMetadata.kurikulum.description} />
+            <SEOHead 
+                title={pageMetadata.kurikulum.title}
+                description={pageMetadata.kurikulum.description}
+                keywords="kurikulum, kurikulum merdeka, mata pelajaran, sistem pembelajaran, SMAN 1 Baleendah"
+                image="/images/kurikulum-banner.jpg"
+            />
 
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -78,11 +85,19 @@ export default function KurikulumPage({ programs = [], curriculumData }) {
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src={formatImagePath(hero?.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
-                        alt="Background Kurikulum" 
-                        className="w-full h-full object-cover"
-                    />
+                    {hero?.backgroundImage ? (
+                        <HeroImage media={hero.backgroundImage} alt="Background Kurikulum" />
+                    ) : (
+                        <img 
+                            src={formatImagePath(hero?.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            alt="Background Kurikulum" 
+                            className="w-full h-full object-cover"
+                            loading="eager"
+                            fetchpriority="high"
+                            width="1920"
+                            height="1080"
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 

@@ -19,6 +19,8 @@ import {
 // Import Components
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
+import ResponsiveImage, { HeroImage, ContentImage, GalleryImage } from '@/Components/ResponsiveImage';
 import { getNavigationData } from '@/Utils/navigationData';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { usePage } from '@inertiajs/react';
@@ -52,10 +54,12 @@ export default function LandingPage({
 
     return (
         <div className="bg-secondary min-h-screen font-sans text-gray-800">
-            <Head>
-                <title>{`${siteName} - Generasi Unggul & Berkarakter`}</title>
-                <meta name="description" content={siteDescription} />
-            </Head>
+            <SEOHead 
+                title={`${siteName} - Generasi Unggul & Berkarakter`}
+                description={siteDescription || "SMAN 1 Baleendah adalah sekolah menengah atas unggulan di Bandung dengan program peminatan MIPA, IPS, dan Bahasa. Dapatkan informasi PPDB, program akademik, ekstrakurikuler, dan prestasi siswa."}
+                keywords="SMAN 1 Baleendah, SMA Baleendah, sekolah Bandung, PPDB Bandung, SMA negeri Bandung, pendidikan Baleendah, peminatan IPA IPS Bahasa, sekolah unggulan"
+                image={heroContent?.background_image_url || "/images/hero-default.jpg"}
+            />
 
             {/* Navbar */}
             <Navbar
@@ -69,9 +73,9 @@ export default function LandingPage({
             <section className="relative pt-32 md:pt-40 overflow-hidden">
                 {/* Hero Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src={heroContent.background_image_url} 
-                        alt="Background" 
+                    <ResponsiveImage 
+                        src={heroContent?.background_image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
+                        alt="Background"
                         className="w-full h-full object-cover"
                     />
                 </div>
@@ -84,18 +88,18 @@ export default function LandingPage({
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                         {/* Left Column: Text */}
-                        <div className="space-y-6 animate-fade-in-up">
+                        <div className="space-y-6">
                             <h1 className={TYPOGRAPHY.heroTitle}>
-                                {heroContent.title_line1} <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{heroContent.title_line2}</span>
+                                {heroContent?.title_line1 || 'Selamat Datang di'} <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{heroContent?.title_line2 || 'SMA Negeri 1 Baleendah'}</span>
                             </h1>
                             <p className={`${TYPOGRAPHY.heroText} max-w-lg`}>
-                                {heroContent.hero_text}
+                                {heroContent?.hero_text || 'Sekolah penggerak prestasi dan inovasi masa depan.'}
                             </p>
                             <div className="flex flex-wrap gap-4 pt-4">
                                 <Link 
-                                    href="/profil/sejarah" 
-                                    className="px-8 py-3.5 bg-accent-yellow text-gray-900 font-bold rounded-full shadow-lg hover:shadow-xl hover:bg-yellow-400 transition-all transform hover:-translate-y-1"
+                                    href="/profil-sekolah" 
+                                    className="px-8 py-3.5 bg-accent-yellow text-gray-900 font-bold rounded-full shadow-lg hover:shadow-xl hover:bg-yellow-400 transition-all"
                                 >
                                     Jelajahi Profil
                                 </Link>
@@ -109,30 +113,38 @@ export default function LandingPage({
                         </div>
 
                         {/* Right Column: Visual */}
-                        <div className="relative mx-auto max-w-lg md:max-w-none w-full h-[500px] lg:h-[600px] flex justify-center items-end">
+                        <div className="relative mx-auto max-w-lg md:max-w-none w-full h-[420px] md:h-[480px] lg:h-[540px] flex justify-center items-end">
                             {/* Main Image */}
-                            <img 
-                                src={heroContent.student_image_url || "/images/anak-sma.png"} 
-                                alt={`Siswa Berprestasi ${siteName}`} 
-                                className="relative z-10 h-full w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                            <ResponsiveImage 
+                                src={heroContent?.student_image_url || "/images/anak-sma.png"} 
+                                alt={`Siswa Berprestasi ${siteName}`}
+                                className="relative z-10 h-[380px] md:h-[440px] lg:h-[500px] w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                                loading="eager"
                             />
 
-                            {/* Floating Glass Cards */}
-                            {(heroContent.stats || []).map((stat, idx) => {
+                            {/* Floating Glass Cards - Stats */}
+                            {(heroContent?.stats || [
+                                { label: 'Akreditasi', value: 'A', icon_name: 'Trophy' },
+                                { label: 'Lulusan', value: '15k+', icon_name: 'GraduationCap' },
+                                { label: 'Siswa Aktif', value: '1.2k+', icon_name: 'Users' }
+                            ]).map((stat, idx) => {
                                 const Icon = iconMap[stat.icon_name] || Trophy;
-                                const animations = ['animate-float-slow', 'animate-float-medium', 'animate-float-fast'];
                                 const positions = [
                                     'top-10 -left-6 md:-left-12',
                                     'bottom-20 -right-4 md:-right-8',
                                     'bottom-8 left-4 md:-left-4'
                                 ];
-                                
+                                const colors = [
+                                    'bg-yellow-100 text-yellow-600',
+                                    'bg-blue-100 text-primary',
+                                    'bg-green-100 text-green-600'
+                                ];
                                 return (
                                     <div 
                                         key={idx}
-                                        className={`absolute ${positions[idx % positions.length]} bg-white/70 backdrop-blur-md border border-white/40 p-4 rounded-xl shadow-lg flex items-center gap-3 ${animations[idx % animations.length]} max-w-[220px] z-20`}
+                                        className={`absolute ${positions[idx % 3]} bg-white/70 backdrop-blur-md border border-white/40 p-4 rounded-xl shadow-lg flex items-center gap-3 max-w-[220px] z-20`}
                                     >
-                                        <div className={`p-2 rounded-full ${idx === 0 ? 'bg-yellow-100 text-yellow-600' : idx === 1 ? 'bg-blue-100 text-primary' : 'bg-green-100 text-green-600'}`}>
+                                        <div className={`p-2 rounded-full ${colors[idx % 3]}`}>
                                             <Icon size={24} fill="currentColor" />
                                         </div>
                                         <div>
@@ -153,11 +165,7 @@ export default function LandingPage({
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <div className="relative">
                             <div className="aspect-video rounded-2xl overflow-hidden shadow-xl bg-gray-200">
-                                <img 
-                                    src={aboutLpContent.image_url} 
-                                    alt={aboutLpContent.title} 
-                                    className="w-full h-full object-cover"
-                                />
+                                <ContentImage src={aboutLpContent.image_url} alt={aboutLpContent.title} />
                             </div>
                             {/* Decorative dots */}
                             <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-dots-pattern opacity-20 hidden md:block"></div>
@@ -195,7 +203,7 @@ export default function LandingPage({
                                 <div className="flex flex-col items-center sm:items-start gap-6">
                                     <div className="relative w-full max-w-md h-[34rem] flex-shrink-0">
                                         <div className="absolute inset-0 bg-primary rounded-2xl rotate-6 opacity-20"></div>
-                                        <img 
+                                        <ContentImage 
                                             src={kepsekWelcomeLpContent.kepsek_image_url} 
                                             alt={kepsekWelcomeLpContent.kepsek_name} 
                                             className="relative w-full h-full object-cover rounded-2xl shadow-lg border-4 border-white"
@@ -244,23 +252,23 @@ export default function LandingPage({
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-64">
                         {(programsLpContent.items || []).map((program, idx) => {
                             const IconComponent = iconMap[program.icon_name] || Microscope;
                             return (
-                                <div key={idx} className="group flex flex-col items-center">
-                                    {/* Image Area - Floating above */}
-                                    <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
-                                        <img 
+                                <div key={idx} className="relative">
+                                    {/* Image Area - Floating above card */}
+                                    <div className="absolute bottom-[calc(100%)] left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                                        <ContentImage 
                                             src={program.image_url || "/images/anak-sma-programstudi.png"} 
                                             alt={program.title}
-                                            className="h-full w-auto object-contain drop-shadow-xl transform group-hover:scale-105 transition-transform duration-500" 
+                                            className="h-72 w-auto object-contain drop-shadow-2xl" 
                                         />
                                     </div>
                                     
                                     {/* Content Section */}
-                                    <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 relative -mt-12 pt-10 flex-1 flex flex-col z-10 w-full">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors ${program.color_class || 'bg-blue-50 text-primary'}`}>
+                                    <div className="bg-white rounded-3xl p-8 pt-8 shadow-lg border border-gray-100 flex flex-col z-10 w-full h-full">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${program.color_class || 'bg-blue-50 text-primary'}`}>
                                             <IconComponent size={24} />
                                         </div>
                                         <h3 className={`${TYPOGRAPHY.cardTitle} mb-2`}>{program.title}</h3>
@@ -302,8 +310,8 @@ export default function LandingPage({
                         {latestPosts.map((post) => (
                             <div key={post.id} className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-all">
                                 <div className="h-48 bg-gray-200 relative overflow-hidden">
-                                    <img 
-                                        src={post.featured_image || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                                    <ContentImage 
+                                        src={post.featured_image} 
                                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
                                         alt={post.title} 
                                     />
@@ -340,9 +348,9 @@ export default function LandingPage({
                 </div>
             </section>
 
-            {/* GALLERY SECTION */}
+            {/* GALLERY SECTION - Full Width Infinite Carousel */}
             <section className="py-20 bg-white overflow-hidden">
-                {/* ... (style tag remains same) */}
+                {/* Animation Styles */}
                 <style>{`
                     @keyframes scroll {
                         0% { transform: translateX(0); }
@@ -358,13 +366,14 @@ export default function LandingPage({
                     .animate-scroll-reverse {
                         animation: scroll-reverse 30s linear infinite;
                     }
-                    .pause-hover:hover .animate-scroll,
-                    .pause-hover:hover .animate-scroll-reverse {
+                    .animate-scroll:hover,
+                    .animate-scroll-reverse:hover {
                         animation-play-state: paused;
                     }
                 `}</style>
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-                    <div className="text-center max-w-3xl mx-auto">
+                
+                <div className="mb-12">
+                    <div className="text-center max-w-3xl mx-auto mb-12 px-4 sm:px-6 lg:px-8">
                         <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
                             {galleryLpContent.title.split(' ').slice(0, -1).join(' ')} <span className="text-primary">{galleryLpContent.title.split(' ').slice(-1)}</span>
                         </h2>
@@ -374,44 +383,71 @@ export default function LandingPage({
                     </div>
                 </div>
                 
-                <div className="flex flex-col gap-6 pause-hover">
-                    {/* Row 1 - Scroll Left */}
-                    <div className="flex gap-6 animate-scroll w-max">
-                        {/* Duplicate images to create seamless loop */}
-                        {[...(galleryLpContent.images || []), ...(galleryLpContent.images || []), ...(galleryLpContent.images || [])].map((imgUrl, idx) => (
-                            <div key={`row1-${idx}`} className="w-64 h-64 md:w-80 md:h-80 flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all relative group">
-                                <img 
-                                    src={imgUrl} 
-                                    alt={`Gallery ${idx}`} 
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                                />
-                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
+                {/* Gallery Section - Full Width Horizontal Scroll */}
+                {(() => {
+                    // Filter only valid image URLs (not videos)
+                    const validImages = (galleryLpContent.images || []).filter(url => {
+                        if (!url) return false;
+                        const lowerUrl = url.toLowerCase();
+                        // Exclude video URLs
+                        if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return false;
+                        if (lowerUrl.endsWith('.mp4') || lowerUrl.endsWith('.webm') || lowerUrl.endsWith('.mov')) return false;
+                        return true;
+                    });
+                    
+                    // Need at least some images for the carousel
+                    if (validImages.length === 0) {
+                        return (
+                            <div className="text-center py-12 text-gray-500">
+                                Belum ada galeri foto.
                             </div>
-                        ))}
-                    </div>
+                        );
+                    }
+                    
+                    // Duplicate images enough times for seamless infinite scroll
+                    const row1Images = [...validImages, ...validImages, ...validImages, ...validImages];
+                    const row2Images = [...validImages, ...validImages, ...validImages, ...validImages].reverse();
+                    
+                    return (
+                        <div className="flex flex-col gap-4 w-full">
+                            {/* Row 1 - Scroll Left */}
+                            <div className="flex gap-4 animate-scroll" style={{ width: 'max-content' }}>
+                                {row1Images.map((imgUrl, idx) => (
+                                    <div key={`row1-${idx}`} className="w-72 h-72 md:w-80 md:h-80 flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all relative group">
+                                        <GalleryImage 
+                                            src={imgUrl} 
+                                            alt={`Gallery ${idx}`} 
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
+                                    </div>
+                                ))}
+                            </div>
 
-                    {/* Row 2 - Scroll Right (Reverse) */}
-                    <div className="flex gap-6 animate-scroll-reverse w-max">
-                        {/* Duplicate images to create seamless loop (reversed) */}
-                        {[...(galleryLpContent.images || []), ...(galleryLpContent.images || []), ...(galleryLpContent.images || [])].reverse().map((imgUrl, idx) => (
-                            <div key={`row2-${idx}`} className="w-64 h-64 md:w-80 md:h-80 flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all relative group">
-                                <img 
-                                    src={imgUrl} 
-                                    alt={`Gallery ${idx}`} 
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                                />
-                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
+                            {/* Row 2 - Scroll Right (Reverse) */}
+                            <div className="flex gap-4 animate-scroll-reverse" style={{ width: 'max-content' }}>
+                                {row2Images.map((imgUrl, idx) => (
+                                    <div key={`row2-${idx}`} className="w-72 h-72 md:w-80 md:h-80 flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all relative group">
+                                        <GalleryImage 
+                                            src={imgUrl} 
+                                            alt={`Gallery ${idx}`} 
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </div>
+                        </div>
+                    );
+                })()}
                 
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-12 text-center">
+                {/* View All Button */}
+                <div className="mt-12 text-center">
                     <Link 
                         href="/galeri" 
-                        className="inline-flex items-center px-8 py-3.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-full hover:bg-gray-50 hover:text-primary transition-all shadow-sm"
+                        className="inline-flex items-center px-8 py-3.5 bg-primary text-white font-bold rounded-full hover:bg-primary-darker transition-all shadow-lg hover:shadow-xl"
                     >
-                        Lihat Galeri Lainnya <ArrowRight size={20} className="ml-2" />
+                        Lihat Galeri Lengkap <ArrowRight size={20} className="ml-2" />
                     </Link>
                 </div>
             </section>

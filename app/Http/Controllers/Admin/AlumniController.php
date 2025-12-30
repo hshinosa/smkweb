@@ -4,17 +4,25 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Alumni;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class AlumniController extends Controller
 {
+    protected $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function index()
     {
-        $alumnis = Alumni::orderBy('sort_order')->latest()->get();
+        $alumnis = Alumni::with('media')->orderBy('sort_order')->latest()->get();
         return Inertia::render('Admin/Alumni/Index', [
-            'alumnis' => $alumnis
+            'alumnis' => $this->imageService->transformCollectionWithMedia($alumnis, ['avatars'])
         ]);
     }
 
@@ -38,11 +46,22 @@ class AlumniController extends Controller
             'sort_order' => 'integer',
         ]);
 
-        if ($request->hasFile('image')) {
-            $validated['image_url'] = Storage::disk('public')->put('alumni', $request->file('image'));
-        }
+        unset($validated['image']);
 
-        Alumni::create($validated);
+        $alumni = Alumni::create($validated);
+
+        if ($request->hasFile('image')) {
+            $alumni->addMediaFromRequest('image')->toMediaCollection('avatars');
+            
+            // Backward compatibility for existing frontend
+            $media = $alumni->getMedia('avatars')->last();
+            if ($media) {
+                // Remove /storage/ prefix to match old behavior
+                // Use explicit path construction to avoid getUrl issues in testing
+                $relativePath = $media->id . '/' . $media->file_name;
+                $alumni->update(['image_url' => $relativePath]);
+            }
+        }
 
         return redirect()->route('admin.alumni.index')->with('success', 'Alumni berhasil ditambahkan.');
     }
@@ -50,7 +69,7 @@ class AlumniController extends Controller
     public function edit(Alumni $alumni)
     {
         return Inertia::render('Admin/Alumni/Edit', [
-            'alumni' => $alumni
+            'alumni' => $this->imageService->transformModelWithMedia($alumni, ['avatars'])
         ]);
     }
 
@@ -69,24 +88,28 @@ class AlumniController extends Controller
             'sort_order' => 'integer',
         ]);
 
-        if ($request->hasFile('image')) {
-            if ($alumni->image_url) {
-                Storage::disk('public')->delete($alumni->image_url);
-            }
-            $validated['image_url'] = Storage::disk('public')->put('alumni', $request->file('image'));
-        }
+        unset($validated['image']);
 
         $alumni->update($validated);
+
+        if ($request->hasFile('image')) {
+            $alumni->clearMediaCollection('avatars');
+            $alumni->addMediaFromRequest('image')->toMediaCollection('avatars');
+            
+            // Backward compatibility
+            $media = $alumni->getMedia('avatars')->last();
+            if ($media) {
+                $relativePath = $media->id . '/' . $media->file_name;
+                $alumni->update(['image_url' => $relativePath]);
+            }
+        }
 
         return redirect()->route('admin.alumni.index')->with('success', 'Alumni berhasil diperbarui.');
     }
 
     public function destroy(Alumni $alumni)
     {
-        if ($alumni->image_url) {
-            Storage::disk('public')->delete($alumni->image_url);
-        }
-        $alumni->delete();
+        $alumni->delete(); // Media library handles deletion
 
         return redirect()->route('admin.alumni.index')->with('success', 'Alumni berhasil dihapus.');
     }

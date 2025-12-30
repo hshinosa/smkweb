@@ -5,21 +5,51 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SiteSetting;
+use App\Services\ImageService;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\ActivityLogger;
 
 class SiteSettingController extends Controller
 {
+    protected $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function index()
     {
-        $settings = SiteSetting::all()->keyBy('section_key');
+        $settings = SiteSetting::with('media')->get()->keyBy('section_key');
         $sections = [];
         
         foreach (array_keys(SiteSetting::getSectionFields()) as $key) {
             $dbRow = $settings->get($key);
             $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
-            $sections[$key] = SiteSetting::getContent($key, $dbContent);
+            $content = SiteSetting::getContent($key, $dbContent);
+            
+            // Append responsive image data if exists
+            if ($dbRow) {
+                // For hero sections with 'image'
+                if (str_starts_with($key, 'hero_')) {
+                    $media = $this->imageService->getFirstMediaData($dbRow, $key);
+                    if ($media) {
+                        $content['backgroundImage'] = $media;
+                    }
+                }
+                
+                // For general settings with logo/favicon
+                if ($key === 'general') {
+                    $logoMedia = $this->imageService->getFirstMediaData($dbRow, 'site_logo');
+                    if ($logoMedia) $content['siteLogoMedia'] = $logoMedia;
+                    
+                    $faviconMedia = $this->imageService->getFirstMediaData($dbRow, 'site_favicon');
+                    if ($faviconMedia) $content['siteFaviconMedia'] = $faviconMedia;
+                }
+            }
+            
+            $sections[$key] = $content;
         }
 
         return Inertia::render('Admin/SiteSettings/Index', [
@@ -48,27 +78,27 @@ class SiteSettingController extends Controller
         $request->validate($rules);
 
         $content = $request->input('content');
-        $existingSetting = SiteSetting::where('section_key', $section)->first();
-        $existingContent = $existingSetting ? $existingSetting->content : [];
+        
+        // Find or create setting
+        $setting = SiteSetting::firstOrNew(['section_key' => $section]);
+        $existingContent = $setting->content ?? [];
 
-        // Handle file uploads for general
+        // Handle file uploads with Media Library
         if ($section === 'general') {
             if ($request->hasFile("content.site_logo")) {
-                if (isset($existingContent['site_logo'])) {
-                    Storage::disk('public')->delete($existingContent['site_logo']);
-                }
-                $path = $request->file("content.site_logo")->store('site', 'public');
-                $content['site_logo'] = $path;
+                $setting->clearMediaCollection('site_logo');
+                $media = $setting->addMediaFromRequest("content.site_logo")
+                                ->toMediaCollection('site_logo');
+                $content['site_logo'] = $media->getUrl();
             } else {
                 $content['site_logo'] = $existingContent['site_logo'] ?? null;
             }
 
             if ($request->hasFile("content.site_favicon")) {
-                if (isset($existingContent['site_favicon'])) {
-                    Storage::disk('public')->delete($existingContent['site_favicon']);
-                }
-                $path = $request->file("content.site_favicon")->store('site', 'public');
-                $content['site_favicon'] = $path;
+                $setting->clearMediaCollection('site_favicon');
+                $media = $setting->addMediaFromRequest("content.site_favicon")
+                                ->toMediaCollection('site_favicon');
+                $content['site_favicon'] = $media->getUrl();
             } else {
                 $content['site_favicon'] = $existingContent['site_favicon'] ?? null;
             }
@@ -77,21 +107,18 @@ class SiteSettingController extends Controller
         // Handle file uploads for hero sections in SiteSetting
         if (str_starts_with($section, 'hero_')) {
             if ($request->hasFile("content.image_file")) {
-                if (isset($existingContent['image'])) {
-                    Storage::disk('public')->delete($existingContent['image']);
-                }
-                $path = $request->file("content.image_file")->store('hero', 'public');
-                $content['image'] = $path;
+                $setting->clearMediaCollection($section);
+                $media = $setting->addMediaFromRequest("content.image_file")
+                                ->toMediaCollection($section);
+                $content['image'] = $media->getUrl();
             } else {
                 $content['image'] = $existingContent['image'] ?? ($content['image'] ?? null);
             }
             unset($content['image_file']);
         }
 
-        SiteSetting::updateOrCreate(
-            ['section_key' => $section],
-            ['content' => $content]
-        );
+        $setting->content = $content;
+        $setting->save();
 
         SiteSetting::forgetCache();
 

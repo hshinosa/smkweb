@@ -15,6 +15,8 @@ import {
 
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
+import ResponsiveImage, { HeroImage, ThumbnailImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { getPageMetadata } from '@/Utils/academicData';
@@ -45,7 +47,12 @@ export default function ProgramIpsPage({ content }) {
 
     return (
         <div className="bg-white font-sans text-gray-800">
-            <Head title={hero?.title || pageMetadata.ips.title} description={hero?.description || pageMetadata.ips.description} />
+            <SEOHead 
+                title={hero?.title || pageMetadata.ips.title}
+                description={hero?.description || pageMetadata.ips.description}
+                keywords="peminatan IPS, jurusan IPS, ekonomi, sosiologi, geografi, sejarah, SMAN 1 Baleendah"
+                image={formatImagePath(hero?.background_image) || "/images/program-ips.jpg"}
+            />
             
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -54,27 +61,25 @@ export default function ProgramIpsPage({ content }) {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            {/* 1. HERO SECTION (Immersive) */}
-            <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden pt-20">
+            {/* 1. HERO SECTION (Consistent with AcademicCalendarPage) */}
+            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <img 
-                        src={formatImagePath(hero?.background_image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
-                        alt="Ilmu Pengetahuan Sosial" 
-                        className="w-full h-full object-cover"
-                    />
+                    {hero?.backgroundImage ? (
+                        <HeroImage media={hero.backgroundImage} alt="Ilmu Pengetahuan Sosial" />
+                    ) : (
+                        <HeroImage 
+                            src={formatImagePath(hero?.background_image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            alt="Ilmu Pengetahuan Sosial" 
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 
-                <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm mb-6 animate-fade-in-up">
-                        <span className="text-white font-bold text-sm tracking-wide uppercase">Terakreditasi A (Unggul)</span>
-                    </div>
-                    
-                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-6 max-w-4xl mx-auto`}>
+                <div className="relative z-10 container mx-auto px-4 text-center text-white">
+                    <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
                         {renderHighlightedTitle("Ilmu Pengetahuan Sosial")}
                     </h1>
-                    
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
                         {hero?.description || "Membentuk pemikir kritis dan analis sosial yang peka terhadap dinamika masyarakat global serta siap menjadi pemimpin masa depan."}
                     </p>
@@ -104,7 +109,7 @@ export default function ProgramIpsPage({ content }) {
                                 <div key={idx} className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 transition-all duration-300">
                                     <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 overflow-hidden">
                                         {item.icon ? (
-                                            <img src={item.icon} alt={item.title} className="w-full h-full object-cover" />
+                                            <ThumbnailImage src={item.icon} alt={item.title} />
                                         ) : (
                                             <Users className="w-8 h-8 text-orange-600 transition-colors" />
                                         )}
@@ -274,7 +279,7 @@ export default function ProgramIpsPage({ content }) {
                                         <div key={idx} className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm transition-all duration-300">
                                             <div className="p-3 bg-blue-50 text-blue-600 rounded-lg overflow-hidden w-12 h-12 flex items-center justify-center">
                                                 {item.icon ? (
-                                                    <img src={item.icon} alt={item.title} className="w-full h-full object-cover" />
+                                                    <ThumbnailImage src={item.icon} alt={item.title} />
                                                 ) : (
                                                     <Briefcase className="w-6 h-6" />
                                                 )}

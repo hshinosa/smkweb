@@ -24,7 +24,7 @@ class GalleriesCrudTest extends TestCase
 
     public function test_can_view_galleries_index_page(): void
     {
-        Gallery::factory()->count(3)->create();
+        Gallery::factory()->count(3)->create(['url' => 'http://example.com']);
 
         $response = $this->get(route('admin.galleries.index'));
 
@@ -58,30 +58,14 @@ class GalleriesCrudTest extends TestCase
             'title' => 'Wisuda 2024',
             'type' => 'photo',
         ]);
-        Storage::disk('public')->assertExists('galleries/' . $file->hashName());
+        
+        $gallery = Gallery::where('title', 'Wisuda 2024')->first();
+        $this->assertTrue($gallery->hasMedia('images'));
+        $media = $gallery->getFirstMedia('images');
+        Storage::disk('public')->assertExists($media->getPathRelativeToRoot());
     }
 
-    public function test_can_create_video_gallery_with_file(): void
-    {
-        Storage::fake('public');
-
-        $file = \Illuminate\Http\UploadedFile::fake()->create('video.mp4', 5000, 'video/mp4');
-        $data = [
-            'title' => 'Video Promosi Sekolah',
-            'description' => 'Video promosi untuk PPDB',
-            'type' => 'video',
-            'file' => $file,
-            'is_featured' => false,
-        ];
-
-        $response = $this->post(route('admin.galleries.store'), $data);
-
-        $response->assertRedirect();
-        $this->assertDatabaseHas('galleries', [
-            'title' => 'Video Promosi Sekolah',
-            'type' => 'video',
-        ]);
-    }
+    // Video upload test removed as we only support external videos or images now
 
     public function test_can_create_external_video_gallery(): void
     {
@@ -132,6 +116,7 @@ class GalleriesCrudTest extends TestCase
         $gallery = Gallery::factory()->create([
             'title' => 'Old Title',
             'type' => 'photo',
+            'url' => 'http://example.com',
         ]);
 
         $data = [
@@ -158,9 +143,12 @@ class GalleriesCrudTest extends TestCase
         Storage::fake('public');
 
         $gallery = Gallery::factory()->create([
-            'url' => '/storage/galleries/old.jpg',
             'is_external' => false,
+            'url' => 'http://example.com',
         ]);
+        $oldFile = \Illuminate\Http\UploadedFile::fake()->image('old.jpg');
+        $gallery->addMedia($oldFile)->toMediaCollection('images');
+        $oldMedia = $gallery->getFirstMedia('images');
 
         $newFile = \Illuminate\Http\UploadedFile::fake()->image('new-gallery.jpg');
 
@@ -173,13 +161,18 @@ class GalleriesCrudTest extends TestCase
         $response = $this->put(route('admin.galleries.update', $gallery), $data);
 
         $response->assertRedirect();
-        Storage::disk('public')->assertMissing('galleries/old.jpg');
-        Storage::disk('public')->assertExists('galleries/' . $newFile->hashName());
+        
+        $gallery->refresh();
+        $this->assertDatabaseMissing('media', ['id' => $oldMedia->id]);
+        
+        $newMedia = $gallery->getFirstMedia('images');
+        $this->assertEquals('new-gallery.jpg', $newMedia->file_name);
+        Storage::disk('public')->assertExists($newMedia->getPathRelativeToRoot());
     }
 
     public function test_can_delete_gallery(): void
     {
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->create(['url' => 'http://example.com']);
 
         $response = $this->delete(route('admin.galleries.destroy', $gallery));
 
@@ -193,15 +186,17 @@ class GalleriesCrudTest extends TestCase
         Storage::fake('public');
 
         $file = \Illuminate\Http\UploadedFile::fake()->image('gallery.jpg');
-        $path = $file->store('galleries', 'public');
-
         $gallery = Gallery::factory()->create([
-            'url' => '/storage/' . $path,
             'is_external' => false,
+            'url' => 'http://example.com',
         ]);
+        $gallery->addMedia($file)->toMediaCollection('images');
+        $media = $gallery->getFirstMedia('images');
+        $path = $media->getPathRelativeToRoot();
 
         $this->delete(route('admin.galleries.destroy', $gallery));
 
+        $this->assertDatabaseMissing('media', ['id' => $media->id]);
         Storage::disk('public')->assertMissing($path);
     }
 

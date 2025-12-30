@@ -17,6 +17,7 @@ import {
 
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
+import SEOHead from '@/Components/SEOHead';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 
@@ -78,7 +79,12 @@ export default function KontakPage({ auth, faqs = [] }) {
 
     return (
         <div className="bg-white font-sans text-gray-800">
-            <Head title={`Kontak Kami - ${siteName}`} />
+            <SEOHead 
+                title={`Kontak Kami - ${siteName}`}
+                description="Hubungi SMAN 1 Baleendah. Alamat, nomor telepon, email, dan lokasi sekolah. Kami siap membantu Anda."
+                keywords="kontak, alamat sekolah, telepon, email, lokasi SMAN 1 Baleendah, hubungi kami"
+                image="/images/contact-banner.jpg"
+            />
             
             <Navbar
                 logoSman1={navigationData.logoSman1}
@@ -88,8 +94,8 @@ export default function KontakPage({ auth, faqs = [] }) {
             />
 
             <main id="main-content" className="pt-20" tabIndex="-1">
-                {/* 1. HERO SECTION (Replaced to match Berita style) */}
-                <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden pt-20">
+                {/* 1. HERO SECTION (Consistent with AcademicCalendarPage, preserving social media) */}
+                <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                     {/* Background Image */}
                     <div className="absolute inset-0 z-0">
                         <img 
@@ -103,13 +109,12 @@ export default function KontakPage({ auth, faqs = [] }) {
                         <div className="absolute inset-0 bg-black/60"></div>
                     </div>
 
-                    <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-                        
-                        <h1 className={`${TYPOGRAPHY.heroTitle} mb-6 max-w-4xl mx-auto`}>
+                    <div className="relative z-10 container mx-auto px-4 text-center text-white">
+                        <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
                             {renderHighlightedTitle(heroSettings.title || 'Hubungi Kami')}
                         </h1>
                         
-                        <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto mb-10 opacity-90`}>
+                        <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto mb-8 opacity-90`}>
                             {heroSettings.subtitle || `Kami menantikan kehadiran Anda. Silakan hubungi kami untuk informasi lebih lanjut atau jadwalkan kunjungan ke sekolah kami.`}
                         </p>
 

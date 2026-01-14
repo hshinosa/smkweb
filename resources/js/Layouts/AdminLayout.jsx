@@ -12,6 +12,7 @@ import {
 import Dropdown from '@/Components/Dropdown';
 import { Transition } from '@headlessui/react';
 import ChatWidget from '@/Components/ChatWidget';
+import { Toaster } from 'react-hot-toast';
 
 // Icons mapping for consistent visual language
 const getIconComponent = (iconName) => {
@@ -23,10 +24,18 @@ const getIconComponent = (iconName) => {
     return icons[iconName] || LayoutGrid;
 };
 
-const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen, onToggle, level = 0 }) => {
+const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen, onToggle, level = 0, isMobile = false }) => {
     const activeClass = isActive 
         ? 'bg-accent-yellow text-gray-900 font-bold shadow-sm' 
-        : 'text-white hover:bg-white/10 hover:text-white';
+        : isMobile 
+            ? 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+            : 'text-white hover:bg-white/10 hover:text-white';
+    
+    const iconClass = isActive 
+        ? 'text-gray-900' 
+        : isMobile 
+            ? 'text-gray-600' 
+            : 'text-white';
     
     const IconComponent = Icon ? getIconComponent(Icon) : null;
     const paddingLeft = level === 0 ? 'pl-4' : `pl-${8 + level * 4}`;
@@ -41,12 +50,12 @@ const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen,
                     aria-controls={`submenu-${level}`}
                 >
                     <span className="flex items-center">
-                        {IconComponent && <IconComponent size={20} className={`mr-3 flex-shrink-0 ${isActive ? 'text-gray-900' : 'text-white'}`} />}
+                        {IconComponent && <IconComponent size={20} className={`mr-3 flex-shrink-0 ${iconClass}`} />}
                         <span className="text-base">{children}</span>
                     </span>
                     <ChevronDown 
                         size={18} 
-                        className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ml-2 flex-shrink-0 ${isActive ? 'text-gray-900' : 'text-white'}`} 
+                        className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ml-2 flex-shrink-0 ${iconClass}`} 
                     />
                 </button>
             ) : (
@@ -54,7 +63,7 @@ const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen,
                     href={href || '#'}
                     className={`flex items-center py-3 px-4 text-sm font-medium rounded-lg transition-all duration-200 block ${activeClass} ${paddingLeft}`}
                 >
-                    {IconComponent && <IconComponent size={20} className={`mr-3 flex-shrink-0 ${isActive ? 'text-gray-900' : 'text-white'}`} />}
+                    {IconComponent && <IconComponent size={20} className={`mr-3 flex-shrink-0 ${iconClass}`} />}
                     <span className="text-base">{children}</span>
                 </Link>
             )}
@@ -62,10 +71,12 @@ const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen,
     );
 };
 
-const SubmenuItem = ({ href, children, isActive, level = 1 }) => {
+const SubmenuItem = ({ href, children, isActive, level = 1, isMobile = false }) => {
     const activeClass = isActive 
-        ? 'text-accent-yellow font-bold bg-white/5 border-l-4 border-accent-yellow' 
-        : 'text-white hover:text-white hover:bg-white/5';
+        ? 'text-primary font-bold bg-primary/5 border-l-4 border-primary' 
+        : isMobile
+            ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            : 'text-white hover:text-white hover:bg-white/5';
     
     return (
         <li className="my-1">
@@ -179,7 +190,7 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
         }
     ];
 
-    const renderNavItemsRecursive = (items, parentKey, currentLevel) => {
+    const renderNavItemsRecursive = (items, parentKey, currentLevel, isMobile = false) => {
         return items.map((item, index) => {
             const menuKey = item.submenuKey || `${parentKey}-${index}`;
             const hasSubmenu = !!item.sublinks && item.sublinks.length > 0;
@@ -197,12 +208,13 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                         isOpen={openMenus[menuKey]}
                         onToggle={hasSubmenu ? () => toggleMenu(menuKey) : undefined}
                         level={currentLevel}
+                        isMobile={isMobile}
                     >
                         {item.title}
                     </SidebarItem>
                     {hasSubmenu && openMenus[menuKey] && (
                         <ul id={`submenu-${menuKey}`} className="space-y-1">
-                            {renderNavItemsRecursive(item.sublinks, menuKey, currentLevel + 1)}
+                            {renderNavItemsRecursive(item.sublinks, menuKey, currentLevel + 1, isMobile)}
                         </ul>
                     )}
                 </React.Fragment>
@@ -360,7 +372,7 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                                 {/* Mobile Navigation */}
                                 <nav className="flex-grow p-3 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
                                     <ul>
-                                        {renderNavItemsRecursive(navigationStructure, 'mobile', 0)}
+                                        {renderNavItemsRecursive(navigationStructure, 'mobile', 0, true)}
                                     </ul>
                                 </nav>
                                 
@@ -398,6 +410,28 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                 </Transition>
 
                 {/* <ChatWidget /> */}
+                <Toaster position="top-right" reverseOrder={false} gutter={8} toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: '#fff',
+                        color: '#374151',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        borderRadius: '0.75rem',
+                        padding: '1rem',
+                    },
+                    success: {
+                        iconTheme: {
+                            primary: '#10B981',
+                            secondary: '#fff',
+                        },
+                    },
+                    error: {
+                        iconTheme: {
+                            primary: '#EF4444',
+                            secondary: '#fff',
+                        },
+                    },
+                }} />
             </div>
         </div>
     );

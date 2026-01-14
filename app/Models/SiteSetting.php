@@ -146,37 +146,37 @@ class SiteSetting extends Model implements HasMedia
             'hero_teachers' => [
                 'title' => 'Guru & Staff',
                 'subtitle' => 'Tenaga pendidik dan kependidikan yang berdedikasi untuk kemajuan pendidikan.',
-                'image' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'hero_posts' => [
                 'title' => 'Berita & Pengumuman',
                 'subtitle' => 'Informasi terbaru seputar kegiatan dan prestasi sekolah.',
-                'image' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'hero_gallery' => [
                 'title' => 'Galeri Kegiatan',
                 'subtitle' => 'Momen-momen berharga dalam berbagai aktivitas sekolah.',
-                'image' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'hero_alumni' => [
                 'title' => 'Jejak Alumni',
                 'subtitle' => 'Kisah sukses dan kontribusi lulusan kami di berbagai bidang.',
-                'image' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'hero_extracurricular' => [
                 'title' => 'Ekstrakurikuler',
                 'subtitle' => 'Wadah pengembangan bakat, minat, dan kreativitas siswa.',
-                'image' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'hero_contact' => [
                 'title' => 'Hubungi Kami',
                 'subtitle' => 'Kami siap melayani informasi dan komunikasi dengan Anda.',
-                'image' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'hero_program' => [
                 'title' => 'Program Unggulan',
                 'subtitle' => 'Membangun karakter dan kompetensi siswa melalui berbagai inisiatif positif.',
-                'image' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
         ];
     }

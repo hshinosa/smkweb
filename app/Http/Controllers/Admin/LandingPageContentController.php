@@ -85,8 +85,8 @@ class LandingPageContentController extends Controller
                     $sectionRules["{$sectionKey}.title_line1"] = 'required|string|max:100';
                     $sectionRules["{$sectionKey}.title_line2"] = 'required|string|max:100';
                     $sectionRules["{$sectionKey}.hero_text"] = 'required|string|max:500';
-                    $sectionRules["{$sectionKey}.background_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
-                    $sectionRules["{$sectionKey}.student_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+                    $sectionRules["{$sectionKey}.background_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240';
+                    $sectionRules["{$sectionKey}.student_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240';
                     $sectionRules["{$sectionKey}.stats"] = 'nullable|array';
                     $sectionRules["{$sectionKey}.stats.*.label"] = 'required|string|max:50';
                     $sectionRules["{$sectionKey}.stats.*.value"] = 'required|string|max:50';
@@ -94,12 +94,12 @@ class LandingPageContentController extends Controller
                 } elseif ($sectionKey === 'about_lp') {
                     $sectionRules["{$sectionKey}.title"] = 'required|string|max:150';
                     $sectionRules["{$sectionKey}.description_html"] = 'required|string|max:5000';
-                    $sectionRules["{$sectionKey}.image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+                    $sectionRules["{$sectionKey}.image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240';
                 } elseif ($sectionKey === 'kepsek_welcome_lp') {
                     $sectionRules["{$sectionKey}.title"] = 'required|string|max:150';
                     $sectionRules["{$sectionKey}.kepsek_name"] = 'required|string|max:100';
                     $sectionRules["{$sectionKey}.kepsek_title"] = 'required|string|max:100';
-                    $sectionRules["{$sectionKey}.kepsek_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+                    $sectionRules["{$sectionKey}.kepsek_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240';
                     $sectionRules["{$sectionKey}.welcome_text_html"] = 'required|string|max:10000';
                 } elseif ($sectionKey === 'programs_lp') {
                     $sectionRules["{$sectionKey}.title"] = 'required|string|max:150';

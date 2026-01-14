@@ -76,6 +76,6 @@ class CurriculumTest extends TestCase
         $response->assertRedirect();
         
         $setting = CurriculumSetting::where('section_key', 'hero')->first();
-        $this->assertTrue($setting->hasMedia('hero_image'));
+        $this->assertTrue($setting->hasMedia('hero_bg'));
     }
 }

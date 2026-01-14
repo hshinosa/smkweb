@@ -86,9 +86,9 @@ class CurriculumController extends Controller
             $heroSetting = CurriculumSetting::firstOrNew(['section_key' => 'hero']);
             
             if ($request->hasFile("content.image")) {
-                $heroSetting->clearMediaCollection('hero_image');
-                $heroSetting->addMediaFromRequest("content.image")->toMediaCollection('hero_image');
-                $media = $heroSetting->getMedia('hero_image')->last();
+                $heroSetting->clearMediaCollection('hero_bg');
+                $heroSetting->addMediaFromRequest("content.image")->toMediaCollection('hero_bg');
+                $media = $heroSetting->getMedia('hero_bg')->last();
                 if ($media) {
                     $content['image'] = '/storage/' . $media->id . '/' . $media->file_name;
                 }

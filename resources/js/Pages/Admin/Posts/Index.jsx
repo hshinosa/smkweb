@@ -12,6 +12,7 @@ import MiniTextEditor from '@/Components/MiniTextEditor';
 import { Plus, Edit2, Trash2, X, Eye, Newspaper, ExternalLink } from 'lucide-react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import Modal from '@/Components/Modal';
+import toast from 'react-hot-toast';
 
 export default function Index({ posts }) {
     const { success } = usePage().props;
@@ -27,7 +28,7 @@ export default function Index({ posts }) {
     const tabs = [{ key: 'list', label: 'Berita & Pengumuman', description: 'Kelola konten berita.', icon: Newspaper }];
 
     const openModal = (postItem = null) => {
-        if (postItem) { setEditMode(true); setCurrentId(postItem.id); setData({ title: postItem.title || '', category: postItem.category || 'Berita', content: postItem.content || '', excerpt: postItem.excerpt || '', featured_image: null, featured_image_url: postItem.featured_image || '', status: postItem.status || 'published' }); }
+        if (postItem) { setEditMode(true); setCurrentId(postItem.id); setData({ title: postItem.title || '', category: postItem.category || 'Berita', content: postItem.content || '', excerpt: postItem.excerpt || '', featured_image: null, featured_image_url: postItem.featuredImage?.original_url || postItem.featured_image || '', status: postItem.status || 'published' }); }
         else { setEditMode(false); setCurrentId(null); reset(); }
         setIsModalOpen(true);
     };
@@ -36,13 +37,31 @@ export default function Index({ posts }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (editMode) { post(route('admin.posts.update', currentId), { forceFormData: true, onSuccess: () => closeModal(), _method: 'PUT' }); }
-        else { post(route('admin.posts.store'), { onSuccess: () => closeModal() }); }
+        if (editMode) {
+            post(route('admin.posts.update', currentId), {
+                forceFormData: true,
+                onSuccess: () => {
+                    closeModal();
+                    toast.success('Berita berhasil diperbarui');
+                },
+                _method: 'PUT'
+            });
+        } else {
+            post(route('admin.posts.store'), {
+                onSuccess: () => {
+                    closeModal();
+                    toast.success('Berita baru berhasil dipublikasikan');
+                }
+            });
+        }
     };
 
-    const handleDelete = (id) => { 
+    const handleDelete = (id) => {
         if (confirm('Hapus berita ini?')) {
-            destroy(route('admin.posts.destroy', id), { preserveScroll: true }); 
+            destroy(route('admin.posts.destroy', id), {
+                preserveScroll: true,
+                onSuccess: () => toast.success('Berita berhasil dihapus')
+            });
         }
     };
 
@@ -56,7 +75,6 @@ export default function Index({ posts }) {
             noForm={true}
             extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tulis Berita</PrimaryButton></div>}
         >
-            {success && <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3"><div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg></div><p className="text-green-800 text-sm font-medium">{success}</p></div>}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {posts.length > 0 ? (
                     <div className="overflow-x-auto">
@@ -67,7 +85,7 @@ export default function Index({ posts }) {
                             <tbody className="divide-y divide-gray-100">
                                 {posts.map((postItem) => (
                                     <tr key={postItem.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3 whitespace-nowrap"><div className="h-12 w-16 rounded-lg overflow-hidden bg-gray-100">{postItem.featured_image ? <img src={postItem.featured_image} alt={postItem.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Newspaper className="text-gray-400 w-6 h-6" /></div>}</div></td>
+                                        <td className="px-4 py-3 whitespace-nowrap"><div className="h-12 w-16 rounded-lg overflow-hidden bg-gray-100">{(postItem.featuredImage?.original_url || postItem.featured_image) ? <img src={postItem.featuredImage?.original_url || postItem.featured_image} alt={postItem.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Newspaper className="text-gray-400 w-6 h-6" /></div>}</div></td>
                                         <td className="px-4 py-3"><p className="font-semibold text-gray-900 text-sm truncate max-w-[120px] sm:max-w-none">{postItem.title}</p><p className="text-xs text-gray-500 font-mono hidden sm:block">{postItem.slug}</p></td>
                                         <td className="px-4 py-3 hidden md:table-cell"><span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">{postItem.category}</span></td>
                                         <td className="px-4 py-3"><span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${postItem.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{postItem.status === 'published' ? 'Publis' : 'Draft'}</span></td>

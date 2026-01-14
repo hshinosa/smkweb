@@ -104,7 +104,7 @@ const ActivityCard = ({ activity, categoryTheme, onClick }) => {
                 <div className="flex items-center gap-2 mb-4">
                     <div className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5" />
-                        {activity.schedule.split(',')[0]} {/* Take first part of schedule */}
+                        {activity.schedule ? activity.schedule.split(',')[0] : 'Jadwal Menyusul'} {/* Take first part of schedule */}
                     </div>
                 </div>
 
@@ -144,7 +144,7 @@ const ActivityDetailModal = ({ show, onClose, activity, categoryTheme }) => {
                 <div className="h-48 relative overflow-hidden bg-gray-900">
                     {/* Image */}
                     <ResponsiveImage 
-                        src={activity.image_url || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                        src={activity.image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
                         alt={activity.name} 
                         className="absolute inset-0 w-full h-full object-cover"
                         loading="lazy"
@@ -338,7 +338,7 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <HeroImage 
-                        src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                        src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1baleendah.jpeg"} 
                         alt={`Background Ekstrakurikuler ${siteName}`} 
                     />
                     <div className="absolute inset-0 bg-black/60"></div>

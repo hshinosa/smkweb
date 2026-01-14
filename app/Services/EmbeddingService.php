@@ -24,12 +24,14 @@ class EmbeddingService
         // Primary API is only for chat completion, not embeddings
         $this->provider = 'ollama'; // Always use Ollama for embeddings
         
-        $this->baseUrl = AiSetting::get('ollama_base_url', 'http://localhost:11434');
+        // Get Ollama base URL from AI settings (configured via Admin Panel)
+        $this->baseUrl = AiSetting::get('ollama_base_url', 'http://localhost:32771');
         $this->model = AiSetting::get('ollama_embedding_model', 'nomic-embed-text');
         $this->dimensions = 768; // nomic-embed-text standard
         
         Log::info('EmbeddingService initialized', [
             'provider' => $this->provider,
+            'base_url' => $this->baseUrl,
             'model' => $this->model,
             'dimensions' => $this->dimensions,
         ]);

@@ -34,57 +34,70 @@ class Teacher extends Model implements HasMedia
     /**
      * Register media conversions for teacher profile photos
      */
-    public function registerMediaConversions(Media $media = null): void
+    public function registerMediaConversions(?Media $media = null): void
     {
-        // Mobile size (375px) - WebP
+        // Portrait-style half-body cropping (3:4 aspect ratio)
+        // Mobile size (300x400) - WebP
         $this
             ->addMediaConversion('mobile')
-            ->width(375)
+            ->width(300)
+            ->height(400)
+            ->fit(\Spatie\Image\Enums\Fit::Crop, 300, 400)
             ->format('webp')
             ->quality(80)
             ->performOnCollections('photos')
             ->nonQueued();
 
-        // Tablet size (768px) - WebP
+        // Tablet size (450x600) - WebP
         $this
             ->addMediaConversion('tablet')
-            ->width(768)
+            ->width(450)
+            ->height(600)
+            ->fit(\Spatie\Image\Enums\Fit::Crop, 450, 600)
             ->format('webp')
             ->quality(85)
             ->performOnCollections('photos')
             ->nonQueued();
 
-        // Desktop size (1280px) - WebP
+        // Desktop size (600x800) - WebP
         $this
             ->addMediaConversion('desktop')
-            ->width(1280)
+            ->width(600)
+            ->height(800)
+            ->fit(\Spatie\Image\Enums\Fit::Crop, 600, 800)
             ->format('webp')
             ->quality(90)
             ->performOnCollections('photos')
             ->nonQueued();
 
-        // Large/HD size (1920px) - WebP
+        // Large/HD size (900x1200) - WebP
         $this
             ->addMediaConversion('large')
-            ->width(1920)
+            ->width(900)
+            ->height(1200)
+            ->fit(\Spatie\Image\Enums\Fit::Crop, 900, 1200)
             ->format('webp')
             ->quality(90)
             ->performOnCollections('photos')
             ->nonQueued();
 
-        // Original as WebP (for modern browsers)
+        // Original as WebP with portrait crop
         $this
             ->addMediaConversion('webp')
+            ->width(600)
+            ->height(800)
+            ->fit(\Spatie\Image\Enums\Fit::Crop, 600, 800)
             ->format('webp')
             ->quality(95)
             ->performOnCollections('photos')
             ->nonQueued();
 
-        // Thumbnail for list view
+        // Thumbnail for list view (square for admin, portrait for display)
         $this
             ->addMediaConversion('thumb')
             ->width(200)
-            ->height(200)
+            ->height(267)
+            ->fit(\Spatie\Image\Enums\Fit::Crop, 200, 267)
             ->format('webp')
             ->quality(85)
             ->nonQueued();

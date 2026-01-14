@@ -29,9 +29,10 @@ class AiSettingController extends Controller
         foreach ($validated['settings'] as $setting) {
             $existingSetting = AiSetting::where('key', $setting['key'])->first();
             
-            if ($existingSetting) {
-                AiSetting::set($setting['key'], $setting['value'], $existingSetting->type);
-            }
+            // Use existing type if available, otherwise default to string
+            $type = $existingSetting ? $existingSetting->type : 'string';
+            
+            AiSetting::set($setting['key'], $setting['value'], $type);
         }
 
         return back()->with('success', 'Pengaturan AI berhasil diperbarui.');

@@ -17,14 +17,34 @@ class DatabaseSeeder extends Seeder
 
         User::firstOrCreate(
             ['email' => 'test@example.com'],
-            ['name' => 'Test User']
+            [
+                'name' => 'Test User',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            ]
         );
+        
         $this->call([
-            AdminSeeder::class,
-            SchoolRebrandingSeeder::class,
-            LandingPageSettingSeeder::class,
-            ProgramSeeder::class,
-            GallerySeeder::class,
+            AdminSeeder::class, // Admin Account
+            
+            // Content Population Seeders
+            PopulateTeachersSeeder::class, // Guru & Staff
+            PopulateAcademicAndCurriculumSeeder::class, // Kurikulum & Kalender
+            PopulateExtracurricularsSeeder::class, // Ekskul (Rich JSON achievements)
+            PopulateProgramsTableSeeder::class, // Programs List (Landing Page)
+            PopulateProgramStudiSeeder::class, // MIPA, IPS, Bahasa (Detail)
+            PopulatePostsSeeder::class, // Berita (Rich content)
+            PopulateAlumniSeeder::class, // Alumni
+            PopulateSpmbSeeder::class, // SPMB (Rich content)
+            PopulateFaqSeeder::class, // FAQ Kontak
+            
+            // Settings & Layout Fixes
+            UpdateLandingPageContentSeeder::class, // Landing Page Settings
+            UpdateSchoolProfileContentSeeder::class, // Profil Sekolah (History, Facilities)
+            UpdateVisiMisiContentSeeder::class, // Visi Misi
+            UpdateStrukturOrganisasiSeeder::class, // Struktur Organisasi
+            FixContactHeroSeeder::class, // Contact Hero Fix
+            PopulateGalleriesSeeder::class, // Gallery Images
+            PopulateAiSettingsSeeder::class, // AI Settings
         ]);
     }
 }

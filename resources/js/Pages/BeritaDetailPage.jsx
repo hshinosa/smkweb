@@ -30,7 +30,7 @@ const articleData = {
     date: "15 Januari 2025",
     time: "09:00 WIB",
     readTime: "5 menit baca",
-    image: "/images/hero-bg-sman1-baleendah.jpeg", // Using existing image as placeholder
+    image: "/images/hero-bg-sman1baleendah.jpeg", // Using existing image as placeholder
     caption: "Tim Olimpiade Fisika saat penerimaan medali di Jakarta.",
     content: `
         <p class="mb-6">
@@ -103,7 +103,7 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
                 title={`${post.title} - Berita ${siteName}`}
                 description={post.excerpt || getExcerpt(post.content)}
                 keywords={`berita, ${post.category || 'pengumuman'}, ${post.title}, ${siteName}, sekolah`}
-                image={post.featured_image || "/images/hero-bg-sman1-baleendah.jpeg"}
+                image={post.featured_image || "/images/hero-bg-sman1baleendah.jpeg"}
                 type="article"
                 author={post.author?.name || 'Admin'}
                 publishedTime={post.published_at || post.created_at}
@@ -186,7 +186,7 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
                                 ) : (
                                     // Fallback for old system
                                     <img 
-                                        src={post.featured_image || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                                        src={post.featured_image || "/images/hero-bg-sman1baleendah.jpeg"} 
                                         alt={post.title} 
                                         className="w-full h-auto object-cover"
                                         loading="eager"
@@ -236,11 +236,11 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
                                             <Link key={news.id} href={`/berita/${news.slug}`} className="group block bg-white rounded-xl p-3 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
                                                 <div className="flex gap-4">
                                                     <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
-                                                        <img 
-                                                            src={news.featured_image || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                                                        <ContentImage 
+                                                            src={news.featured_image} 
+                                                            media={news.featuredImage}
                                                             alt={news.title} 
                                                             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                                                            loading="lazy"
                                                         />
                                                     </div>
                                                     <div className="flex-1 flex flex-col justify-center">

@@ -18,7 +18,7 @@ import {
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import SEOHead from '@/Components/SEOHead';
-import { HeroImage } from '@/Components/ResponsiveImage';
+import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
 
 // Import utilities
 import { TYPOGRAPHY } from '@/Utils/typography';
@@ -36,6 +36,7 @@ export default function KurikulumPage({ programs = [], curriculumData }) {
     // Helper to format image path correctly
     const formatImagePath = (path) => {
         if (!path) return null;
+        if (typeof path !== 'string') return null;
         if (path.startsWith('http') || path.startsWith('/')) return path;
         return `/storage/${path}`;
     };
@@ -89,7 +90,7 @@ export default function KurikulumPage({ programs = [], curriculumData }) {
                         <HeroImage media={hero.backgroundImage} alt="Background Kurikulum" />
                     ) : (
                         <img 
-                            src={formatImagePath(hero?.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            src={formatImagePath(hero?.image) || "/images/hero-bg-sman1baleendah.jpeg"} 
                             alt="Background Kurikulum" 
                             className="w-full h-full object-cover"
                             loading="eager"
@@ -128,8 +129,9 @@ export default function KurikulumPage({ programs = [], curriculumData }) {
                         <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
                             <div className="w-full md:w-1/2">
                                 <div className="relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3] group">
-                                    <img 
-                                        src={formatImagePath(fase_e?.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                                    <ResponsiveImage 
+                                        media={typeof fase_e?.image === 'object' ? fase_e.image : null}
+                                        src={typeof fase_e?.image === 'string' ? formatImagePath(fase_e.image) : "/images/hero-bg-sman1baleendah.jpeg"} 
                                         alt="Siswa Belajar" 
                                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                     />
@@ -163,8 +165,9 @@ export default function KurikulumPage({ programs = [], curriculumData }) {
                         <div className="flex flex-col md:flex-row-reverse items-center gap-8 md:gap-12">
                             <div className="w-full md:w-1/2">
                                 <div className="relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3] group">
-                                    <img 
-                                        src={formatImagePath(fase_f?.image) || "/images/panen-karya-sman1-baleendah.jpg"} 
+                                    <ResponsiveImage 
+                                        media={typeof fase_f?.image === 'object' ? fase_f.image : null}
+                                        src={typeof fase_f?.image === 'string' ? formatImagePath(fase_f.image) : "/images/panen-karya-sman1-baleendah.jpg"} 
                                         alt="Diskusi Kelompok" 
                                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                     />

@@ -19,6 +19,7 @@ class Extracurricular extends Model implements HasMedia
         'icon_name',
         'schedule',
         'coach_name',
+        'achievements', // Added
         'sort_order',
         'is_active',
     ];
@@ -26,6 +27,7 @@ class Extracurricular extends Model implements HasMedia
     protected $casts = [
         'is_active' => 'boolean',
         'sort_order' => 'integer',
+        'achievements' => 'array', // Added casting
     ];
 
     /**

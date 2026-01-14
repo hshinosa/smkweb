@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm, usePage } from '@inertiajs/react';
+import toast from 'react-hot-toast';
 
 export function useContentManagement(initialData, updateRoute, method = 'post') {
     const { success, errors: pageErrorsFromLaravel } = usePage().props;
@@ -102,9 +103,11 @@ export function useContentManagement(initialData, updateRoute, method = 'post') 
             preserveScroll: true,
             onSuccess: () => {
                 setSelectedFiles({});
+                toast.success('Perubahan berhasil disimpan');
             },
             onError: (serverErrors) => {
                 setLocalErrors(serverErrors);
+                toast.error('Gagal menyimpan perubahan');
             }
         };
 

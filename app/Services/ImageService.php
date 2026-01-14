@@ -108,10 +108,10 @@ class ImageService
     public function getFallbackImage(string $type = 'default'): string
     {
         $fallbacks = [
-            'hero' => '/images/hero-bg-sman1-baleendah.jpeg',
-            'post' => '/images/hero-bg-sman1-baleendah.jpeg',
-            'gallery' => '/images/hero-bg-sman1-baleendah.jpeg',
-            'default' => '/images/hero-bg-sman1-baleendah.jpeg',
+            'hero' => '/images/hero-bg-sman1baleendah.jpeg',
+            'post' => '/images/hero-bg-sman1baleendah.jpeg',
+            'gallery' => '/images/hero-bg-sman1baleendah.jpeg',
+            'default' => '/images/hero-bg-sman1baleendah.jpeg',
         ];
 
         return $fallbacks[$type] ?? $fallbacks['default'];

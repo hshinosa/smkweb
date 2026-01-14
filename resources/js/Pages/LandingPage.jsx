@@ -75,6 +75,7 @@ export default function LandingPage({
                 <div className="absolute inset-0 z-0">
                     <ResponsiveImage 
                         src={heroContent?.background_image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
+                        media={heroContent?.backgroundImage}
                         alt="Background"
                         className="w-full h-full object-cover"
                     />
@@ -117,6 +118,7 @@ export default function LandingPage({
                             {/* Main Image */}
                             <ResponsiveImage 
                                 src={heroContent?.student_image_url || "/images/anak-sma.png"} 
+                                media={heroContent?.studentImage}
                                 alt={`Siswa Berprestasi ${siteName}`}
                                 className="relative z-10 h-[380px] md:h-[440px] lg:h-[500px] w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                                 loading="eager"
@@ -130,9 +132,9 @@ export default function LandingPage({
                             ]).map((stat, idx) => {
                                 const Icon = iconMap[stat.icon_name] || Trophy;
                                 const positions = [
-                                    'top-10 -left-6 md:-left-12',
-                                    'bottom-20 -right-4 md:-right-8',
-                                    'bottom-8 left-4 md:-left-4'
+                                    'top-12 -left-2 md:-left-8',        // Top Left (Akreditasi) - Adjusted
+                                    'top-1/2 -right-4 md:-right-12',    // Middle Right (Lulusan) - Moved up & adjusted
+                                    'bottom-8 left-2 md:-left-8'        // Bottom Left (Siswa) - Adjusted
                                 ];
                                 const colors = [
                                     'bg-yellow-100 text-yellow-600',
@@ -165,7 +167,11 @@ export default function LandingPage({
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <div className="relative">
                             <div className="aspect-video rounded-2xl overflow-hidden shadow-xl bg-gray-200">
-                                <ContentImage src={aboutLpContent.image_url} alt={aboutLpContent.title} />
+                                <ContentImage 
+                                    src={aboutLpContent.image_url} 
+                                    media={aboutLpContent?.aboutImage} 
+                                    alt={aboutLpContent.title} 
+                                />
                             </div>
                             {/* Decorative dots */}
                             <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-dots-pattern opacity-20 hidden md:block"></div>
@@ -193,49 +199,51 @@ export default function LandingPage({
             {/* KEPSEK WELCOME SECTION */}
             <section className="py-20 bg-secondary">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-                        {/* Left Column: Title & Profile */}
-                        <div className="space-y-8">
-                            <div>
-                                <h2 className={`${TYPOGRAPHY.sectionHeading} mb-6`}>
-                                    Sambutan <span className="text-primary">Kepala Sekolah</span>
-                                </h2>
-                                <div className="flex flex-col items-center sm:items-start gap-6">
-                                    <div className="relative w-full max-w-md h-[34rem] flex-shrink-0">
-                                        <div className="absolute inset-0 bg-primary rounded-2xl rotate-6 opacity-20"></div>
-                                        <ContentImage 
-                                            src={kepsekWelcomeLpContent.kepsek_image_url} 
-                                            alt={kepsekWelcomeLpContent.kepsek_name} 
-                                            className="relative w-full h-full object-cover rounded-2xl shadow-lg border-4 border-white"
-                                        />
-                                    </div>
-                                    <div className="text-center sm:text-left w-full max-w-md">
-                                        <h3 className="text-xl font-bold text-gray-900">
-                                            {kepsekWelcomeLpContent.kepsek_name}
-                                        </h3>
-                                        <p className="text-primary font-medium mt-1">
-                                            {kepsekWelcomeLpContent.kepsek_title}
-                                        </p>
-                                        <div className="w-12 h-1 bg-accent-yellow mt-4 mx-auto sm:mx-0 rounded-full"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    {/* Section Title */}
+                    <div className="text-center mb-12">
+                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                            Sambutan <span className="text-primary">Kepala Sekolah</span>
+                        </h2>
+                    </div>
 
-                        {/* Right Column: Welcome Text */}
-                        <div className="bg-white p-10 md:p-14 rounded-3xl shadow-sm border border-gray-100 relative h-full flex flex-col justify-center">
-                            {/* Quote Icon Decoration */}
-                            <div className="absolute top-6 right-8 text-gray-100">
-                                <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 7.55228 14.017 7V3H19.017C20.6739 3 22.017 4.34315 22.017 6V15C22.017 16.6569 20.6739 18 19.017 18H16.017V21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.91203 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 7.55228 5.0166 7V3H10.0166C11.6735 3 13.0166 4.34315 13.0166 6V15C13.0166 16.6569 11.6735 18 10.0166 18H7.0166V21H5.0166Z" />
-                                </svg>
-                            </div>
-                            
-                            <div 
-                                className="prose prose-lg prose-blue text-gray-600 leading-relaxed"
-                                dangerouslySetInnerHTML={{ __html: kepsekWelcomeLpContent.welcome_text_html }}
+                    {/* Centered Photo & Profile Info */}
+                    <div className="flex flex-col items-center mb-12">
+                        {/* Photo Container */}
+                        <div className="relative w-72 h-80 md:w-80 md:h-96 flex-shrink-0 mb-6">
+                            <div className="absolute inset-0 bg-primary rounded-2xl rotate-6 opacity-20"></div>
+                            <ContentImage
+                                src={kepsekWelcomeLpContent.kepsek_image_url}
+                                media={kepsekWelcomeLpContent?.kepsekImage}
+                                alt={kepsekWelcomeLpContent.kepsek_name}
+                                className="relative w-full h-full object-cover rounded-2xl shadow-lg"
                             />
                         </div>
+                        
+                        {/* Profile Info */}
+                        <div className="text-center">
+                            <h3 className="text-xl font-bold text-gray-900">
+                                {kepsekWelcomeLpContent.kepsek_name}
+                            </h3>
+                            <p className="text-primary font-medium mt-1">
+                                {kepsekWelcomeLpContent.kepsek_title}
+                            </p>
+                            <div className="w-12 h-1 bg-accent-yellow mt-4 mx-auto rounded-full"></div>
+                        </div>
+                    </div>
+
+                    {/* Welcome Text - Full Width */}
+                    <div className="bg-white p-8 md:p-12 lg:p-14 rounded-3xl shadow-sm border border-gray-100 relative">
+                        {/* Quote Icon Decoration */}
+                        <div className="absolute top-6 right-8 text-gray-100">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 7.55228 14.017 7V3H19.017C20.6739 3 22.017 4.34315 22.017 6V15C22.017 16.6569 20.6739 18 19.017 18H16.017V21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.91203 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 7.55228 5.0166 7V3H10.0166C11.6735 3 13.0166 4.34315 13.0166 6V15C13.0166 16.6569 11.6735 18 10.0166 18H7.0166V21H5.0166Z" />
+                            </svg>
+                        </div>
+                        
+                        <div
+                            className="prose prose-lg prose-blue text-gray-600 leading-relaxed max-w-none [&>p]:mb-3 [&>p:last-child]:mb-0"
+                            dangerouslySetInnerHTML={{ __html: kepsekWelcomeLpContent.welcome_text_html }}
+                        />
                     </div>
                 </div>
             </section>
@@ -256,18 +264,19 @@ export default function LandingPage({
                         {(programsLpContent.items || []).map((program, idx) => {
                             const IconComponent = iconMap[program.icon_name] || Microscope;
                             return (
-                                <div key={idx} className="relative">
+                                <div key={idx} className="relative group">
                                     {/* Image Area - Floating above card */}
-                                    <div className="absolute bottom-[calc(100%)] left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-                                        <ContentImage 
+                                    <div className="absolute bottom-[calc(100%-3rem)] left-0 right-0 z-0 pointer-events-none flex justify-center">
+                                        <ResponsiveImage 
                                             src={program.image_url || "/images/anak-sma-programstudi.png"} 
+                                            media={program.image}
                                             alt={program.title}
-                                            className="h-72 w-auto object-contain drop-shadow-2xl" 
+                                            className="h-80 w-auto max-w-full object-contain drop-shadow-xl transition-transform duration-500 group-hover:scale-105" 
                                         />
                                     </div>
                                     
                                     {/* Content Section */}
-                                    <div className="bg-white rounded-3xl p-8 pt-8 shadow-lg border border-gray-100 flex flex-col z-10 w-full h-full">
+                                    <div className="bg-white rounded-3xl p-8 pt-12 shadow-lg border border-gray-100 flex flex-col z-10 w-full h-full relative">
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${program.color_class || 'bg-blue-50 text-primary'}`}>
                                             <IconComponent size={24} />
                                         </div>
@@ -411,7 +420,7 @@ export default function LandingPage({
                     return (
                         <div className="flex flex-col gap-4 w-full">
                             {/* Row 1 - Scroll Left */}
-                            <div className="flex gap-4 animate-scroll" style={{ width: 'max-content' }}>
+                            <div className="flex gap-4 animate-scroll" style={{ width: 'max-content', animationDuration: '80s' }}>
                                 {row1Images.map((imgUrl, idx) => (
                                     <div key={`row1-${idx}`} className="w-72 h-72 md:w-80 md:h-80 flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all relative group">
                                         <GalleryImage 
@@ -425,7 +434,7 @@ export default function LandingPage({
                             </div>
 
                             {/* Row 2 - Scroll Right (Reverse) */}
-                            <div className="flex gap-4 animate-scroll-reverse" style={{ width: 'max-content' }}>
+                            <div className="flex gap-4 animate-scroll-reverse" style={{ width: 'max-content', animationDuration: '80s' }}>
                                 {row2Images.map((imgUrl, idx) => (
                                     <div key={`row2-${idx}`} className="w-72 h-72 md:w-80 md:h-80 flex-shrink-0 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all relative group">
                                         <GalleryImage 

@@ -85,7 +85,7 @@ class LandingPageSetting extends Model implements HasMedia
                 'title_line1' => 'Selamat Datang di',
                 'title_line2' => 'SMA Negeri 1 Baleendah',
                 'hero_text' => 'Sekolah penggerak prestasi dan inovasi masa depan. Kami berkomitmen mencetak lulusan yang cerdas, berakhlak mulia, dan siap bersaing di era global.',
-                'background_image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'background_image_url' => '/images/hero-bg-sman1baleendah.jpeg',
                 'student_image_url' => '/images/anak-sma.png',
                 'stats' => [
                     ['label' => 'Akreditasi', 'value' => 'A (Unggul)', 'icon_name' => 'Trophy'],
@@ -96,7 +96,7 @@ class LandingPageSetting extends Model implements HasMedia
             'about_lp' => [
                 'title' => 'Tentang SMAN 1 Baleendah',
                 'description_html' => '<p>SMA Negeri 1 Baleendah adalah salah satu sekolah menengah atas negeri unggulan di Kabupaten Bandung yang memiliki reputasi baik dalam pendidikan akademik.</p><p>Kami menawarkan tiga program studi unggulan: MIPA (Matematika dan Ilmu Pengetahuan Alam), IPS (Ilmu Pengetahuan Sosial), dan Bahasa (Ilmu Bahasa dan Budaya) yang didukung oleh pengajar kompeten dan fasilitas memadai untuk mencetak lulusan berprestasi dan berkarakter.</p>',
-                'image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image_url' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'kepsek_welcome_lp' => [
                 'title' => 'Sambutan Kepala Sekolah',
@@ -137,9 +137,9 @@ class LandingPageSetting extends Model implements HasMedia
                 'description' => 'Momen-momen seru dan kegiatan inspiratif siswa-siswi SMAN 1 Baleendah.',
                 'images' => [
                     '/images/panen-karya-sman1-baleendah.jpg',
-                    '/images/hero-bg-sman1-baleendah.jpeg',
+                    '/images/hero-bg-sman1baleendah.jpeg',
                     '/images/keluarga-besar-sman1-baleendah.png',
-                    '/images/hero-bg-sman1-baleendah.jpeg'
+                    '/images/hero-bg-sman1baleendah.jpeg'
                 ]
             ],
             'cta_lp' => [

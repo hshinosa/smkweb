@@ -16,7 +16,20 @@ import { usePage } from '@inertiajs/react';
 
 // Helper function for teacher photo
 const getTeacherPhoto = (teacher) => {
-    if (teacher.image_url) return teacher.image_url;
+    // Check for media library image first (photos collection)
+    if (teacher.photosImage?.original_url) {
+        return teacher.photosImage.original_url;
+    }
+    // Check for image_url and format it properly
+    if (teacher.image_url) {
+        // If already a full URL or absolute path, return as is
+        if (teacher.image_url.startsWith('http') || teacher.image_url.startsWith('/')) {
+            return teacher.image_url;
+        }
+        // Otherwise, prepend /storage/
+        return `/storage/${teacher.image_url}`;
+    }
+    // Fallback to UI Avatars
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(teacher.name)}&background=0d47a1&color=fff&size=300`;
 };
 
@@ -96,7 +109,7 @@ export default function GuruStaffPage({ teachers = [] }) {
             // Filter by search query first
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
-                const match = 
+                const match =
                     teacher.name.toLowerCase().includes(query) ||
                     teacher.position.toLowerCase().includes(query) ||
                     (teacher.department && teacher.department.toLowerCase().includes(query));
@@ -112,11 +125,34 @@ export default function GuruStaffPage({ teachers = [] }) {
         return groups;
     }, [searchQuery, teachers]);
 
-    // Scroll Spy & Navigation Logic
+    // Scroll Spy - Update active group based on scroll position
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollPosition = window.scrollY + 200; // offset for header
+            
+            // Find the section currently in view
+            for (let i = MGMP_GROUPS.length - 1; i >= 0; i--) {
+                const group = MGMP_GROUPS[i];
+                const element = document.getElementById(group.id);
+                if (element) {
+                    const offsetTop = element.offsetTop;
+                    if (scrollPosition >= offsetTop) {
+                        setActiveGroup(group.id);
+                        break;
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Scroll to Section & Navigation Logic
     const scrollToSection = (id) => {
         const element = document.getElementById(id);
         if (element) {
-            const offset = 100; // Adjust for sticky header
+            const offset = 150; // Adjust for sticky header
             const elementPosition = element.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - offset;
             
@@ -145,14 +181,14 @@ export default function GuruStaffPage({ teachers = [] }) {
 
     const SidebarNav = () => (
         <div className="hidden lg:block w-1/4 pr-8">
-            <div className="sticky top-24 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <div className="sticky top-32 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 <h3 className="font-bold text-gray-900 mb-4 px-4 text-lg font-serif">Kategori</h3>
                 <ul className="space-y-1">
                     {MGMP_GROUPS.map((group) => (
                         <li key={group.id}>
                             <button
                                 onClick={() => scrollToSection(group.id)}
-                                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 border-l-4 ${
+                                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border-l-4 ${
                                     activeGroup === group.id
                                     ? "border-accent-yellow bg-blue-50 text-primary font-bold"
                                     : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -186,36 +222,37 @@ export default function GuruStaffPage({ teachers = [] }) {
     );
 
     const TeacherCard = ({ teacher }) => (
-        <div 
-            className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer border border-gray-100 flex flex-col h-full"
+        <div
+            className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer border border-gray-100 flex flex-col h-full"
             onClick={() => openModal(teacher)}
         >
-            <div className="relative aspect-square overflow-hidden bg-gray-100">
-                <ResponsiveImage 
-                    src={getTeacherPhoto(teacher)} 
+            <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
+                <ResponsiveImage
+                    src={getTeacherPhoto(teacher)}
                     alt={teacher.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
+                    style={{ objectPosition: 'center 20%' }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </div>
             
-            <div className="p-5 flex flex-col flex-grow">
-                <h3 className={`${TYPOGRAPHY.cardTitle} text-lg mb-1 group-hover:text-primary transition-colors line-clamp-2`}>
+            <div className="p-3 flex flex-col flex-grow">
+                <h3 className={`font-bold text-gray-900 text-sm mb-0.5 group-hover:text-primary transition-colors line-clamp-2`}>
                     {teacher.name}
                 </h3>
-                <p className="text-sm text-primary font-medium mb-3 line-clamp-1">
+                <p className="text-xs text-primary font-medium mb-2 line-clamp-1">
                     {teacher.position}
                 </p>
                 
-                <div className="mt-auto space-y-2 pt-3 border-t border-gray-100">
-                    <div className="flex items-center text-gray-500 text-xs">
-                        <MapPin className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                <div className="mt-auto space-y-1 pt-2 border-t border-gray-100">
+                    <div className="flex items-center text-gray-500 text-[11px]">
+                        <MapPin className="w-3 h-3 mr-1.5 text-gray-400 flex-shrink-0" />
                         <span className="line-clamp-1">{teacher.department || (teacher.type === 'guru' ? 'Guru' : 'Staff')}</span>
                     </div>
                     {teacher.nip && (
-                        <div className="flex items-center text-gray-500 text-xs">
-                            <GraduationCap className="w-3.5 h-3.5 mr-2 text-gray-400" />
+                        <div className="flex items-center text-gray-500 text-[11px]">
+                            <GraduationCap className="w-3 h-3 mr-1.5 text-gray-400 flex-shrink-0" />
                             <span className="line-clamp-1">NIP: {teacher.nip}</span>
                         </div>
                     )}
@@ -319,7 +356,7 @@ export default function GuruStaffPage({ teachers = [] }) {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <HeroImage 
-                        src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                        src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1baleendah.jpeg"} 
                         alt="Background Guru & Staff" 
                     />
                     <div className="absolute inset-0 bg-black/60"></div>
@@ -359,20 +396,20 @@ export default function GuruStaffPage({ teachers = [] }) {
                         <MobileNav />
 
                         {/* Content Area */}
-                        <div className="w-full lg:w-3/4 space-y-16">
+                        <div className="w-full lg:w-3/4 space-y-12">
                             {MGMP_GROUPS.map((group) => {
                                 const teachersInGroup = groupedTeachers[group.id];
                                 if (teachersInGroup.length === 0) return null;
 
                                 return (
-                                    <div key={group.id} id={group.id} className="scroll-mt-32">
-                                        <div className="mb-8 border-b border-gray-200 pb-4">
-                                            <h2 className={`${TYPOGRAPHY.sectionHeading} text-2xl md:text-3xl`}>
+                                    <div key={group.id} id={group.id} className="scroll-mt-40">
+                                        <div className="mb-6 border-b border-gray-200 pb-3">
+                                            <h2 className={`${TYPOGRAPHY.sectionHeading} text-xl md:text-2xl`}>
                                                 {group.title}
                                             </h2>
                                         </div>
                                         
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                                             {teachersInGroup.map((teacher) => (
                                                 <TeacherCard key={teacher.id} teacher={teacher} />
                                             ))}

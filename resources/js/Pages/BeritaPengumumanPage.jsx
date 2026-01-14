@@ -14,90 +14,13 @@ import {
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import SEOHead from '@/Components/SEOHead';
-import { HeroImage } from '@/Components/ResponsiveImage';
+import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { usePage } from '@inertiajs/react';
 
-// --- MOCK DATA ---
-
-const heroNews = [
-    {
-        id: 1,
-        title: "PPDB 2025 Resmi Dibuka: Panduan Lengkap Pendaftaran",
-        category: "Pengumuman",
-        date: "15 Jan 2025",
-        image: "/images/hero-bg-sman1-baleendah.jpeg", 
-        isMain: true
-    },
-    {
-        id: 2,
-        title: "Tim Basket Putra Raih Juara 1 DBL West Java Series",
-        category: "Prestasi",
-        date: "14 Jan 2025",
-        image: "https://placehold.co/400x250/0D47A1/FFFFFF?text=Basket+Juara",
-        isMain: false
-    },
-    {
-        id: 3,
-        title: "Kunjungan Edukasi ke Museum Geologi Bandung",
-        category: "Kegiatan",
-        date: "12 Jan 2025",
-        image: "https://placehold.co/400x250/0D47A1/FFFFFF?text=Museum+Geologi",
-        isMain: false
-    }
-];
-
-const latestNews = [
-    {
-        id: 4,
-        title: "Siswa Berprestasi Raih Medali Emas OSN Fisika",
-        excerpt: "Delegasi sekolah berhasil mengharumkan nama daerah di kancah nasional dengan perolehan medali emas pada bidang studi Fisika.",
-        category: "Prestasi",
-        date: "10 Jan 2025",
-        image: "https://placehold.co/300x200/0D47A1/FFFFFF?text=OSN+Emas"
-    },
-    {
-        id: 5,
-        title: "Jadwal Ujian Tengah Semester Genap 2024/2025",
-        excerpt: "Berikut adalah jadwal lengkap pelaksanaan UTS Genap untuk seluruh jenjang kelas X, XI, dan XII beserta tata tertib ujian.",
-        category: "Akademik",
-        date: "08 Jan 2025",
-        image: null // Test placeholder pattern
-    },
-    {
-        id: 6,
-        title: "Workshop 'Public Speaking' bersama Alumni Sukses",
-        excerpt: "Meningkatkan kepercayaan diri siswa dalam berkomunikasi di depan umum melalui pelatihan intensif bersama praktisi.",
-        category: "Kegiatan",
-        date: "05 Jan 2025",
-        image: "https://placehold.co/300x200/0D47A1/FFFFFF?text=Public+Speaking"
-    },
-    {
-        id: 7,
-        title: "Penyuluhan Kesehatan Remaja dari Puskesmas Setempat",
-        excerpt: "Pentingnya menjaga kesehatan fisik dan mental bagi remaja di era digital menjadi topik utama dalam penyuluhan kali ini.",
-        category: "Kegiatan",
-        date: "03 Jan 2025",
-        image: "https://placehold.co/300x200/0D47A1/FFFFFF?text=Kesehatan"
-    }
-];
-
-const popularNews = [
-    { id: 1, title: "Syarat & Ketentuan PPDB Jalur Zonasi 2025" },
-    { id: 2, title: "Daftar Ekstrakurikuler Paling Diminati Tahun Ini" },
-    { id: 3, title: "Profil Lulusan Sekolah di PTN Favorit" },
-    { id: 4, title: "Kalender Akademik Semester Genap 2024/2025" },
-    { id: 5, title: "Prestasi Internasional Tim Robotik Sekolah" }
-];
-
-const announcements = [
-    "Rapat Orang Tua Siswa Kelas XII (20 Jan 2025)",
-    "Libur Nasional Tahun Baru Imlek (29 Jan 2025)",
-    "Batas Akhir Pengumpulan Tugas Proyek (25 Jan 2025)",
-    "Pendaftaran Ulang Semester Genap (1-5 Feb 2025)"
-];
-
+// --- STATIC DATA ---
+// Categories filter
 const categories = ["Semua", "Berita", "Pengumuman", "Prestasi", "Akademik", "Kegiatan", "Alumni"];
 
 // --- COMPONENTS ---
@@ -106,14 +29,15 @@ const NewsItem = ({ news }) => (
     <div className="flex flex-col sm:flex-row gap-6 group border-b border-gray-100 last:border-0 pb-6 last:pb-0">
         {/* Image / Placeholder - Fixed Width 30% */}
         <div className="w-full sm:w-[30%] h-48 sm:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
-            {news.featured_image ? (
-                <img 
-                    src={news.featured_image} 
-                    alt={news.title} 
-                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                />
-            ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4 text-center">
+            <ResponsiveImage 
+                media={typeof news.image === 'object' ? news.image : null}
+                src={typeof news.image === 'string' ? news.image : (news.featured_image || null)}
+                alt={news.title}
+                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                fallback={<div className="w-full h-full bg-gray-100 flex items-center justify-center p-4 text-center"><Newspaper className="w-12 h-12 text-gray-300" /></div>}
+            />
+            {!news.image && !news.featured_image && (
+                 <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4 text-center absolute inset-0">
                     <Newspaper className="w-12 h-12 text-gray-300" />
                 </div>
             )}
@@ -154,6 +78,7 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
     // Helper to format image path correctly
     const formatImagePath = (path) => {
         if (!path) return null;
+        if (typeof path !== 'string') return null;
         if (path.startsWith('http') || path.startsWith('/')) return path;
         return `/storage/${path}`;
     };
@@ -170,7 +95,12 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
     const heroNews = filteredPosts.slice(0, 3);
     const latestNews = filteredPosts.slice(3);
     const popularNews = popularPosts.length > 0 ? popularPosts : posts.slice(0, 5);
-    const announcements = posts.filter(p => p.category === 'Pengumuman').slice(0, 4).map(p => p.title);
+    
+    // Dynamic announcements from DB
+    const announcements = posts
+        .filter(p => p.category === 'Pengumuman')
+        .slice(0, 5)
+        .map(p => p.title);
 
     const renderHighlightedTitle = (title) => {
         if (!title) return null;
@@ -206,13 +136,16 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    {heroSettings.image ? (
-                        // If Media Library is implemented in the future
+                    {heroSettings.image && typeof heroSettings.image === 'object' ? (
+                        // If Media Library object is available
                         <HeroImage media={heroSettings.image} alt={`Berita ${siteName}`} />
                     ) : (
-                        // Current/old system
+                        // Fallback or String path
                         <img 
-                            src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            src={
+                                (typeof heroSettings.image === 'string' ? formatImagePath(heroSettings.image) : null) 
+                                || "/images/hero-bg-sman1baleendah.jpeg"
+                            } 
                             alt={`Berita ${siteName}`} 
                             className="w-full h-full object-cover"
                             loading="eager"
@@ -236,13 +169,14 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
 
             <main className="py-12 relative z-0">
                 {/* PART 1: HERO SECTION (Strict Grid) */}
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12">
                     {heroNews.length > 0 ? (
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Main Headline (Left - 2 Cols) */}
                             <div className="lg:col-span-2 relative rounded-2xl overflow-hidden group shadow-lg h-[500px]">
-                                <img 
-                                    src={heroNews[0].featured_image || '/images/hero-bg-sman1-baleendah.jpeg'} 
+                                <ResponsiveImage 
+                                    media={typeof heroNews[0]?.image === 'object' ? heroNews[0].image : null}
+                                    src={typeof heroNews[0]?.image === 'string' ? heroNews[0].image : (heroNews[0]?.featured_image || '/images/hero-bg-sman1baleendah.jpeg')} 
                                     alt={heroNews[0].title} 
                                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                 />
@@ -270,8 +204,9 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
                             <div className="flex flex-col gap-6">
                                 {heroNews.slice(1).map((news) => (
                                     <div key={news.id} className="relative flex-1 rounded-2xl overflow-hidden group shadow-md h-[238px]">
-                                        <img 
-                                            src={news.featured_image || '/images/hero-bg-sman1-baleendah.jpeg'} 
+                                        <ResponsiveImage 
+                                            media={typeof news.image === 'object' ? news.image : null}
+                                            src={typeof news.image === 'string' ? news.image : (news.featured_image || '/images/hero-bg-sman1baleendah.jpeg')} 
                                             alt={news.title} 
                                             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                         />
@@ -300,7 +235,7 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
                 </section>
 
                 {/* PART 2: MAIN CONTENT AREA (Strict Grid) */}
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <section className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                         
                         {/* Left Column: Latest News (8 Cols) */}

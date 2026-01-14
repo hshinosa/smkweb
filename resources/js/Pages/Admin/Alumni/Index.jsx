@@ -1,5 +1,5 @@
 // FILE: resources/js/Pages/Admin/Alumni/Index.jsx
-// Fully responsive alumni management page with accent color theme
+// Fully responsive alumni management page with accent color theme and video support
 
 import React, { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
@@ -8,9 +8,10 @@ import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import FileUploadField from '@/Components/Admin/FileUploadField';
-import { Plus, Edit2, Trash2, X, User, GraduationCap, Briefcase, Star } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, User, GraduationCap, Briefcase, Star, Video, FileText } from 'lucide-react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import Modal from '@/Components/Modal';
+import toast from 'react-hot-toast';
 
 export default function Index({ alumnis }) {
     const { success } = usePage().props;
@@ -19,14 +20,42 @@ export default function Index({ alumnis }) {
     const [currentId, setCurrentId] = useState(null);
     const [activeTab, setActiveTab] = useState('list');
 
-    const { data, setData, post, delete: destroy, processing, errors, reset } = useForm({
-        name: '', graduation_year: new Date().getFullYear(), current_position: '', education: '', testimonial: '', category: '', image: null, image_url: '', is_featured: false, is_published: true, sort_order: 0,
+    const { data, setData, post, delete: destroy, processing, errors, reset, transform } = useForm({
+        name: '',
+        graduation_year: new Date().getFullYear(),
+        testimonial: '',
+        content_type: 'text',
+        image: null,
+        image_url: '',
+        video_source: 'youtube',
+        video_url: '',
+        video_file: null,
+        is_featured: false,
+        is_published: true,
+        sort_order: 0,
     });
 
     const tabs = [{ key: 'list', label: 'Daftar Alumni', description: 'Kelola data alumni.', icon: User }];
 
     const openModal = (alumni = null) => {
-        if (alumni) { setEditMode(true); setCurrentId(alumni.id); setData({ name: alumni.name || '', graduation_year: alumni.graduation_year || new Date().getFullYear(), current_position: alumni.current_position || '', education: alumni.education || '', testimonial: alumni.testimonial || '', category: alumni.category || '', image: null, image_url: alumni.image_url || '', is_featured: !!alumni.is_featured, is_published: !!alumni.is_published, sort_order: alumni.sort_order || 0 }); }
+        if (alumni) {
+            setEditMode(true);
+            setCurrentId(alumni.id);
+            setData({
+                name: alumni.name || '',
+                graduation_year: alumni.graduation_year || new Date().getFullYear(),
+                testimonial: alumni.testimonial || '',
+                content_type: alumni.content_type || 'text',
+                image: null,
+                image_url: alumni.image_url || '',
+                video_source: alumni.video_source || 'youtube',
+                video_url: alumni.video_url || '',
+                video_file: null,
+                is_featured: !!alumni.is_featured,
+                is_published: !!alumni.is_published,
+                sort_order: alumni.sort_order || 0
+            });
+        }
         else { setEditMode(false); setCurrentId(null); reset(); }
         setIsModalOpen(true);
     };
@@ -35,13 +64,35 @@ export default function Index({ alumnis }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (editMode) { post(route('admin.alumni.update', currentId), { forceFormData: true, onSuccess: () => closeModal(), _method: 'PUT' }); }
-        else { post(route('admin.alumni.store'), { onSuccess: () => closeModal() }); }
+        if (editMode) {
+            transform((data) => ({
+                ...data,
+                _method: 'PUT',
+            }));
+            post(route('admin.alumni.update', currentId), {
+                forceFormData: true,
+                onSuccess: () => {
+                    closeModal();
+                    toast.success('Data alumni berhasil diperbarui');
+                },
+            });
+        } else {
+            transform((data) => data); // Reset transform or ensure no _method for create
+            post(route('admin.alumni.store'), {
+                onSuccess: () => {
+                    closeModal();
+                    toast.success('Alumni baru berhasil ditambahkan');
+                }
+            });
+        }
     };
 
-    const handleDelete = (id) => { 
+    const handleDelete = (id) => {
         if (confirm('Hapus data ini?')) {
-            destroy(route('admin.alumni.destroy', id), { preserveScroll: true });
+            destroy(route('admin.alumni.destroy', id), {
+                preserveScroll: true,
+                onSuccess: () => toast.success('Data alumni berhasil dihapus')
+            });
         }
     };
 
@@ -55,7 +106,6 @@ export default function Index({ alumnis }) {
             noForm={true}
             extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah Alumni</PrimaryButton></div>}
         >
-            {success && <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3"><div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg></div><p className="text-green-800 text-sm font-medium">{success}</p></div>}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {alumnis.length > 0 ? (
                     <div className="overflow-x-auto">
@@ -64,7 +114,6 @@ export default function Index({ alumnis }) {
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Alumni</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Angkatan</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Posisi/Pendidikan</th>
                                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Featured</th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Aksi</th>
                                 </tr>
@@ -74,12 +123,30 @@ export default function Index({ alumnis }) {
                                     <tr key={alumni.id} className="hover:bg-gray-50">
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border-2 border-gray-200">{alumni.image_url ? <img src={`/storage/${alumni.image_url}`} alt={alumni.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400"><User size={18} /></div>}</div>
-                                                <div><p className="font-semibold text-gray-900 text-sm">{alumni.name}</p><p className="text-xs text-gray-500">{alumni.category}</p></div>
+                                                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border-2 border-gray-200">
+                                                    {alumni.avatarsImage?.original_url || alumni.image_url ? (
+                                                        <img
+                                                            src={alumni.avatarsImage?.original_url || (alumni.image_url?.startsWith('/') || alumni.image_url?.startsWith('http') ? alumni.image_url : `/storage/${alumni.image_url}`)}
+                                                            alt={alumni.name}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-gray-400"><User size={18} /></div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-semibold text-gray-900 text-sm">{alumni.name}</p>
+                                                        {alumni.content_type === 'video' && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                                                <Video size={10} /> {alumni.video_source === 'youtube' ? 'YouTube' : 'Upload'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-accent-yellow/10 text-accent-yellow">{alumni.graduation_year}</span></td>
-                                        <td className="px-4 py-3 hidden md:table-cell"><div className="space-y-1"><div className="flex items-center gap-1.5 text-sm"><Briefcase size={14} className="text-gray-400" /><span className="text-gray-700">{alumni.current_position || '-'}</span></div><div className="flex items-center gap-1.5 text-xs"><GraduationCap size={12} className="text-gray-400" /><span className="text-gray-500">{alumni.education || '-'}</span></div></div></td>
                                         <td className="px-4 py-3 text-center">{alumni.is_featured ? <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700"><Star size={12} fill="currentColor" /> Ya</span> : <span className="text-gray-300">-</span>}</td>
                                         <td className="px-4 py-3 text-right"><div className="flex items-center justify-end gap-1"><button onClick={() => openModal(alumni)} className="p-2 !text-accent-yellow hover:bg-accent-yellow/10 rounded-lg"><Edit2 size={16} /></button><button onClick={() => handleDelete(alumni.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button></div></td>
                                     </tr>
@@ -95,13 +162,142 @@ export default function Index({ alumnis }) {
                 <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto">
                     <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10"><h3 className="text-lg sm:text-xl font-bold text-gray-900">{editMode ? 'Edit Alumni' : 'Tambah Alumni'}</h3><button onClick={closeModal} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
                     <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-                        <div className="grid grid-cols-2 gap-4"><div><InputLabel htmlFor="name" value="Nama" /><TextInput id="name" type="text" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required placeholder="Nama..." /><InputError message={errors.name} className="mt-2" /></div><div><InputLabel htmlFor="graduation_year" value="Tahun Lulus" /><TextInput id="graduation_year" type="number" className="mt-1 block w-full" value={data.graduation_year} onChange={(e) => setData('graduation_year', e.target.value)} /></div></div>
-                        <div className="grid grid-cols-2 gap-4"><div><InputLabel htmlFor="category" value="Bidang" /><TextInput id="category" type="text" className="mt-1 block w-full" value={data.category} onChange={(e) => setData('category', e.target.value)} placeholder="Contoh: Kedokteran" /></div><div><InputLabel htmlFor="current_position" value="Pekerjaan" /><TextInput id="current_position" type="text" className="mt-1 block w-full" value={data.current_position} onChange={(e) => setData('current_position', e.target.value)} placeholder="Pekerjaan saat ini" /></div></div>
-                        <div><InputLabel htmlFor="education" value="Pendidikan" /><TextInput id="education" type="text" className="mt-1 block w-full" value={data.education} onChange={(e) => setData('education', e.target.value)} placeholder="Pendidikan terakhir" /></div>
-                        <div><InputLabel htmlFor="testimonial" value="Testimoni" /><textarea id="testimonial" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" rows="3" value={data.testimonial} onChange={(e) => setData('testimonial', e.target.value)} required placeholder="Cerita alumni..."></textarea><InputError message={errors.testimonial} className="mt-2" /></div>
-                        <div><InputLabel htmlFor="image" value="Foto" /><FileUploadField label="Upload Foto" onChange={(file) => setData('image', file)} previewUrl={data.image_url ? `/storage/${data.image_url}` : null} error={errors.image} /></div>
-                        <div className="flex flex-wrap gap-4 sm:gap-6"><label className="flex items-center gap-2"><input type="checkbox" id="is_featured" checked={data.is_featured} onChange={(e) => setData('is_featured', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-accent-yellow focus:ring-accent-yellow" /><span className="text-sm text-gray-700">Featured</span></label><label className="flex items-center gap-2"><input type="checkbox" id="is_published" checked={data.is_published} onChange={(e) => setData('is_published', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-accent-yellow focus:ring-accent-yellow" /><span className="text-sm text-gray-700">Publish</span></label></div>
-                        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200"><button type="button" onClick={closeModal} className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium">Batal</button><PrimaryButton type="submit" disabled={processing} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 px-5 py-2">{processing ? '...' : (editMode ? 'Simpan' : 'Tambah')}</PrimaryButton></div>
+                        {/* Content Type Selection */}
+                        <div>
+                            <InputLabel value="Tipe Konten" />
+                            <div className="mt-2 flex gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="content_type"
+                                        value="text"
+                                        checked={data.content_type === 'text'}
+                                        onChange={(e) => setData(d => ({ ...d, content_type: 'text', is_featured: false }))}
+                                        className="w-4 h-4 text-accent-yellow focus:ring-accent-yellow"
+                                    />
+                                    <FileText size={16} className="text-gray-500" />
+                                    <span className="text-sm text-gray-700">Testimoni (Teks)</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="content_type"
+                                        value="video"
+                                        checked={data.content_type === 'video'}
+                                        onChange={(e) => setData(d => ({ ...d, content_type: 'video', is_featured: true }))}
+                                        className="w-4 h-4 text-accent-yellow focus:ring-accent-yellow"
+                                    />
+                                    <Video size={16} className="text-red-500" />
+                                    <span className="text-sm text-gray-700">Video (Featured)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <InputLabel htmlFor="name" value="Nama" />
+                                <TextInput id="name" type="text" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required placeholder="Nama..." />
+                                <InputError message={errors.name} className="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="graduation_year" value="Tahun Lulus" />
+                                <TextInput id="graduation_year" type="number" className="mt-1 block w-full" value={data.graduation_year} onChange={(e) => setData('graduation_year', e.target.value)} />
+                            </div>
+                        </div>
+
+                        {data.content_type === 'text' && (
+                            <div>
+                                <InputLabel htmlFor="testimonial" value="Testimoni" />
+                                <textarea id="testimonial" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" rows="3" value={data.testimonial} onChange={(e) => setData('testimonial', e.target.value)} required placeholder="Cerita alumni..."></textarea>
+                                <InputError message={errors.testimonial} className="mt-2" />
+                            </div>
+                        )}
+
+                        {/* Conditional Fields Based on Content Type */}
+                        {data.content_type === 'text' ? (
+                            <div>
+                                <InputLabel htmlFor="image" value="Foto Profil" />
+                                <FileUploadField
+                                    id="image"
+                                    label="Upload Foto"
+                                    onChange={(file) => setData('image', file)}
+                                    previewUrl={data.image_url ? `/storage/${data.image_url}` : null}
+                                    error={errors.image}
+                                />
+                            </div>
+                        ) : (
+                            <div className="space-y-4 border-t border-gray-100 pt-4 mt-2">
+                                <div>
+                                    <InputLabel value="Sumber Video" />
+                                    <div className="mt-2 flex gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100">
+                                            <input
+                                                type="radio"
+                                                name="video_source"
+                                                value="youtube"
+                                                checked={data.video_source === 'youtube'}
+                                                onChange={(e) => setData('video_source', e.target.value)}
+                                                className="w-4 h-4 text-accent-yellow focus:ring-accent-yellow"
+                                            />
+                                            <span className="text-sm text-gray-700">YouTube</span>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-100">
+                                            <input
+                                                type="radio"
+                                                name="video_source"
+                                                value="upload"
+                                                checked={data.video_source === 'upload'}
+                                                onChange={(e) => setData('video_source', e.target.value)}
+                                                className="w-4 h-4 text-accent-yellow focus:ring-accent-yellow"
+                                            />
+                                            <span className="text-sm text-gray-700">Upload File</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {data.video_source === 'youtube' ? (
+                                    <div>
+                                        <InputLabel htmlFor="video_url" value="URL Video YouTube" />
+                                        <TextInput
+                                            id="video_url"
+                                            type="url"
+                                            className="mt-1 block w-full"
+                                            value={data.video_url}
+                                            onChange={(e) => setData('video_url', e.target.value)}
+                                            placeholder="https://youtube.com/watch?v=..."
+                                        />
+                                        <InputError message={errors.video_url} className="mt-2" />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <InputLabel htmlFor="video_file" value="File Video" />
+                                        <FileUploadField
+                                            id="video_file"
+                                            label="Upload Video"
+                                            accept="video/*"
+                                            fileType="video"
+                                            onChange={(file) => setData('video_file', file)}
+                                            previewUrl={data.video_url ? (data.video_url.startsWith('/') || data.video_url.startsWith('http') ? data.video_url : `/storage/${data.video_url}`) : null}
+                                            error={errors.video_file}
+                                            description="Format: MP4, WebM. Maksimal 50MB."
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-4 sm:gap-6">
+                            {/* Featured is automated based on content type */}
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" id="is_published" checked={data.is_published} onChange={(e) => setData('is_published', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-accent-yellow focus:ring-accent-yellow" />
+                                <span className="text-sm text-gray-700">Publish</span>
+                            </label>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
+                            <button type="button" onClick={closeModal} className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium">Batal</button>
+                            <PrimaryButton type="submit" disabled={processing} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 px-5 py-2">{processing ? '...' : (editMode ? 'Simpan' : 'Tambah')}</PrimaryButton>
+                        </div>
                     </form>
                 </div>
             </Modal>

@@ -35,10 +35,11 @@ class ExtracurricularController extends Controller
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'icon_name' => 'nullable|string|max:255',
             'schedule' => 'nullable|string|max:255',
             'coach_name' => 'nullable|string|max:255',
+            'achievements' => 'nullable|array', // New field
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ]);
@@ -63,10 +64,11 @@ class ExtracurricularController extends Controller
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'icon_name' => 'nullable|string|max:255',
             'schedule' => 'nullable|string|max:255',
             'coach_name' => 'nullable|string|max:255',
+            'achievements' => 'nullable|array', // New field
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ]);

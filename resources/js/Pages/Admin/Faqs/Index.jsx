@@ -11,6 +11,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import { Plus, Edit2, Trash2, X, HelpCircle, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import Modal from '@/Components/Modal';
+import toast from 'react-hot-toast';
 
 export default function Index({ faqs }) {
     const { success } = usePage().props;
@@ -63,13 +64,29 @@ export default function Index({ faqs }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (editMode) put(route('admin.faqs.update', currentId), { onSuccess: () => closeModal() });
-        else post(route('admin.faqs.store'), { onSuccess: () => closeModal() });
+        if (editMode) {
+            put(route('admin.faqs.update', currentId), {
+                onSuccess: () => {
+                    closeModal();
+                    toast.success('FAQ berhasil diperbarui');
+                }
+            });
+        } else {
+            post(route('admin.faqs.store'), {
+                onSuccess: () => {
+                    closeModal();
+                    toast.success('FAQ baru berhasil ditambahkan');
+                }
+            });
+        }
     };
 
-    const handleDelete = (id) => { 
+    const handleDelete = (id) => {
         if (confirm('Hapus FAQ ini?')) {
-            destroy(route('admin.faqs.destroy', id), { preserveScroll: true }); 
+            destroy(route('admin.faqs.destroy', id), {
+                preserveScroll: true,
+                onSuccess: () => toast.success('FAQ berhasil dihapus')
+            });
         }
     };
 
@@ -110,7 +127,6 @@ export default function Index({ faqs }) {
             noForm={true}
             extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah FAQ</PrimaryButton></div>}
         >
-            {success && <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3"><div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center"><svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg></div><p className="text-green-800 text-sm font-medium">{success}</p></div>}
             <div className="space-y-3 sm:space-y-4">
                 {orderedFaqs.length > 0 ? orderedFaqs.map((faq, index) => (
                     <div 

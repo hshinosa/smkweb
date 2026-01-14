@@ -12,6 +12,7 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import FileUploadField from '@/Components/Admin/FileUploadField';
 import Modal from '@/Components/Modal';
+import toast from 'react-hot-toast';
 
 export default function Index({ teachers, currentSettings }) {
     const [activeTab, setActiveTab] = useState('hero');
@@ -37,7 +38,7 @@ export default function Index({ teachers, currentSettings }) {
     }, route('admin.teachers.update_settings'));
 
     // Form for teacher data
-    const { data, setData, post, delete: destroy, processing, errors, reset } = useForm({
+    const { data, setData, post, delete: destroy, processing, errors, reset, transform } = useForm({
         name: '',
         nip: '',
         type: 'guru',
@@ -85,21 +86,37 @@ export default function Index({ teachers, currentSettings }) {
     const handleTeacherSubmit = (e) => {
         e.preventDefault();
         if (editMode) {
+            // Use transform to add _method for method spoofing with file uploads
+            transform((formData) => ({
+                ...formData,
+                _method: 'PUT',
+            }));
             post(route('admin.teachers.update', currentId), {
                 forceFormData: true,
-                onSuccess: () => closeModal(),
-                _method: 'PUT'
+                preserveScroll: true,
+                onSuccess: () => {
+                    closeModal();
+                    toast.success('Data guru/staff berhasil diperbarui');
+                },
             });
         } else {
+            // Reset transform for create
+            transform((formData) => formData);
             post(route('admin.teachers.store'), {
-                onSuccess: () => closeModal(),
+                onSuccess: () => {
+                    closeModal();
+                    toast.success('Data guru/staff baru berhasil ditambahkan');
+                },
             });
         }
     };
 
     const handleDelete = (id) => {
         if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-            destroy(route('admin.teachers.destroy', id), { preserveScroll: true });
+            destroy(route('admin.teachers.destroy', id), {
+                preserveScroll: true,
+                onSuccess: () => toast.success('Data guru/staff berhasil dihapus')
+            });
         }
     };
 

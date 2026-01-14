@@ -48,7 +48,6 @@ class SpmbContentController extends Controller
                     $sectionRules["{$sectionKey}.title"] = 'required|string|max:200';
                     $sectionRules["{$sectionKey}.description_html"] = 'required|string|max:5000';
                     $sectionRules["{$sectionKey}.banner_image_url"] = 'nullable|string|max:255';
-                    $sectionRules["{$sectionKey}.brochure_url"] = 'nullable|string|max:255';
                     $sectionRules["{$sectionKey}.whatsapp_number"] = 'nullable|string|max:20';
                     $sectionRules["{$sectionKey}.video_guide_url"] = 'nullable|string|max:255';
                     $sectionRules["{$sectionKey}.registration_open"] = 'required|boolean';
@@ -148,12 +147,31 @@ class SpmbContentController extends Controller
 
         try {
             foreach ($finalDataToSave as $sectionKey => $content) {
+                $setting = SpmbSetting::firstOrNew(['section_key' => $sectionKey]);
+                
+                // Handle Media Uploads for Pengaturan Umum
+                if ($sectionKey === 'pengaturan_umum') {
+                    // Check for file upload (key matching the URL field or a specific file field)
+                    // Assuming frontend sends file in 'banner_image_file' or overrides 'banner_image_url'
+                    $fileKey = "{$sectionKey}.banner_image_file"; 
+                    if (!$request->hasFile($fileKey)) {
+                        $fileKey = "{$sectionKey}.banner_image_url"; // Try existing field if it contains file
+                    }
+
+                    if ($request->hasFile($fileKey)) {
+                        $setting->clearMediaCollection('banner_image');
+                        $setting->addMediaFromRequest($fileKey)->toMediaCollection('banner_image');
+                        $media = $setting->getMedia('banner_image')->last();
+                        if ($media) {
+                            $content['banner_image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
+                        }
+                    }
+                }
+
                 // Ensure content is array and not null before saving
                 if (is_array($content)) {
-                    SpmbSetting::updateOrCreate(
-                        ['section_key' => $sectionKey],
-                        ['content' => $content]
-                    );
+                    $setting->content = $content;
+                    $setting->save();
                 } else {
                     Log::warning("Konten untuk section {$sectionKey} bukan array, tidak disimpan.", ['content' => $content]);
                 }

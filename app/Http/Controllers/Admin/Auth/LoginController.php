@@ -29,12 +29,12 @@ class LoginController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'username' => 'required|string',
+            'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
         // Gunakan guard 'admin' untuk attempt
-        if (Auth::guard('admin')->attempt($request->only('username', 'password'), $request->filled('remember'))) {
+        if (Auth::guard('admin')->attempt($request->only('email', 'password'), $request->filled('remember'))) {
             $request->session()->regenerate();
 
             // Redirect ke dashboard admin setelah login berhasil
@@ -43,7 +43,7 @@ class LoginController extends Controller
 
         // Jika login gagal
         throw ValidationException::withMessages([
-            'username' => [trans('auth.failed')], // Pesan error standar Laravel
+            'email' => [trans('auth.failed')], // Pesan error standar Laravel
         ]);
     }
 

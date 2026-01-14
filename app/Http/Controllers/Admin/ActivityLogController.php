@@ -11,7 +11,7 @@ class ActivityLogController extends Controller
     public function index(Request $request)
     {
         // Ambil log terbaru, bisa dengan pagination
-        $logs = ActivityLog::with('admin:id,username') // Hanya ambil id dan username admin
+        $logs = ActivityLog::with('causer') // Load polymorphic relation
             ->latest()
             ->paginate($request->input('per_page', 10)); // Default 10 per halaman
 

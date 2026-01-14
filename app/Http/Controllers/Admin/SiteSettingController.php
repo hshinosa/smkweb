@@ -71,7 +71,7 @@ class SiteSettingController extends Controller
         if ($section === 'general') {
             $rules['content.site_name'] = 'required|string|max:255';
             $rules['content.email'] = 'nullable|email|max:255';
-            $rules['content.site_logo'] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+            $rules['content.site_logo'] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240';
             $rules['content.site_favicon'] = 'nullable|image|mimes:ico,png,jpg,jpeg|max:1024';
         }
 

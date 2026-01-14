@@ -96,20 +96,20 @@ class SchoolProfileSetting extends Model implements HasMedia
         $defaults = [
             'hero_history' => [
                 'title' => 'Profil & Sejarah',
-                'image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image_url' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'hero_vision_mission' => [
                 'title' => 'Visi & Misi',
-                'image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image_url' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'hero_organization' => [
                 'title' => 'Struktur Organisasi',
-                'image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image_url' => '/images/hero-bg-sman1baleendah.jpeg',
             ],
             'history' => [
                 'title' => 'Sejarah Singkat',
                 'description_html' => '<p>SMAN 1 Baleendah didirikan pada tahun 1975...</p>',
-                'image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
+                'image_url' => '/images/hero-bg-sman1baleendah.jpeg',
                 'timeline' => [
                     ['year' => '1975', 'title' => 'Pendirian', 'description' => 'Sekolah resmi didirikan.'],
                 ],
@@ -137,6 +137,12 @@ class SchoolProfileSetting extends Model implements HasMedia
             ],
         ];
 
-        return $dbContent ?? ($defaults[$key] ?? []);
+        $default = $defaults[$key] ?? [];
+        
+        if ($dbContent && is_array($dbContent)) {
+            return array_merge($default, $dbContent);
+        }
+
+        return $default;
     }
 }

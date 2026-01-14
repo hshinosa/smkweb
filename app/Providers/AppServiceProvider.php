@@ -32,8 +32,12 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
 
         // Share site settings with all views (including app.blade.php) using cache
-        if (Schema::hasTable('site_settings')) {
-            View::share('siteSettings', SiteSetting::getCachedAll());
+        try {
+            if (!app()->runningInConsole() && Schema::hasTable('site_settings')) {
+                View::share('siteSettings', SiteSetting::getCachedAll());
+            }
+        } catch (\Exception $e) {
+            // Silently fail if DB is not ready (e.g. during build)
         }
     }
 }

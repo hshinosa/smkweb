@@ -126,7 +126,7 @@ export default function FileUploadField({ id, label, onChange, previewUrl, error
                         onChange={handleFileChange}
                     />
                     <p className="mt-4 text-sm text-slate-500 leading-relaxed">
-                        {description || (accept.includes('video') ? 'Format: MP4, WebM. Maksimal 20MB.' : 'Format: JPEG, PNG, JPG, GIF, SVG. Maksimal 5MB. Bisa drag & drop file ke sini.')}
+                        {description || (accept.includes('video') ? 'Format: MP4, WebM. Maksimal 50MB.' : 'Format: JPEG, PNG, JPG, GIF, SVG. Maksimal 10MB. Bisa drag & drop file ke sini.')}
                     </p>
                     {error && (
                         <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg">

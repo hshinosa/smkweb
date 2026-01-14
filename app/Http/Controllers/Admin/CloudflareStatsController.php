@@ -278,9 +278,16 @@ class CloudflareStatsController extends Controller
             return $chartData;
         });
 
-        // ... (sisa logika pengembalian response sama) ...
-        if (isset($cachedData['error']) && $cachedData['fetch_error_count'] === ($request->input('period', '7d') === '1d' ? 24 : (($request->input('period', '7d') === '7d') ? 7 : self::MAX_DATA_AGE_DAYS)) && $cachedData['fetch_error_count'] > 0) {
-            return response()->json(['error' => $cachedData['error'], 'labels' => $cachedData['labels'], 'data' => $cachedData['data']], $cachedData['status_code'] ?? 500);
+        // Safe access to fetch_error_count with fallback
+        $fetchErrorCount = $cachedData['fetch_error_count'] ?? 0;
+        $periodCount = ($request->input('period', '7d') === '1d' ? 24 : (($request->input('period', '7d') === '7d') ? 7 : self::MAX_DATA_AGE_DAYS));
+        
+        if (isset($cachedData['error']) && $fetchErrorCount === $periodCount && $fetchErrorCount > 0) {
+            return response()->json([
+                'error' => $cachedData['error'],
+                'labels' => $cachedData['labels'] ?? [],
+                'data' => $cachedData['data'] ?? []
+            ], $cachedData['status_code'] ?? 500);
         }
 
         return response()->json($cachedData);

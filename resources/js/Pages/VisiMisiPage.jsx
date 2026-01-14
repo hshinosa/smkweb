@@ -1,5 +1,3 @@
-// FILE: resources/js/Pages/VisiMisiPage.jsx
-
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 
@@ -7,7 +5,7 @@ import { Head, Link } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import SEOHead from '@/Components/SEOHead';
-import { HeroImage } from '@/Components/ResponsiveImage';
+import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
 import { Check, Star, Target } from 'lucide-react';
 // Import typography constants
 import { TYPOGRAPHY } from '@/Utils/typography';
@@ -16,18 +14,23 @@ import { usePage } from '@inertiajs/react';
 
 export default function VisiMisiPage({ auth, visionMission, hero }) {
     const { siteSettings } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
     const navigationData = getNavigationData(siteSettings);
     const { vision, mission, goals } = visionMission || {};
 
-    // Helper to format image path correctly
-    const formatImagePath = (path) => {
-        if (!path) return null;
-        if (path.startsWith('http') || path.startsWith('/')) return path;
-        return `/storage/${path}`;
-    };
-
     const renderHighlightedTitle = (title) => {
         if (!title) return null;
+        
+        // Check for specific phrase "SMAN 1 Baleendah"
+        if (title.includes('SMAN 1 Baleendah')) {
+            const parts = title.split('SMAN 1 Baleendah');
+            return (
+                <>
+                    {parts[0]}<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">SMAN 1 Baleendah</span>{parts[1]}
+                </>
+            );
+        }
+
         const words = title.split(' ');
         if (words.length <= 1) return title;
         const lastWord = words.pop();
@@ -41,8 +44,8 @@ export default function VisiMisiPage({ auth, visionMission, hero }) {
     return (
         <div className="bg-white font-sans text-gray-800">
             <SEOHead 
-                title={`${hero?.title || 'Visi & Misi'} - SMAN 1 Baleendah`}
-                description="Visi dan Misi SMA Negeri 1 Baleendah. Membentuk peserta didik berakhlak mulia, berprestasi akademik tinggi, bercarakter kuat, dan berwawasan global."
+                title={`${hero?.title || 'Visi & Misi'} - ${siteName}`}
+                description="Visi dan Misi SMA Negeri 1 Baleendah. Membentuk peserta didik berakhlak mulia, berprestasi akademik tinggi, berkarakter kuat, dan berwawasan global."
                 keywords="visi misi, tujuan sekolah, nilai nilai sekolah, SMAN 1 Baleendah"
                 image={hero?.background_image || "/images/visi-misi-banner.jpg"}
             />
@@ -62,7 +65,7 @@ export default function VisiMisiPage({ auth, visionMission, hero }) {
                         <HeroImage media={hero.backgroundImage} alt="Background Visi Misi" />
                     ) : (
                         <HeroImage 
-                            src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            src={hero?.image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
                             alt="Background Visi Misi" 
                         />
                     )}
@@ -121,26 +124,6 @@ export default function VisiMisiPage({ auth, visionMission, hero }) {
                     </div>
                 </div>
             </section>
-
-            {/* SECTION D: GOALS */}
-            {goals && goals.length > 0 && (
-                <section className="py-20 bg-gray-50">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16">
-                            <h2 className={TYPOGRAPHY.sectionHeading}>
-                                Tujuan Strategis <span className="text-primary">Sekolah</span>
-                            </h2>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {goals.map((goal, idx) => (
-                                <div key={idx} className="bg-white p-6 rounded-2xl shadow-md border-t-4 border-primary">
-                                    <p className="text-gray-700 font-medium">{goal}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-            )}
 
             <Footer
                 logoSman1={navigationData.logoSman1}

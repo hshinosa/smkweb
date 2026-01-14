@@ -32,8 +32,16 @@ export default function ProgramBahasaPage({ content }) {
     // Helper to format image path correctly
     const formatImagePath = (path) => {
         if (!path) return null;
+        if (typeof path !== 'string') return null;
         if (path.startsWith('http') || path.startsWith('/')) return path;
         return `/storage/${path}`;
+    };
+
+    const getHeroImageSrc = () => {
+        if (hero?.background_image && typeof hero.background_image === 'object') {
+            return hero.background_image.original_url;
+        }
+        return formatImagePath(hero?.background_image) || "/images/hero-bg-sman1baleendah.jpeg";
     };
 
     const renderHighlightedTitle = (title) => {
@@ -51,7 +59,7 @@ export default function ProgramBahasaPage({ content }) {
                 title={hero?.title || pageMetadata.bahasa.title}
                 description={hero?.description || pageMetadata.bahasa.description}
                 keywords="peminatan Bahasa, jurusan bahasa, bahasa Indonesia, bahasa Inggris, sastra, SMAN 1 Baleendah"
-                image={formatImagePath(hero?.background_image) || "/images/program-bahasa.jpg"}
+                image={getHeroImageSrc()}
             />
             
             <Navbar
@@ -65,11 +73,11 @@ export default function ProgramBahasaPage({ content }) {
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    {hero?.backgroundImage ? (
-                        <HeroImage media={hero.backgroundImage} alt="Bahasa & Ilmu Budaya" />
+                    {hero?.background_image && typeof hero.background_image === 'object' ? (
+                        <HeroImage media={hero.background_image} alt="Bahasa & Ilmu Budaya" />
                     ) : (
                         <HeroImage 
-                            src={formatImagePath(hero?.background_image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            src={formatImagePath(hero?.background_image) || "/images/hero-bg-sman1baleendah.jpeg"} 
                             alt="Bahasa & Ilmu Budaya" 
                         />
                     )}
@@ -168,8 +176,9 @@ export default function ProgramBahasaPage({ content }) {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[500px]">
                         {/* Left Column: Main Static Item */}
                         <div className="lg:col-span-2 relative rounded-3xl overflow-hidden group shadow-lg h-full">
-                            <img 
-                                src={facilities?.main_image || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            <ResponsiveImage 
+                                media={typeof facilities?.main_image === 'object' ? facilities.main_image : null}
+                                src={typeof facilities?.main_image === 'string' ? formatImagePath(facilities.main_image) : "/images/hero-bg-sman1baleendah.jpeg"} 
                                 alt={facilities?.main_title || "Laboratorium Bahasa"} 
                                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                             />
@@ -190,7 +199,7 @@ export default function ProgramBahasaPage({ content }) {
                                         [...facilities.items, ...facilities.items].map((item, idx) => (
                                             <div key={idx} className="relative rounded-2xl overflow-hidden shadow-md h-48 flex-shrink-0 group/item">
                                                 <img 
-                                                    src={item.image || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                                                    src={item.image || "/images/hero-bg-sman1baleendah.jpeg"} 
                                                     alt={item.title} 
                                                     className="w-full h-full object-cover"
                                                 />
@@ -204,7 +213,7 @@ export default function ProgramBahasaPage({ content }) {
                                         [1, 2, 3, 4, 1, 2, 3, 4].map((item, idx) => (
                                             <div key={idx} className="relative rounded-2xl overflow-hidden shadow-md h-48 flex-shrink-0 group/item">
                                                 <img 
-                                                    src={idx % 2 === 0 ? "/images/hero-bg-sman1-baleendah.jpeg" : "/images/anak-sma.png"} 
+                                                    src={idx % 2 === 0 ? "/images/hero-bg-sman1baleendah.jpeg" : "/images/anak-sma.png"} 
                                                     alt={`Facility ${item}`} 
                                                     className="w-full h-full object-cover"
                                                 />
@@ -280,8 +289,9 @@ export default function ProgramBahasaPage({ content }) {
                             <div className="group relative flex flex-col h-full max-w-md mx-auto">
                                 {/* Image Area - Floating above */}
                                 <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
-                                    <img 
-                                        src={alumni_spotlight?.image || "/images/anak-sma.png"} 
+                                    <ResponsiveImage 
+                                        media={typeof alumni_spotlight?.image === 'object' ? alumni_spotlight.image : null}
+                                        src={typeof alumni_spotlight?.image === 'string' ? formatImagePath(alumni_spotlight.image) : "/images/anak-sma.png"} 
                                         alt={alumni_spotlight?.name || "Alumni Sukses"}
                                         className="h-full w-auto object-contain drop-shadow-xl transition-transform duration-500" 
                                     />

@@ -8,6 +8,7 @@ use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileUnacceptableForCollection;
 
 class GalleryController extends Controller
 {
@@ -68,8 +69,14 @@ class GalleryController extends Controller
             $gallery = Gallery::create($validated);
             
             $collection = $request->type === 'video' ? 'videos' : 'images';
-            $gallery->addMediaFromRequest('file')
-                     ->toMediaCollection($collection);
+            
+            try {
+                $gallery->addMediaFromRequest('file')
+                        ->toMediaCollection($collection);
+            } catch (FileUnacceptableForCollection $e) {
+                $gallery->delete(); // Clean up if file rejected
+                return redirect()->back()->withErrors(['file' => 'File tidak valid atau ukurannya terlalu besar.']);
+            }
             
             // Keep url for backward compatibility
             $media = $gallery->getFirstMedia($collection);
@@ -132,8 +139,13 @@ class GalleryController extends Controller
             $gallery->clearMediaCollection('videos');
             
             $collection = $request->type === 'video' ? 'videos' : 'images';
-            $gallery->addMediaFromRequest('file')
-                     ->toMediaCollection($collection);
+            
+            try {
+                $gallery->addMediaFromRequest('file')
+                        ->toMediaCollection($collection);
+            } catch (FileUnacceptableForCollection $e) {
+                return redirect()->back()->withErrors(['file' => 'File tidak valid atau ukurannya terlalu besar.']);
+            }
             
             // Update url for backward compatibility
             $media = $gallery->getFirstMedia($collection);

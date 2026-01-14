@@ -2,10 +2,11 @@
 // Consistent design with accent color theme
 
 import React, { useState } from 'react';
-import { Head, usePage, Link } from '@inertiajs/react';
+import { Head, usePage, Link, router } from '@inertiajs/react';
 import { Sparkles, Plus, Edit2, Trash2, RefreshCw, FileText } from 'lucide-react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
+import toast from 'react-hot-toast';
 
 export default function Index({ documents }) {
     const { success } = usePage().props;
@@ -22,6 +23,7 @@ export default function Index({ documents }) {
             router.post(route('admin.rag-documents.reprocess', id), {}, {
                 preserveScroll: true,
                 onFinish: () => setProcessing(null),
+                onSuccess: () => toast.success('Dokumen berhasil diproses ulang'),
             });
         }
     };
@@ -30,6 +32,7 @@ export default function Index({ documents }) {
         if (confirm('Hapus dokumen ini? Semua chunks dan embeddings akan dihapus.')) {
             router.delete(route('admin.rag-documents.destroy', id), {
                 preserveScroll: true,
+                onSuccess: () => toast.success('Dokumen berhasil dihapus'),
             });
         }
     };
@@ -52,17 +55,6 @@ export default function Index({ documents }) {
                 </div>
             }
         >
-            {success && (
-                <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                        </svg>
-                    </div>
-                    <p className="text-green-800 text-sm font-medium">{success}</p>
-                </div>
-            )}
-
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 {documents.data && documents.data.length > 0 ? (
                     <div className="overflow-x-auto">

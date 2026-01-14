@@ -15,17 +15,25 @@ class Alumni extends Model implements HasMedia
     protected $fillable = [
         'name',
         'graduation_year',
-        'current_position',
-        'education',
         'testimonial',
-        'image_url', // Tetap disimpan untuk backward compatibility
-        'category',
+        'image_url',
+        'video_url',
+        'video_thumbnail_url',
+        'video_source',
+        'content_type',
         'is_featured',
         'is_published',
         'sort_order',
     ];
 
-    public function registerMediaConversions(Media $media = null): void
+    protected $casts = [
+        'is_featured' => 'boolean',
+        'is_published' => 'boolean',
+        'sort_order' => 'integer',
+        'graduation_year' => 'integer',
+    ];
+
+    public function registerMediaConversions(?Media $media = null): void
     {
         $this->addMediaConversion('thumb')
             ->width(200)
@@ -38,5 +46,59 @@ class Alumni extends Model implements HasMedia
             ->format('webp')
             ->quality(90)
             ->nonQueued();
+    }
+
+    /**
+     * Register media collections
+     */
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('avatars')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+
+        $this
+            ->addMediaCollection('video_thumbnails')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+
+        $this
+            ->addMediaCollection('videos')
+            ->singleFile()
+            ->acceptsMimeTypes(['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime']);
+    }
+
+    /**
+     * Helper method to extract YouTube video ID from URL
+     */
+    public static function extractYouTubeId($url)
+    {
+        if (empty($url)) {
+            return null;
+        }
+
+        $patterns = [
+            '/youtube\.com\/watch\?v=([^&]+)/',
+            '/youtube\.com\/embed\/([^?]+)/',
+            '/youtu\.be\/([^?]+)/',
+            '/youtube\.com\/v\/([^?]+)/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $url, $matches)) {
+                return $matches[1];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if video URL is a YouTube URL
+     */
+    public static function isYouTubeUrl($url)
+    {
+        return self::extractYouTubeId($url) !== null;
     }
 }

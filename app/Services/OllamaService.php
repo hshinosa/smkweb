@@ -14,7 +14,7 @@ class OllamaService
 
     public function __construct()
     {
-        $this->baseUrl = AiSetting::get('ollama_base_url', 'http://localhost:11434');
+        $this->baseUrl = AiSetting::get('ollama_base_url', '');
         $this->model = AiSetting::get('ollama_model', 'llama3.2');
         $this->embeddingModel = AiSetting::get('ollama_embedding_model', 'nomic-embed-text');
     }
@@ -24,6 +24,10 @@ class OllamaService
      */
     public function isAvailable(): bool
     {
+        if (empty($this->baseUrl)) {
+            return false;
+        }
+        
         try {
             $response = Http::timeout(2)->get("{$this->baseUrl}/api/tags");
             return $response->successful();

@@ -85,6 +85,26 @@ export default {
                 'float-medium': 'float 5s ease-in-out infinite',
                 'float-fast': 'float 4s ease-in-out infinite',
                 'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                'scroll': 'scroll 80s linear infinite',
+                'scroll-reverse': 'scroll-reverse 80s linear infinite',
+            },
+            keyframes: {
+                float: {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-20px)' },
+                },
+                fadeInUp: {
+                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                scroll: {
+                    '0%': { transform: 'translateX(0)' },
+                    '100%': { transform: 'translateX(-50%)' },
+                },
+                'scroll-reverse': {
+                    '0%': { transform: 'translateX(-50%)' },
+                    '100%': { transform: 'translateX(0)' },
+                }
             }
     	}
     },

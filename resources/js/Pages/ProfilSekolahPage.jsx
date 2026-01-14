@@ -1,5 +1,3 @@
-// FILE: resources/js/Pages/ProfilSekolahPage.jsx
-
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 
@@ -8,69 +6,17 @@ import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import SEOHead from '@/Components/SEOHead';
 import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
-import { Check, Star, Target, MapPin, Building, Trophy, Users } from 'lucide-react';
+import { Building } from 'lucide-react';
 // Import typography constants
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { usePage } from '@inertiajs/react';
-
-// Get navigation data from centralized source
-
-const timelineEvents = [
-    {
-        year: "1975",
-        title: "Awal Pendirian",
-        description: "Berdiri sebagai sekolah filial (kelas jauh) untuk memenuhi kebutuhan pendidikan di wilayah Baleendah.",
-        side: "left"
-    },
-    {
-        year: "1980",
-        title: "Penegerian",
-        description: "Resmi berdiri sendiri sebagai SMAN 1 Baleendah dengan SK Menteri Pendidikan, menandai era baru kemandirian.",
-        side: "right"
-    },
-    {
-        year: "2010",
-        title: "Pengembangan Fasilitas",
-        description: "Revitalisasi gedung utama dan pembangunan Masjid sekolah sebagai pusat pembentukan karakter siswa.",
-        side: "left"
-    },
-    {
-        year: "Sekarang",
-        title: "Era Prestasi",
-        description: "Menjadi Sekolah Penggerak dan meraih predikat Sekolah Adiwiyata Tingkat Provinsi/Nasional.",
-        side: "right"
-    }
-];
-
-const facilities = [
-    { name: "Lab Komputer", image: "/images/panen-karya-sman1-baleendah.jpg" },
-    { name: "Perpustakaan", image: "/images/hero-bg-sman1-baleendah.jpeg" }, // Placeholder reused
-    { name: "Masjid Sekolah", image: "/images/keluarga-besar-sman1-baleendah.png" }, // Placeholder reused
-    { name: "Lapangan Olahraga", image: "/images/hero-bg-sman1-baleendah.jpeg" }, // Placeholder reused
-    { name: "Ruang Kelas Modern", image: "/images/panen-karya-sman1-baleendah.jpg" } // Placeholder reused
-];
-
-const misiPoints = [
-    "Melaksanakan pembelajaran berbasis teknologi dan inovasi.",
-    "Menanamkan nilai karakter dan budi pekerti luhur.",
-    "Mengembangkan potensi akademik dan non-akademik siswa.",
-    "Menciptakan lingkungan sekolah yang ramah dan berwawasan lingkungan.",
-    "Menjalin kerjasama dengan berbagai institusi pendidikan tinggi."
-];
 
 export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
     const { siteSettings } = usePage().props;
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
     const navigationData = getNavigationData(siteSettings);
     
-    // Helper to format image path correctly
-    const formatImagePath = (path) => {
-        if (!path) return null;
-        if (path.startsWith('http') || path.startsWith('/')) return path;
-        return `/storage/${path}`;
-    };
-
     // Safety check and dynamic data extraction
     const timelineEvents = Array.isArray(history?.timeline) ? history.timeline : [];
     const historyTitle = history?.title || 'Jejak Langkah Kami';
@@ -82,6 +28,17 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
 
     const renderHighlightedTitle = (title) => {
         if (!title) return null;
+        
+        // Check for specific phrase "SMAN 1 Baleendah"
+        if (title.includes('SMAN 1 Baleendah')) {
+            const parts = title.split('SMAN 1 Baleendah');
+            return (
+                <>
+                    {parts[0]}<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">SMAN 1 Baleendah</span>{parts[1]}
+                </>
+            );
+        }
+
         const words = title.split(' ');
         if (words.length <= 1) return title;
         const lastWord = words.pop();
@@ -116,7 +73,7 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
                         <HeroImage media={hero.backgroundImage} alt={`Gedung ${siteName}`} />
                     ) : (
                         <HeroImage 
-                            src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            src={hero?.image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
                             alt={`Gedung ${siteName}`} 
                         />
                     )}
@@ -192,31 +149,37 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {facilityList.map((facility, idx) => (
-                            <div key={idx} className="group relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3] cursor-pointer">
-                                {facility.image_url ? (
-                                    <ResponsiveImage 
-                                        src={formatImagePath(facility.image_url)} 
-                                        alt={facility.title} 
-                                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                                        loading="lazy"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full bg-blue-600 flex items-center justify-center text-white">
-                                        <Building className="w-16 h-16 opacity-20" />
-                                        <span className="absolute inset-0 flex items-center justify-center font-bold text-lg p-4 text-center">
-                                            {facility.title}
-                                        </span>
+                        {facilityList.map((facility, idx) => {
+                            const imageUrl = facility.image_url || facility.image || '';
+                            const title = facility.title || facility.name || 'Fasilitas';
+                            const description = facility.description || '';
+
+                            return (
+                                <div key={idx} className="group relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3] cursor-pointer">
+                                    {imageUrl ? (
+                                        <ResponsiveImage 
+                                            src={imageUrl} 
+                                            alt={title} 
+                                            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                                            loading="lazy"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-blue-600 flex items-center justify-center text-white">
+                                            <Building className="w-16 h-16 opacity-20" />
+                                            <span className="absolute inset-0 flex items-center justify-center font-bold text-lg p-4 text-center">
+                                                {title}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 transition-opacity"></div>
+                                    <div className="absolute bottom-0 left-0 right-0 p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                                        <h3 className="text-xl font-bold text-white mb-1">{title}</h3>
+                                        <p className="text-white/80 text-sm line-clamp-2">{description}</p>
+                                        <div className="h-1 w-12 bg-accent-yellow rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 mt-2"></div>
                                     </div>
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 transition-opacity"></div>
-                                <div className="absolute bottom-0 left-0 right-0 p-6 transform translate-y-2 group-hover:translate-y-0 transition-transform">
-                                    <h3 className="text-xl font-bold text-white mb-1">{facility.title}</h3>
-                                    <p className="text-white/80 text-sm line-clamp-2">{facility.description}</p>
-                                    <div className="h-1 w-12 bg-accent-yellow rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 mt-2"></div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </section>

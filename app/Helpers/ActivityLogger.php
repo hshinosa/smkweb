@@ -10,10 +10,12 @@ class ActivityLogger
 {
     public static function log(string $action, ?string $description = null, ?Request $request = null)
     {
+        $user = Auth::guard('admin')->user();
+        
         ActivityLog::create([
-            'admin_id' => Auth::guard('admin')->id(),
-            'action' => $action,
-            'description' => $description,
+            'causer_type' => $user ? get_class($user) : null,
+            'causer_id' => $user ? $user->id : null,
+            'description' => $action . ($description ? ': ' . $description : ''),
             'ip_address' => $request ? $request->ip() : null,
             'user_agent' => $request ? $request->userAgent() : null,
         ]);

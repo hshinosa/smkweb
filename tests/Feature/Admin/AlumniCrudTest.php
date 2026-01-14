@@ -61,7 +61,7 @@ class AlumniCrudTest extends TestCase
 
     public function test_can_create_alumni_with_image(): void
     {
-        Storage::fake('public');
+        // Storage::fake('public'); // Already called in setUp
 
         $file = \Illuminate\Http\UploadedFile::fake()->image('alumni.jpg');
         $data = [
@@ -87,7 +87,7 @@ class AlumniCrudTest extends TestCase
 
     public function test_can_update_alumni_image(): void
     {
-        Storage::fake('public');
+        // Storage::fake('public'); // Already called
 
         // Create with initial image
         $alumni = Alumni::factory()->create();
@@ -107,8 +107,13 @@ class AlumniCrudTest extends TestCase
             'is_published' => true,
         ];
 
-        $response = $this->put(route('admin.alumni.update', $alumni), $data);
+        // Debug: Check media before request
+        $alumni->refresh();
+        // Use POST with _method PUT for file uploads
+        $data['_method'] = 'PUT';
+        $response = $this->post(route('admin.alumni.update', $alumni), $data);
 
+        $response->assertSessionHasNoErrors();
         $response->assertRedirect();
         
         $alumni->refresh();
@@ -123,7 +128,7 @@ class AlumniCrudTest extends TestCase
 
     public function test_deleting_alumni_removes_image(): void
     {
-        Storage::fake('public');
+        // Storage::fake('public'); // Already called
 
         $file = \Illuminate\Http\UploadedFile::fake()->image('alumni.jpg');
         $alumni = Alumni::factory()->create();

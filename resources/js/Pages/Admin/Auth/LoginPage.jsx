@@ -13,7 +13,7 @@ export default function LoginPage() {
     const loginBgImage = '/images/hero-bg-sman1baleendah.jpeg'; // Default background image
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        username: '',
+        email: '',
         password: '',
         remember: false, // Opsional
     });
@@ -57,19 +57,19 @@ export default function LoginPage() {
 
                         <form onSubmit={submit} className="space-y-6">
                             <div>
-                                <InputLabel htmlFor="username" value="Nama Pengguna" />
+                                <InputLabel htmlFor="email" value="Alamat Email" />
                                 <TextInput
-                                    id="username"
-                                    type="text"
-                                    name="username"
-                                    value={data.username}
+                                    id="email"
+                                    type="email"
+                                    name="email"
+                                    value={data.email}
                                     className="mt-1 block w-full"
                                     autoComplete="username"
                                     isFocused={true}
-                                    onChange={(e) => setData('username', e.target.value)}
+                                    onChange={(e) => setData('email', e.target.value)}
                                     required
                                 />
-                                <InputError message={errors.username} className="mt-2" />
+                                <InputError message={errors.email} className="mt-2" />
                             </div>
 
                             <div>

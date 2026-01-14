@@ -105,5 +105,79 @@ class Post extends Model implements HasMedia
             ->singleFile() // Only one featured image
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
     }
+
+    // ============================================
+    // Full-Text Search Scopes (Phase 2 Performance)
+    // ============================================
+
+    /**
+     * Full-text search scope for PostgreSQL
+     * Uses Indonesian language configuration
+     */
+    public function scopeSearchFullText($query, string $searchTerm)
+    {
+        if (empty($searchTerm)) {
+            return $query;
+        }
+
+        return $query->whereRaw("
+            to_tsvector('indonesian', COALESCE(title, '') || ' ' || COALESCE(excerpt, '') || ' ' || COALESCE(content, ''))
+            @@ plainto_tsquery('indonesian', ?)
+        ", [$searchTerm]);
+    }
+
+    /**
+     * Search with ranking (most relevant first)
+     */
+    public function scopeSearchWithRanking($query, string $searchTerm)
+    {
+        if (empty($searchTerm)) {
+            return $query;
+        }
+
+        return $query->whereRaw("
+            to_tsvector('indonesian', COALESCE(title, '') || ' ' || COALESCE(excerpt, '') || ' ' || COALESCE(content, ''))
+            @@ plainto_tsquery('indonesian', ?)
+        ", [$searchTerm])
+        ->orderByRaw("
+            ts_rank(to_tsvector('indonesian', COALESCE(title, '') || ' ' || COALESCE(excerpt, '') || ' ' || COALESCE(content, '')),
+            plainto_tsquery('indonesian', ?)) DESC
+        ", [$searchTerm]);
+    }
+
+    /**
+     * Fallback search using LIKE (for databases without full-text support)
+     */
+    public function scopeSearchFallback($query, string $searchTerm)
+    {
+        if (empty($searchTerm)) {
+            return $query;
+        }
+
+        $search = '%' . strtolower($searchTerm) . '%';
+
+        return $query->where(function ($q) use ($search) {
+            $q->whereRaw('LOWER(title) LIKE ?', [$search])
+              ->orWhereRaw('LOWER(excerpt) LIKE ?', [$search])
+              ->orWhereRaw('LOWER(content) LIKE ?', [$search]);
+        });
+    }
+
+    /**
+     * Smart search that uses full-text if available, falls back to LIKE
+     */
+    public function scopeSmartSearch($query, string $searchTerm)
+    {
+        if (empty($searchTerm)) {
+            return $query;
+        }
+
+        // Try full-text search first, fall back to LIKE
+        try {
+            return $query->searchWithRanking($searchTerm);
+        } catch (\Exception $e) {
+            return $query->searchFallback($searchTerm);
+        }
+    }
 }
 

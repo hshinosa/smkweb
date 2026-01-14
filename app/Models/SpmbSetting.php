@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class SpmbSetting extends Model
+class SpmbSetting extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'section_key',
@@ -17,6 +20,21 @@ class SpmbSetting extends Model
     protected $casts = [
         'content' => 'array',
     ];
+
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('desktop')
+            ->width(1280)
+            ->format('webp')
+            ->quality(90)
+            ->nonQueued();
+
+        $this->addMediaConversion('mobile')
+            ->width(375)
+            ->format('webp')
+            ->quality(80)
+            ->nonQueued();
+    }
 
     // Define valid fields for each SPMB section
     public static function getSectionFields(): array
@@ -29,7 +47,6 @@ class SpmbSetting extends Model
                 'registration_year', 
                 'announcement_text',
                 'banner_image_url',
-                'brochure_url',
                 'whatsapp_number',
                 'video_guide_url'
             ],
@@ -50,8 +67,7 @@ class SpmbSetting extends Model
                 'is_registration_open' => false,
                 'registration_year' => '2025/2026',
                 'announcement_text' => 'Pendaftaran SPMB akan segera dibuka. Pantau terus website ini untuk informasi terbaru.',
-                'banner_image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
-                'brochure_url' => '#',
+                'banner_image_url' => '/images/hero-bg-sman1baleendah.jpeg',
                 'whatsapp_number' => '628123456789',
                 'video_guide_url' => '#',
             ],

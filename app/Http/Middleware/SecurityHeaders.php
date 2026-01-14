@@ -42,6 +42,10 @@ class SecurityHeaders
         $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
         $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
         $response->headers->set('Content-Security-Policy', implode('; ', $csp));
+        
+        // HSTS (HTTP Strict Transport Security)
+        // Max-age: 1 year (31536000 seconds)
+        $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
 
         return $response;
     }

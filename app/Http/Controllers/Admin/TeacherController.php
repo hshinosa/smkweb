@@ -35,7 +35,7 @@ class TeacherController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'subtitle' => 'required|string',
-            'image_file' => 'nullable|image|max:2048',
+            'image_file' => 'nullable|image|max:10240',
         ]);
 
         $settings = SiteSetting::firstOrNew(['section_key' => 'hero_teachers']);
@@ -45,11 +45,12 @@ class TeacherController extends Controller
         $content['subtitle'] = $validated['subtitle'];
 
         if ($request->hasFile('image_file')) {
-            if (isset($content['image']) && !str_starts_with($content['image'], '/images/')) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $content['image']));
+            $settings->clearMediaCollection('hero_bg');
+            $settings->addMediaFromRequest('image_file')->toMediaCollection('hero_bg');
+            $media = $settings->getMedia('hero_bg')->last();
+            if ($media) {
+                $content['image'] = '/storage/' . $media->id . '/' . $media->file_name;
             }
-            $path = $request->file('image_file')->store('hero', 'public');
-            $content['image'] = '/storage/' . $path;
         }
 
         $settings->content = $content;
@@ -67,7 +68,7 @@ class TeacherController extends Controller
             'type' => 'required|in:guru,staff',
             'position' => 'required|string|max:255',
             'department' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'nip' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
@@ -86,6 +87,12 @@ class TeacherController extends Controller
         if ($request->hasFile('image')) {
             $teacher->addMediaFromRequest('image')
                      ->toMediaCollection('photos');
+            
+            // Update image_url with proper media URL
+            $media = $teacher->getFirstMedia('photos');
+            if ($media) {
+                $teacher->update(['image_url' => $media->getUrl()]);
+            }
         }
 
         return redirect()->back()->with('success', 'Data Guru/Staff berhasil ditambahkan');
@@ -98,7 +105,7 @@ class TeacherController extends Controller
             'type' => 'required|in:guru,staff',
             'position' => 'required|string|max:255',
             'department' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'nip' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
@@ -121,6 +128,12 @@ class TeacherController extends Controller
             // Add new media
             $teacher->addMediaFromRequest('image')
                      ->toMediaCollection('photos');
+            
+            // Update image_url with proper media URL
+            $media = $teacher->getFirstMedia('photos');
+            if ($media) {
+                $teacher->update(['image_url' => $media->getUrl()]);
+            }
         }
 
         return redirect()->back()->with('success', 'Data Guru/Staff berhasil diperbarui');

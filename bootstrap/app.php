@@ -18,13 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\PerformanceOptimization::class,
         ]);
 
-        // Exclude API routes from CSRF protection
+        // Exclude API routes and health check from CSRF protection
         $middleware->validateCsrfTokens(except: [
             'api/*',
+            'health',
         ]);
 
         // Trust all proxies (Cloudflare, Nginx, etc.)
-        $middleware->trustProxies(at: '*');
+        $middleware->trustProxies(at: '*', headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR | \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

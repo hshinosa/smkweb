@@ -52,7 +52,7 @@ class AcademicCalendarController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'calendar_image' => 'required|file|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'calendar_image' => 'required|file|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
             'semester' => 'required|integer|in:1,2',
             'academic_year_start' => 'required|integer|min:2000|max:2100',
             'sort_order' => 'integer|min:0',
@@ -88,7 +88,7 @@ class AcademicCalendarController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'calendar_image' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'calendar_image' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
             'semester' => 'required|integer|in:1,2',
             'academic_year_start' => 'required|integer|min:2000|max:2100',
             'sort_order' => 'integer|min:0',

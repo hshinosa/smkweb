@@ -45,6 +45,16 @@ export default function AcademicCalendarPage({
         setShowImageModal(false);
     };
 
+    const getImageSrc = (cal) => {
+        if (!cal) return '';
+        // If media object exists (Spatie), use original_url
+        if (cal.image && cal.image.original_url) return cal.image.original_url;
+        // Legacy/Direct URL
+        if (cal.image_url) return cal.image_url;
+        // Fallback
+        return "/images/hero-bg-sman1baleendah.jpeg";
+    };
+
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
             <SEOHead 
@@ -67,7 +77,7 @@ export default function AcademicCalendarPage({
                 <div className="absolute inset-0 z-0">
                     {/* Static image for now - can be replaced with Media Library later */}
                     <img 
-                        src="/images/hero-bg-sman1-baleendah.jpeg" 
+                        src="/images/hero-bg-sman1baleendah.jpeg" 
                         alt="Background Kalender Akademik" 
                         className="w-full h-full object-cover"
                         loading="eager"
@@ -154,7 +164,7 @@ export default function AcademicCalendarPage({
                                                 Lihat Full Screen
                                             </button>
                                             <a 
-                                                href={selectedCalendar.calendar_image_url} 
+                                                href={getImageSrc(selectedCalendar)} 
                                                 download 
                                                 className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-all"
                                             >
@@ -183,8 +193,8 @@ export default function AcademicCalendarPage({
                                         onClick={() => openImageModal(selectedCalendar)}
                                     >
                                         <ResponsiveImage 
-                                            media={selectedCalendar.calendarImagesImage}
-                                            src={selectedCalendar.calendar_image_url} 
+                                            media={selectedCalendar.image}
+                                            src={getImageSrc(selectedCalendar)} 
                                             alt={selectedCalendar.title} 
                                             className="w-full h-full object-contain bg-gray-50 transform group-hover:scale-[1.02] transition-transform duration-700"
                                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 800px"
@@ -250,26 +260,28 @@ export default function AcademicCalendarPage({
             </section>
 
             {/* Full Image Modal */}
-            <Modal show={showImageModal} onClose={closeImageModal} maxWidth="6xl">
-                <div className="p-2 relative bg-black/90 min-h-[50vh] flex items-center justify-center rounded-2xl overflow-hidden">
+            <Modal show={showImageModal} onClose={closeImageModal} maxWidth="5xl">
+                <div className="relative flex flex-col bg-white">
                     <button
                         onClick={closeImageModal}
-                        className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-20"
+                        className="absolute top-4 right-4 p-2 bg-white/80 hover:bg-white backdrop-blur-sm rounded-full text-gray-800 shadow-sm transition-all z-20 border border-gray-100"
                         aria-label="Tutup"
                     >
-                        <X size={24} />
+                        <X size={20} />
                     </button>
                     
                     {selectedCalendar && (
-                        <div className="w-full h-full flex flex-col items-center">
-                            <img 
-                                src={selectedCalendar.calendar_image_url} 
-                                alt={selectedCalendar.title}
-                                className="max-w-full max-h-[85vh] object-contain rounded-lg"
-                            />
-                            <div className="mt-4 pb-4 px-6 text-center text-white/80">
-                                <p className="font-bold text-lg">{selectedCalendar.title}</p>
-                                <p className="text-sm text-white/60">{selectedCalendar.academic_year} - {selectedCalendar.semester_name}</p>
+                        <div className="w-full">
+                            <div className="bg-gray-100/50 p-4 md:p-8 flex items-center justify-center min-h-[400px]">
+                                <img 
+                                    src={getImageSrc(selectedCalendar)} 
+                                    alt={selectedCalendar.title}
+                                    className="max-w-full max-h-[75vh] object-contain shadow-xl rounded-lg bg-white"
+                                />
+                            </div>
+                            <div className="p-6 text-center border-t border-gray-100">
+                                <h3 className="font-bold text-xl text-gray-900 mb-1">{selectedCalendar.title}</h3>
+                                <p className="text-gray-500 font-medium">{selectedCalendar.academic_year} - {selectedCalendar.semester_name}</p>
                             </div>
                         </div>
                     )}

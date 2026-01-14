@@ -9,6 +9,7 @@ import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
+import toast from 'react-hot-toast';
 
 export default function Index({ settings }) {
     const { success } = usePage().props;
@@ -61,7 +62,9 @@ export default function Index({ settings }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('admin.ai-settings.update'));
+        post(route('admin.ai-settings.update'), {
+            onSuccess: () => toast.success('Pengaturan AI berhasil diperbarui'),
+        });
     };
 
     return (
@@ -73,17 +76,6 @@ export default function Index({ settings }) {
             setActiveTab={setActiveTab}
             onSave={handleSubmit}
         >
-            {success && (
-                <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                        </svg>
-                    </div>
-                    <p className="text-green-800 text-sm font-medium">{success}</p>
-                </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Primary AI Settings */}
                 {activeTab === 'primary' && (

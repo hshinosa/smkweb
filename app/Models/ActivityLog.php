@@ -10,15 +10,22 @@ class ActivityLog extends Model
     use HasFactory;
 
     protected $fillable = [
-        'admin_id',
-        'action',
         'description',
+        'details',
+        'causer_type',
+        'causer_id',
         'ip_address',
         'user_agent',
     ];
 
+    public function causer()
+    {
+        return $this->morphTo();
+    }
+    
+    // Alias for backward compatibility if needed, but better to use causer
     public function admin()
     {
-        return $this->belongsTo(Admin::class);
+        return $this->morphTo(__FUNCTION__, 'causer_type', 'causer_id');
     }
 }

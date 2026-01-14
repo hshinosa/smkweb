@@ -46,7 +46,7 @@ export default function AcademicCalendarContentPage({ contents, filters }) {
         });
         setEditingContent(content);
         setSelectedFile(null);
-        setPreviewUrl(content.calendar_image_url || '');
+        setPreviewUrl(content.calendar_imagesImage?.original_url || content.calendar_image_url || '');
         setShowModal(true);
     };
 
@@ -173,7 +173,7 @@ export default function AcademicCalendarContentPage({ contents, filters }) {
                                                 <div className="flex-shrink-0 h-12 w-12">
                                                     <img
                                                         className="h-12 w-12 rounded object-cover border"
-                                                        src={content.calendar_image_url}
+                                                        src={content.calendar_imagesImage?.original_url || content.calendar_image_url}
                                                         alt={content.title}
                                                         onError={(e) => {
                                                             e.target.src = 'https://placehold.co/48x48/E5E7EB/9CA3AF?text=IMG';
@@ -214,6 +214,7 @@ export default function AcademicCalendarContentPage({ contents, filters }) {
                                         <td className="px-3 py-4 text-sm font-medium">
                                             <div className="flex items-center gap-1">
                                                 <button
+                                                    type="button"
                                                     onClick={() => openEditModal(content)}
                                                     className="text-blue-600 hover:text-blue-900 p-1 rounded"
                                                     title="Edit"
@@ -221,6 +222,7 @@ export default function AcademicCalendarContentPage({ contents, filters }) {
                                                     <Edit2 size={14} />
                                                 </button>
                                                 <button
+                                                    type="button"
                                                     onClick={() => handleDelete(content)}
                                                     className="text-red-600 hover:text-red-900 p-1 rounded"
                                                     title="Hapus"

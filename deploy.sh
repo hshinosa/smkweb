@@ -116,15 +116,17 @@ print_status "Building and starting Docker containers..."
 ssh $VPS_HOST "
     cd $REMOTE_PATH
 
-    # Stop existing containers
+    # Drop and remove all existing docker resources as requested
+    echo 'Dropping all existing Docker resources...'
+    docker stop \$(docker ps -aq) 2>/dev/null || true
+    docker rm \$(docker ps -aq) 2>/dev/null || true
+    docker network prune -f 2>/dev/null || true
+    docker volume prune -f 2>/dev/null || true
+    # Not removing images yet to save time, but removing orphans
     docker-compose down --remove-orphans || true
 
-    # Remove app_public volume to ensure fresh build assets
-    echo 'Removing old app_public volume...'
-    docker volume ls -q | grep app_public | xargs -r docker volume rm 2>/dev/null || true
-
-    # Build fresh images (no cache to ensure latest code)
-    echo 'Building Docker images...'
+    # Build fresh images on VPS
+    echo 'Building Docker images on VPS...'
     docker-compose build --no-cache
 
     # Start containers

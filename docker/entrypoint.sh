@@ -23,10 +23,10 @@ fi
 
 # Clear and cache config in production
 if [ "$APP_ENV" = "production" ]; then
-    echo "==> Caching configuration..."
-    php artisan config:cache 2>/dev/null || true
-    php artisan route:cache 2>/dev/null || true
-    php artisan view:cache 2>/dev/null || true
+    echo "==> Cleaning configuration cache..."
+    php artisan config:clear 2>/dev/null || true
+    php artisan route:clear 2>/dev/null || true
+    php artisan view:clear 2>/dev/null || true
 fi
 
 # Run migrations if needed (optional - uncomment if you want auto-migration)
@@ -35,5 +35,10 @@ fi
 
 echo "==> Application ready!"
 
-# Execute the main command
-exec "$@"
+# Execute the main command as www-data if running as root
+if [ "$(id -u)" = "0" ]; then
+    echo "==> Switching to www-data..."
+    exec su-exec www-data "$@"
+else
+    exec "$@"
+fi

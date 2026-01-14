@@ -6,6 +6,14 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import ChatWidget from '@/Components/ChatWidget';
 import { Toaster } from 'react-hot-toast';
+import { route as ziggyRoute } from 'ziggy-js';
+
+// Create a route function that uses Ziggy config from Laravel's @routes directive
+const route = (name, params, absolute) => {
+    return ziggyRoute(name, params, absolute, window.Ziggy);
+};
+
+window.route = route;
 
 createInertiaApp({
     resolve: (name) =>

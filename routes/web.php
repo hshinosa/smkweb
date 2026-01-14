@@ -13,30 +13,68 @@ use App\Models\ProgramStudiSetting;
 use App\Models\SpmbSetting;
 use App\Models\Program;
 use App\Models\Gallery;
+use App\Services\ImageService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    $settings = LandingPageSetting::all()->keyBy('section_key');
+    $imageService = new ImageService();
+    $settings = LandingPageSetting::with('media')->get()->keyBy('section_key');
+    
     // Filter hanya Program Studi untuk Landing Page
-    $featuredPrograms = Program::where('is_featured', true)
+    $featuredProgramsQuery = Program::where('is_featured', true)
         ->where('category', 'Program Studi')
         ->orderBy('sort_order')
+        ->with('media') // Load media relationship
         ->get();
+
+    // Transform programs to include responsive image data
+    $featuredPrograms = $featuredProgramsQuery->map(function ($program) use ($imageService) {
+        $data = $program->toArray();
+        $media = $imageService->getFirstMediaData($program, 'program_image');
+        if ($media) {
+            $data['image'] = $media; // Inject media object
+        }
+        return $data;
+    });
     $featuredGalleries = Gallery::where('is_featured', true)->latest()->get();
 
     // Helper untuk mendapatkan konten atau default
-    $getContentOrDefault = function ($key, $defaults) use ($settings) {
-        $content = $settings->get($key)?->content;
+    $getContentOrDefault = function ($key, $defaults) use ($settings, $imageService) {
+        $dbRow = $settings->get($key);
+        $content = $dbRow?->content;
         
         // Handle JSON string or array
+        $finalContent = $defaults;
         if (is_string($content)) {
             $decoded = json_decode($content, true);
-            return is_array($decoded) ? $decoded : $defaults;
+            $finalContent = is_array($decoded) ? $decoded : $defaults;
+        } elseif (is_array($content)) {
+            $finalContent = $content;
+        }
+
+        // Inject Media Library Data (WebP conversions)
+        if ($dbRow) {
+            if ($key === 'hero') {
+                $bgMedia = $imageService->getFirstMediaData($dbRow, 'hero_background');
+                if ($bgMedia) $finalContent['backgroundImage'] = $bgMedia;
+
+                $studentMedia = $imageService->getFirstMediaData($dbRow, 'hero_student');
+                if ($studentMedia) $finalContent['studentImage'] = $studentMedia;
+            } elseif ($key === 'about_lp') {
+                $aboutMedia = $imageService->getFirstMediaData($dbRow, 'about_image');
+                if ($aboutMedia) $finalContent['aboutImage'] = $aboutMedia; // Note: Frontend expects 'image' or specific prop? Check prop mapping.
+                // Actually frontend might expect just url string from content if media object not present, 
+                // but ResponsiveImage component checks for 'media' prop usually passed as separate prop or nested.
+                // Let's stick to injecting it into content array, LandingPage.jsx destructures it.
+            } elseif ($key === 'kepsek_welcome_lp') {
+                $kepsekMedia = $imageService->getFirstMediaData($dbRow, 'kepsek_image');
+                if ($kepsekMedia) $finalContent['kepsekImage'] = $kepsekMedia;
+            }
         }
         
-        return $content ?? $defaults;
+        return $finalContent;
     };
 
     // Definisikan default di sini jika diperlukan (atau bisa juga di controller jika lebih kompleks)
@@ -44,7 +82,7 @@ Route::get('/', function () {
         'title_line1' => 'Selamat Datang di',
         'title_line2' => 'SMA Negeri 1 Baleendah',
         'hero_text' => 'Sekolah penggerak prestasi dan inovasi masa depan. Kami berkomitmen mencetak lulusan yang cerdas, berakhlak mulia, dan siap bersaing di era global.',
-        'background_image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
+        'background_image_url' => '/images/hero-bg-sman1baleendah.jpeg',
         'student_image_url' => '/images/anak-sma.png',
         'stats' => [
             ['label' => 'Akreditasi', 'value' => 'A', 'icon' => 'Trophy'],
@@ -55,7 +93,7 @@ Route::get('/', function () {
     $defaultAbout = [
         'title' => 'Tentang Kami',
         'description_html' => '<p>SMAN 1 Baleendah berdiri sejak tahun 1975 dan telah menjadi salah satu sekolah rujukan di Jawa Barat. Dengan visi menjadi sekolah unggul dalam prestasi dan berwawasan lingkungan, kami terus berinovasi dalam pembelajaran berbasis teknologi dan penguatan karakter.</p><p>Kami percaya bahwa setiap siswa memiliki potensi unik yang perlu dikembangkan melalui bimbingan yang tepat dan fasilitas yang memadai.</p>',
-        'image_url' => '/images/hero-bg-sman1-baleendah.jpeg',
+        'image_url' => '/images/hero-bg-sman1baleendah.jpeg',
     ];
     $defaultKepsek = [
         'title' => 'Sambutan Kepala Sekolah',
@@ -83,7 +121,30 @@ Route::get('/', function () {
         ->where('published_at', '<=', now())
         ->latest('published_at')
         ->take(3)
-        ->get();
+        ->with('media')
+        ->get()
+        ->map(function ($post) use ($imageService) {
+            $data = $post->toArray();
+            $media = $imageService->getFirstMediaData($post, 'featured');
+            if ($media) {
+                $data['featuredImage'] = $media;
+                $data['featured_image'] = $media['original_url'];
+            }
+            return $data;
+        });
+
+    // Gallery Images for Carousel (WebP preferred)
+    $galleryImages = Gallery::where('type', 'photo')
+        ->latest()
+        ->take(12)
+        ->with('media')
+        ->get()
+        ->map(function ($gallery) use ($imageService) {
+            $media = $imageService->getFirstMediaData($gallery, 'images');
+            return $media ? ($media['conversions']['webp'] ?? $media['original_url']) : $gallery->url;
+        })
+        ->values()
+        ->toArray();
 
     return Inertia::render('LandingPage', [
         // auth dan props lain yang sudah ada
@@ -91,7 +152,7 @@ Route::get('/', function () {
         'aboutLpContent' => $getContentOrDefault('about_lp', $defaultAbout),
         'kepsekWelcomeLpContent' => $getContentOrDefault('kepsek_welcome_lp', $defaultKepsek),
         'programsLpContent' => array_merge($getContentOrDefault('programs_lp', $defaultPrograms), ['items' => $featuredPrograms]),
-        'galleryLpContent' => array_merge($getContentOrDefault('gallery_lp', $defaultGallery), ['images' => Gallery::where('type', 'photo')->latest()->pluck('url')->toArray()]),
+        'galleryLpContent' => array_merge($getContentOrDefault('gallery_lp', $defaultGallery), ['images' => $galleryImages]),
         'ctaLpContent' => $getContentOrDefault('cta_lp', $defaultCta),
         'latestPosts' => $latestPosts,
         // ... props lain yang sudah Anda kirim ke LandingPage.jsx
@@ -100,12 +161,24 @@ Route::get('/', function () {
 
 // Tambahkan rute baru untuk Informasi SPMB
 Route::get('/informasi-spmb', function () {
-    $settings = SpmbSetting::all()->keyBy('section_key');
+    $imageService = new \App\Services\ImageService();
+    $settings = \App\Models\SpmbSetting::with('media')->get()->keyBy('section_key');
+    
     $spmbData = [];
-    foreach (array_keys(SpmbSetting::getSectionFields()) as $key) {
+    foreach (array_keys(\App\Models\SpmbSetting::getSectionFields()) as $key) {
         $dbRow = $settings->get($key);
         $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
-        $spmbData[$key] = SpmbSetting::getContent($key, $dbContent);
+        $content = \App\Models\SpmbSetting::getContent($key, $dbContent);
+        
+        // Inject Media
+        if ($dbRow) {
+            if ($key === 'pengaturan_umum') {
+                $media = $imageService->getFirstMediaData($dbRow, 'banner_image');
+                if ($media) $content['banner_image'] = $media;
+            }
+        }
+        
+        $spmbData[$key] = $content;
     }
     return Inertia::render('InformasiSpmbPage', [
         'spmbData' => $spmbData
@@ -113,10 +186,46 @@ Route::get('/informasi-spmb', function () {
 })->name('informasi.spmb'); // Opsional: beri nama rute
 
 Route::get('/alumni', function () {
+    $imageService = new \App\Services\ImageService();
     $alumnis = \App\Models\Alumni::where('is_published', true)
         ->orderBy('sort_order')
         ->latest()
-        ->get();
+        ->with('media')
+        ->get()
+        ->map(function ($alumni) use ($imageService) {
+            $data = $alumni->toArray();
+            
+            // Get avatar/profile image
+            $avatarMedia = $imageService->getFirstMediaData($alumni, 'avatars');
+            if ($avatarMedia) {
+                $data['avatarsImage'] = $avatarMedia;
+                $data['image_url'] = $avatarMedia['original_url'];
+            }
+            
+            // Get video media for uploaded videos
+            if ($alumni->content_type === 'video' && $alumni->video_source === 'upload') {
+                $videoMedia = $alumni->getFirstMedia('videos');
+                if ($videoMedia) {
+                    $data['video_url'] = $videoMedia->getUrl();
+                    $data['videoMedia'] = [
+                        'id' => $videoMedia->id,
+                        'original_url' => $videoMedia->getUrl(),
+                        'mime_type' => $videoMedia->mime_type,
+                        'file_name' => $videoMedia->file_name,
+                        'size' => $videoMedia->size,
+                    ];
+                }
+            }
+            
+            // Get video thumbnail
+            $thumbnailMedia = $imageService->getFirstMediaData($alumni, 'video_thumbnails');
+            if ($thumbnailMedia) {
+                $data['video_thumbnail_url'] = $thumbnailMedia['original_url'];
+                $data['videoThumbnailImage'] = $thumbnailMedia;
+            }
+            
+            return $data;
+        });
     
     return Inertia::render('AlumniPage', [
         'alumnis' => $alumnis
@@ -124,7 +233,8 @@ Route::get('/alumni', function () {
 })->name('alumni');
 
 Route::get('/profil-sekolah', function () {
-    $settings = \App\Models\SchoolProfileSetting::all()->keyBy('section_key');
+    $imageService = new \App\Services\ImageService();
+    $settings = \App\Models\SchoolProfileSetting::with('media')->get()->keyBy('section_key');
     
     // Helper untuk mendapatkan konten dari settings
     $getSettingContent = function($key) use ($settings) {
@@ -137,6 +247,13 @@ Route::get('/profil-sekolah', function () {
     };
     
     $hero = \App\Models\SchoolProfileSetting::getContent('hero_history', $getSettingContent('hero_history'));
+    // Inject Media
+    $heroRow = $settings->get('hero_history');
+    if ($heroRow) {
+        $bgMedia = $imageService->getFirstMediaData($heroRow, 'hero_history_bg');
+        if ($bgMedia) $hero['backgroundImage'] = $bgMedia;
+    }
+
     $history = \App\Models\SchoolProfileSetting::getContent('history', $getSettingContent('history'));
     $facilities = \App\Models\SchoolProfileSetting::getContent('facilities', $getSettingContent('facilities'));
     
@@ -148,7 +265,8 @@ Route::get('/profil-sekolah', function () {
 })->name('profil.sekolah');
 
 Route::get('/visi-misi', function () {
-    $settings = \App\Models\SchoolProfileSetting::all()->keyBy('section_key');
+    $imageService = new \App\Services\ImageService();
+    $settings = \App\Models\SchoolProfileSetting::with('media')->get()->keyBy('section_key');
     
     $getSettingContent = function($key) use ($settings) {
         $content = $settings->get($key)?->content;
@@ -160,6 +278,14 @@ Route::get('/visi-misi', function () {
     };
     
     $hero = \App\Models\SchoolProfileSetting::getContent('hero_vision_mission', $getSettingContent('hero_vision_mission'));
+    
+    // Inject Media
+    $heroRow = $settings->get('hero_vision_mission');
+    if ($heroRow) {
+        $bgMedia = $imageService->getFirstMediaData($heroRow, 'hero_vision_mission_bg');
+        if ($bgMedia) $hero['backgroundImage'] = $bgMedia;
+    }
+
     $visionMission = \App\Models\SchoolProfileSetting::getContent('vision_mission', $getSettingContent('vision_mission'));
     
     return Inertia::render('VisiMisiPage', [
@@ -169,7 +295,8 @@ Route::get('/visi-misi', function () {
 })->name('visi.misi');
 
 Route::get('/struktur-organisasi', function () {
-    $settings = \App\Models\SchoolProfileSetting::all()->keyBy('section_key');
+    $imageService = new \App\Services\ImageService();
+    $settings = \App\Models\SchoolProfileSetting::with('media')->get()->keyBy('section_key');
     
     $getSettingContent = function($key) use ($settings) {
         $content = $settings->get($key)?->content;
@@ -181,7 +308,20 @@ Route::get('/struktur-organisasi', function () {
     };
     
     $hero = \App\Models\SchoolProfileSetting::getContent('hero_organization', $getSettingContent('hero_organization'));
+    // Inject Media Hero
+    $heroRow = $settings->get('hero_organization');
+    if ($heroRow) {
+        $bgMedia = $imageService->getFirstMediaData($heroRow, 'hero_organization_bg');
+        if ($bgMedia) $hero['backgroundImage'] = $bgMedia;
+    }
+
     $organization = \App\Models\SchoolProfileSetting::getContent('organization', $getSettingContent('organization'));
+    // Inject Media Chart
+    $orgRow = $settings->get('organization');
+    if ($orgRow) {
+        $chartMedia = $imageService->getFirstMediaData($orgRow, 'organization_chart');
+        if ($chartMedia) $organization['chartImage'] = $chartMedia;
+    }
     
     return Inertia::render('StrukturOrganisasiPage', [
         'hero' => $hero,
@@ -190,8 +330,44 @@ Route::get('/struktur-organisasi', function () {
 })->name('struktur.organisasi');
 
 Route::get('/program', function () {
+    $imageService = new \App\Services\ImageService();
+    
+    // Ambil semua program KECUALI Program Studi
+    $programsQuery = Program::where('category', '!=', 'Program Studi')
+        ->orderBy('sort_order')
+        ->with('media')
+        ->get();
+
+    // Transform programs to include responsive image data
+    $programs = $programsQuery->map(function ($program) use ($imageService) {
+        $data = $program->toArray();
+        $media = $imageService->getFirstMediaData($program, 'program_image');
+        if ($media) {
+            $data['image'] = $media; // Inject media object
+        }
+        return $data;
+    });
+
+    // Hero Program Settings
+    $heroSetting = \App\Models\SiteSetting::where('section_key', 'hero_program')->first();
+    $heroData = [];
+    
+    if ($heroSetting) {
+        $content = $heroSetting->content;
+        if (is_string($content)) {
+            $heroData = json_decode($content, true) ?? [];
+        } else {
+            $heroData = $content ?? [];
+        }
+        
+        // Inject Media
+        $bgMedia = $imageService->getFirstMediaData($heroSetting, 'hero_program_bg');
+        if ($bgMedia) $heroData['backgroundImage'] = $bgMedia;
+    }
+
     return Inertia::render('ProgramSekolahPage', [
-        'programs' => Program::orderBy('sort_order')->get()
+        'programs' => $programs,
+        'heroSettings' => $heroData
     ]);
 })->name('program.sekolah');
 
@@ -204,14 +380,50 @@ Route::get('/login', function () {
 
 // Route untuk halaman akademik baru
 Route::get('/akademik/kurikulum', function () {
-    $programs = Program::where('category', 'Program Studi')->orderBy('sort_order')->get();
-    $settings = \App\Models\CurriculumSetting::all()->keyBy('section_key');
+    $imageService = new \App\Services\ImageService();
+    
+    // Programs with Media
+    $programs = Program::where('category', 'Program Studi')
+        ->orderBy('sort_order')
+        ->with('media')
+        ->get()
+        ->map(function ($program) use ($imageService) {
+            $data = $program->toArray();
+            $media = $imageService->getFirstMediaData($program, 'program_image');
+            if ($media) $data['image'] = $media;
+            return $data;
+        });
+
+    $settings = \App\Models\CurriculumSetting::with('media')->get()->keyBy('section_key');
     
     $curriculumData = [];
     foreach (array_keys(\App\Models\CurriculumSetting::getSectionFields()) as $key) {
         $dbRow = $settings->get($key);
         $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
-        $curriculumData[$key] = \App\Models\CurriculumSetting::getContent($key, $dbContent);
+        $content = \App\Models\CurriculumSetting::getContent($key, $dbContent);
+        
+        // Inject Media Data
+        if ($dbRow) {
+            if ($key === 'hero') {
+                 $bgMedia = $imageService->getFirstMediaData($dbRow, 'hero_bg');
+                 if ($bgMedia) $content['backgroundImage'] = $bgMedia;
+            }
+            if ($key === 'fase_e') {
+                 $media = $imageService->getFirstMediaData($dbRow, 'fase_e_image');
+                 // Only override if media exists (otherwise use default string)
+                 if ($media) {
+                     $content['image'] = $media; 
+                 }
+            }
+            if ($key === 'fase_f') {
+                 $media = $imageService->getFirstMediaData($dbRow, 'fase_f_image');
+                 if ($media) {
+                     $content['image'] = $media;
+                 }
+            }
+        }
+        
+        $curriculumData[$key] = $content;
     }
 
     return Inertia::render('KurikulumPage', [
@@ -221,20 +433,77 @@ Route::get('/akademik/kurikulum', function () {
 })->name('akademik.kurikulum');
 
 Route::get('/akademik/ekstrakurikuler', function () {
-    $extracurriculars = \App\Models\Extracurricular::where('is_active', true)->orderBy('sort_order')->get();
+    $imageService = new \App\Services\ImageService();
+    $extracurriculars = \App\Models\Extracurricular::where('is_active', true)
+        ->orderBy('sort_order')
+        ->with('media')
+        ->get()
+        ->map(function ($ekskul) use ($imageService) {
+            $data = $ekskul->toArray();
+            $media = $imageService->getFirstMediaData($ekskul, 'images');
+            if ($media) {
+                $data['image_url'] = $media['original_url']; // Use media URL
+                // We could also inject 'media' object if frontend supports it
+            }
+            return $data;
+        });
+
     return Inertia::render('EkstrakurikulerPage', [
         'extracurriculars' => $extracurriculars
     ]);
 })->name('akademik.ekstrakurikuler');
 
+Route::get('/akademik/kalender-akademik', function () {
+    $imageService = new \App\Services\ImageService();
+    $calendars = \App\Models\AcademicCalendarContent::where('is_active', true)
+        ->orderBy('academic_year_start', 'desc')
+        ->orderBy('semester', 'asc')
+        ->orderBy('sort_order', 'asc')
+        ->with('media')
+        ->get()
+        ->map(function ($cal) use ($imageService) {
+            $data = $cal->toArray();
+            $media = $imageService->getFirstMediaData($cal, 'calendar_images');
+            if ($media) {
+                $data['image'] = $media;
+            } elseif ($cal->calendar_image_url) {
+                $data['image_url'] = $cal->calendar_image_url;
+            }
+            return $data;
+        });
+
+    return Inertia::render('AcademicCalendarPage', [
+        'calendars' => $calendars
+    ]);
+})->name('akademik.kalender');
+
 // Helper untuk mendapatkan data program studi
 $getProgramData = function ($programName) {
-    $settings = ProgramStudiSetting::where('program_name', $programName)->get()->keyBy('section_key');
+    $imageService = new \App\Services\ImageService();
+    $settings = ProgramStudiSetting::where('program_name', $programName)->with('media')->get()->keyBy('section_key');
     $pageData = [];
     foreach (array_keys(ProgramStudiSetting::getSectionFields()) as $key) {
         $dbRow = $settings->get($key);
         $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
-        $pageData[$key] = ProgramStudiSetting::getContent($key, $dbContent);
+        $content = ProgramStudiSetting::getContent($key, $dbContent);
+        
+        // Inject Media
+        if ($dbRow) {
+            if ($key === 'hero') {
+                $media = $imageService->getFirstMediaData($dbRow, 'hero_bg');
+                if ($media) $content['background_image'] = $media;
+            }
+            if ($key === 'facilities') {
+                $media = $imageService->getFirstMediaData($dbRow, 'facilities_main_image');
+                if ($media) $content['main_image'] = $media;
+            }
+            if ($key === 'alumni_spotlight') {
+                $media = $imageService->getFirstMediaData($dbRow, 'alumni_image');
+                if ($media) $content['image'] = $media;
+            }
+        }
+        
+        $pageData[$key] = $content;
     }
     return $pageData;
 };
@@ -260,16 +529,33 @@ Route::get('/akademik/program-studi/bahasa', function () use ($getProgramData) {
 
 // Route untuk halaman baru
 Route::get('/berita-pengumuman', function () {
-    $posts = \App\Models\Post::with('author')
+    $imageService = new \App\Services\ImageService();
+    
+    $transformPosts = function ($posts) use ($imageService) {
+        return $posts->map(function ($post) use ($imageService) {
+            $data = $post->toArray();
+            $media = $imageService->getFirstMediaData($post, 'featured');
+            if ($media) {
+                $data['image'] = $media;
+                $data['featured_image'] = $media['original_url'];
+            }
+            return $data;
+        });
+    };
+
+    $posts = \App\Models\Post::with(['author', 'media'])
         ->where('status', 'published')
         ->where('published_at', '<=', now())
         ->latest('published_at')
         ->get();
+    $posts = $transformPosts($posts);
 
-    $popularPosts = \App\Models\Post::where('status', 'published')
+    $popularPosts = \App\Models\Post::with(['author', 'media'])
+        ->where('status', 'published')
         ->orderBy('views_count', 'desc')
         ->take(5)
         ->get();
+    $popularPosts = $transformPosts($popularPosts);
 
     return Inertia::render('BeritaPengumumanPage', [
         'posts' => $posts,
@@ -278,18 +564,38 @@ Route::get('/berita-pengumuman', function () {
 })->name('berita.pengumuman');
 
 Route::get('/berita/{slug}', function ($slug) {
-    $post = \App\Models\Post::with('author')->where('slug', $slug)->firstOrFail();
+    $imageService = new \App\Services\ImageService();
+
+    $post = \App\Models\Post::with(['author', 'media'])->where('slug', $slug)->firstOrFail();
     $post->increment('views_count');
+    
+    // Transform single post to include media
+    $postData = $post->toArray();
+    $media = $imageService->getFirstMediaData($post, 'featured');
+    if ($media) {
+        $postData['featuredImage'] = $media;
+        $postData['featured_image'] = $media['original_url'];
+    }
     
     $relatedPosts = \App\Models\Post::where('id', '!=', $post->id)
         ->where('category', $post->category)
         ->where('status', 'published')
         ->latest('published_at')
         ->take(3)
-        ->get();
+        ->with(['author', 'media'])
+        ->get()
+        ->map(function ($p) use ($imageService) {
+            $d = $p->toArray();
+            $m = $imageService->getFirstMediaData($p, 'featured');
+            if ($m) {
+                $d['featuredImage'] = $m;
+                $d['featured_image'] = $m['original_url'];
+            }
+            return $d;
+        });
 
     return Inertia::render('BeritaDetailPage', [
-        'post' => $post,
+        'post' => $postData,
         'relatedPosts' => $relatedPosts
     ]);
 })->name('berita.detail');
@@ -305,12 +611,21 @@ Route::get('/kontak', function () {
 })->name('kontak');
 
 Route::post('/kontak', [\App\Http\Controllers\ContactController::class, 'store'])
-    ->middleware('throttle:5,1')
+    ->middleware('throttle:3,1')
     ->name('kontak.store');
 
 // Route untuk galeri
 Route::get('/galeri', function () {
-    $galleries = Gallery::latest()->get();
+    $imageService = new \App\Services\ImageService();
+    $galleries = Gallery::with('media')->latest()->get()->map(function ($gallery) use ($imageService) {
+        $data = $gallery->toArray();
+        $media = $imageService->getFirstMediaData($gallery, 'images');
+        if ($media) {
+            $data['image'] = $media;
+        }
+        return $data;
+    });
+    
     return Inertia::render('GaleriPage', [
         'galleries' => $galleries
     ]);
@@ -318,7 +633,24 @@ Route::get('/galeri', function () {
 
 // Route untuk guru & staff
 Route::get('/guru-staff', function () {
-    $teachers = \App\Models\Teacher::where('is_active', true)->orderBy('sort_order')->get();
+    $imageService = new \App\Services\ImageService();
+    $teachers = \App\Models\Teacher::where('is_active', true)
+        ->orderBy('sort_order')
+        ->with('media')
+        ->get()
+        ->map(function ($teacher) use ($imageService) {
+            $data = $teacher->toArray();
+            
+            // Get photo from media library
+            $photoMedia = $imageService->getFirstMediaData($teacher, 'photos');
+            if ($photoMedia) {
+                $data['photosImage'] = $photoMedia;
+                $data['image_url'] = $photoMedia['original_url'];
+            }
+            
+            return $data;
+        });
+    
     return Inertia::render('GuruStaffPage', [
         'teachers' => $teachers
     ]);
@@ -342,7 +674,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Rute untuk memproses login
     Route::post('/login', [AdminLoginController::class, 'store'])
-        ->middleware(['guest:admin', 'throttle:10,1'])
+        ->middleware(['guest:admin', 'throttle:5,1'])
         ->name('login.attempt');
 
     // Rute untuk logout (harus sudah login sebagai admin)
@@ -388,7 +720,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/teachers/update-settings', [\App\Http\Controllers\Admin\TeacherController::class, 'updateSettings'])->name('teachers.update_settings');
         Route::resource('teachers', \App\Http\Controllers\Admin\TeacherController::class);
         Route::resource('posts', \App\Http\Controllers\Admin\PostController::class);
-        Route::resource('alumni', \App\Http\Controllers\Admin\AlumniController::class);
+        Route::resource('alumni', \App\Http\Controllers\Admin\AlumniController::class)
+             ->parameters(['alumni' => 'alumni']);
         Route::post('/faqs/reorder', [\App\Http\Controllers\Admin\FaqController::class, 'reorder'])->name('faqs.reorder');
         Route::resource('faqs', \App\Http\Controllers\Admin\FaqController::class);
         Route::get('/school-profile', [\App\Http\Controllers\Admin\SchoolProfileController::class, 'index'])->name('school-profile.index');
@@ -419,7 +752,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 // --- API ROUTES FOR CHATBOT ---
 Route::prefix('api')->name('api.')->group(function () {
     Route::post('/chat/send', [\App\Http\Controllers\Api\ChatController::class, 'sendMessage'])
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:20,1')
         ->name('chat.send');
     
     Route::get('/chat/history', [\App\Http\Controllers\Api\ChatController::class, 'getHistory'])
@@ -431,3 +764,8 @@ Route::prefix('api')->name('api.')->group(function () {
 Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
 Route::get('/robots.txt', [\App\Http\Controllers\SitemapController::class, 'robots'])->name('robots');
 // --- AKHIR SEO ROUTES ---
+
+// --- HEALTH CHECK ROUTE ---
+// Health check is already excluded from CSRF in bootstrap/app.php via except patterns
+Route::get('/health', [\App\Http\Controllers\HealthController::class, 'index'])->name('health');
+// --- AKHIR HEALTH CHECK ROUTE ---

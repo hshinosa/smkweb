@@ -1,5 +1,3 @@
-// FILE: resources/js/Pages/StrukturOrganisasiPage.jsx
-
 import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 
@@ -17,17 +15,15 @@ import { usePage } from '@inertiajs/react';
 
 export default function StrukturOrganisasiPage({ auth, organization, hero }) {
     const { siteSettings } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
     const navigationData = getNavigationData(siteSettings);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     
-    // Helper to format image path correctly
-    const formatImagePath = (path) => {
-        if (!path) return null;
-        if (path.startsWith('http') || path.startsWith('/')) return path;
-        return `/storage/${path}`;
-    };
-
-    const imagePath = formatImagePath(organization?.image_url) || '/images/struktur-organisasi-sman1-baleendah.jpg';
+    const chartMedia = organization?.chartImage;
+    const chartFallback = organization?.image_url || '/images/struktur-organisasi-sman1-baleendah.jpg';
+    
+    // For modal, prefer original high-res URL from Spatie if available
+    const modalImageSrc = chartMedia?.original_url || chartFallback;
 
     const openImageModal = () => {
         setIsImageModalOpen(true);
@@ -39,6 +35,17 @@ export default function StrukturOrganisasiPage({ auth, organization, hero }) {
 
     const renderHighlightedTitle = (title) => {
         if (!title) return null;
+        
+        // Check for specific phrase "SMAN 1 Baleendah"
+        if (title.includes('SMAN 1 Baleendah')) {
+            const parts = title.split('SMAN 1 Baleendah');
+            return (
+                <>
+                    {parts[0]}<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">SMAN 1 Baleendah</span>{parts[1]}
+                </>
+            );
+        }
+
         const words = title.split(' ');
         if (words.length <= 1) return title;
         const lastWord = words.pop();
@@ -52,10 +59,10 @@ export default function StrukturOrganisasiPage({ auth, organization, hero }) {
     return (
         <div className="bg-white font-sans text-gray-800">
             <SEOHead 
-                title={`${hero?.title || 'Struktur Organisasi'} - SMAN 1 Baleendah`}
+                title={`${hero?.title || 'Struktur Organisasi'} - ${siteName}`}
                 description="Struktur organisasi dan manajemen SMAN 1 Baleendah. Kepala sekolah, wakil kepala, koordinator, dan tim manajemen sekolah."
                 keywords="struktur organisasi, manajemen sekolah, kepala sekolah, organisasi sekolah, SMAN 1 Baleendah"
-                image="/images/struktur-organisasi.jpg"
+                image={modalImageSrc}
             />
 
             <Navbar
@@ -67,20 +74,20 @@ export default function StrukturOrganisasiPage({ auth, organization, hero }) {
 
             {/* SECTION A: HERO BANNER */}
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
-                {/* Background Image */}
+                {/* Background Image */}\
                 <div className="absolute inset-0 z-0">
                     {hero?.backgroundImage ? (
-                        <HeroImage media={hero.backgroundImage} alt="Background Struktur Organisasi" />
+                        <HeroImage media={hero.backgroundImage} alt={`Gedung ${siteName}`} />
                     ) : (
                         <HeroImage 
-                            src={formatImagePath(hero?.image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
-                            alt="Background Struktur Organisasi" 
+                            src={hero?.image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            alt={`Gedung ${siteName}`} 
                         />
                     )}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 
-                {/* Content */}
+                {/* Content */}\
                 <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
                     <h1 className={`${TYPOGRAPHY.heroTitle} mb-4 drop-shadow-lg`}>
                         {renderHighlightedTitle(hero?.title || 'Struktur Organisasi')}
@@ -92,21 +99,14 @@ export default function StrukturOrganisasiPage({ auth, organization, hero }) {
             <section className="py-20 bg-secondary">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl max-w-6xl mx-auto border border-gray-100">
-                        {organization?.backgroundImage ? (
+                        <div onClick={openImageModal} className="cursor-pointer group">
                             <ContentImage
-                                media={organization.backgroundImage}
+                                src={chartFallback}
+                                media={chartMedia}
                                 alt="Bagan Struktur Organisasi SMA Negeri 1 Baleendah - Klik untuk memperbesar"
-                                className="w-full h-auto rounded-xl border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01]"
-                                onClick={openImageModal}
+                                className="w-full h-auto rounded-xl border border-gray-100 transition-all duration-300 transform group-hover:scale-[1.01] group-hover:shadow-lg"
                             />
-                        ) : (
-                            <img
-                                src={imagePath}
-                                alt="Bagan Struktur Organisasi SMA Negeri 1 Baleendah - Klik untuk memperbesar"
-                                className="w-full h-auto rounded-xl border border-gray-100 cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01]"
-                                onClick={openImageModal}
-                            />
-                        )}
+                        </div>
                         <p className={`${TYPOGRAPHY.smallText} text-center mt-6 italic`}>
                             Klik pada gambar untuk memperbesar tampilan.
                         </p>
@@ -131,7 +131,7 @@ export default function StrukturOrganisasiPage({ auth, organization, hero }) {
                         <X size={24} />
                     </button>
                     <img
-                        src={imagePath}
+                        src={modalImageSrc}
                         alt="Bagan Struktur Organisasi SMA Negeri 1 Baleendah (diperbesar)"
                         className="w-full h-auto rounded-lg"
                     />

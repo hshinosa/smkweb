@@ -202,6 +202,7 @@ export default function InformasiSpmbPage({ spmbData }) {
     // Helper to format image path correctly
     const formatImagePath = (path) => {
         if (!path) return null;
+        if (typeof path !== 'string') return null;
         if (path.startsWith('http') || path.startsWith('/')) return path;
         return `/storage/${path}`;
     };
@@ -227,11 +228,11 @@ export default function InformasiSpmbPage({ spmbData }) {
                 <section className="relative min-h-screen flex items-center justify-center overflow-hidden pb-32">
                     {/* Background Image with Overlay */}
                     <div className="absolute inset-0 z-0">
-                    {pengaturan_umum?.backgroundImage ? (
-                        <HeroImage media={pengaturan_umum.backgroundImage} alt={`Siswa ${siteName}`} />
+                    {pengaturan_umum?.banner_image && typeof pengaturan_umum.banner_image === 'object' ? (
+                        <HeroImage media={pengaturan_umum.banner_image} alt={`Siswa ${siteName}`} />
                     ) : (
                         <img 
-                            src={formatImagePath(pengaturan_umum?.banner_image_url) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            src={formatImagePath(pengaturan_umum?.banner_image_url) || "/images/hero-bg-sman1baleendah.jpeg"} 
                             alt={`Siswa ${siteName}`} 
                             className="w-full h-full object-cover"
                             loading="eager"
@@ -274,15 +275,6 @@ export default function InformasiSpmbPage({ spmbData }) {
                                     dangerouslySetInnerHTML={{ __html: pengaturan_umum?.announcement_text || "Pendaftaran Belum Dibuka" }}
                                 />
                             )}
-                            <a 
-                                href={pengaturan_umum?.brochure_url || "#"} 
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-xl hover:bg-white/10 transition-all flex items-center gap-2"
-                            >
-                                <Download className="w-5 h-5" />
-                                Unduh Brosur PDF
-                            </a>
                         </div>
                     </div>
 

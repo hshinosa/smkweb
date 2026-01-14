@@ -32,7 +32,7 @@ class ProgramController extends Controller
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'icon_name' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
             'image_url' => 'nullable|string|max:255', // External URL input
             'color_class' => 'nullable|string|max:255',
             'description' => 'required|string',
@@ -64,7 +64,7 @@ class ProgramController extends Controller
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'icon_name' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
             'image_url' => 'nullable|string|max:255',
             'color_class' => 'nullable|string|max:255',
             'description' => 'required|string',

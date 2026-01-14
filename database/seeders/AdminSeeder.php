@@ -13,15 +13,27 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
+        // Admin Utama (Default)
         Admin::updateOrCreate(
-            ['username' => 'hshino'],
-            ['password' => Hash::make('123hshi')]
+            ['email' => 'admin@sman1baleendah.sch.id'],
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('password123'),
+                'email_verified_at' => now(),
+            ]
         );
 
-        // Anda bisa menambahkan lebih banyak admin jika perlu
-        // Admin::create([
-        //     'username' => 'editor',
-        //     'password' => 'secretpassword'
-        // ]);
+        // Admin Developer (Backup)
+        Admin::updateOrCreate(
+            ['email' => 'developer@smkweb.com'],
+            [
+                'name' => 'Developer',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $this->command->info('Admin accounts seeded.');
+        $this->command->info('Login: admin@sman1baleendah.sch.id | Pass: password123');
     }
 }

@@ -17,12 +17,33 @@ class OpenAIService
 
     public function __construct(?OllamaService $ollamaService = null)
     {
-        $this->baseUrl = AiSetting::get('ai_model_base_url', 'https://api-ai.hshinoshowcase.site/v1');
-        $this->apiKey = AiSetting::get('ai_model_api_key', 'sk-hshinosa');
+        $this->baseUrl = (string) AiSetting::get('ai_model_base_url', '');
+        $this->apiKey = (string) AiSetting::get('ai_model_api_key', '');
         $this->model = AiSetting::get('ai_model_name', 'gemini-claude-sonnet-4-5-thinking');
         $this->embeddingModel = AiSetting::get('ai_embedding_model', 'text-embedding-3-small');
         $this->useOllamaFallback = AiSetting::get('use_ollama_fallback', true);
         $this->ollamaService = $ollamaService;
+        
+        // Validate required settings
+        $this->validateConfiguration();
+    }
+    
+    /**
+     * Validate that required AI settings are configured
+     *
+     * @throws \InvalidArgumentException
+     */
+    protected function validateConfiguration(): void
+    {
+        if (empty($this->baseUrl)) {
+            Log::error('[OpenAIService] AI model base URL not configured');
+            throw new \InvalidArgumentException('AI model base URL must be configured in AI settings');
+        }
+        
+        if (empty($this->apiKey)) {
+            Log::error('[OpenAIService] AI model API key not configured');
+            throw new \InvalidArgumentException('AI model API key must be configured in AI settings');
+        }
     }
 
     /**

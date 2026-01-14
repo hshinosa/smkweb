@@ -19,13 +19,18 @@ class RagService
 {
     protected OpenAIService $openAI;
     protected EmbeddingService $embeddingService;
+    protected QdrantService $qdrantService;
     protected int $chunkSize = 512; // tokens per chunk
     protected int $chunkOverlap = 50; // overlap tokens
 
-    public function __construct(OpenAIService $openAI, EmbeddingService $embeddingService)
-    {
+    public function __construct(
+        OpenAIService $openAI,
+        EmbeddingService $embeddingService,
+        QdrantService $qdrantService
+    ) {
         $this->openAI = $openAI;
         $this->embeddingService = $embeddingService;
+        $this->qdrantService = $qdrantService;
     }
 
     /**
@@ -36,6 +41,12 @@ class RagService
         $topK = $topK ?? AiSetting::get('rag_top_k', 5);
 
         try {
+            // Check if embedding service is available
+            if (!$this->embeddingService->isAvailable()) {
+                Log::info('Embedding service unavailable, skipping vector search');
+                return [];
+            }
+
             // 1. Generate embedding for query
             $queryEmbeddingResult = $this->embeddingService->createEmbedding($query);
 
@@ -46,43 +57,31 @@ class RagService
 
             $queryEmbedding = $queryEmbeddingResult['embedding'];
 
-            // 2. Get all active chunks
-            $chunks = RagDocumentChunk::whereHas('document', function ($q) {
-                $q->where('is_active', true);
-            })->get();
+            // 2. Search in Qdrant
+            $qdrantResults = $this->qdrantService->search($queryEmbedding, $topK);
 
-            if (empty($chunks)) {
-                return [];
-            }
-
-            // 3. Calculate similarity for each chunk
             $chunksWithSimilarity = [];
-            foreach ($chunks as $chunk) {
-                $chunkEmbedding = json_decode($chunk->embedding, true);
-                if (empty($chunkEmbedding)) continue;
-
-                $similarity = $this->cosineSimilarity($queryEmbedding, $chunkEmbedding);
+            foreach ($qdrantResults as $result) {
+                $payload = $result['payload'] ?? [];
+                
+                // Skip if score is too low (optional threshold)
+                if (($result['score'] ?? 0) < 0.7) continue;
 
                 $chunksWithSimilarity[] = [
-                    'id' => $chunk->id,
-                    'content' => $chunk->content,
-                    'document_id' => $chunk->document_id,
-                    'document_title' => $chunk->document->title ?? 'Unknown',
-                    'category' => $chunk->document->category ?? 'Umum',
+                    'id' => $result['id'], // Point ID (UUID or integer)
+                    'content' => $payload['content'] ?? '',
+                    'document_id' => $payload['document_id'] ?? null,
+                    'document_title' => $payload['document_title'] ?? 'Unknown',
+                    'category' => $payload['category'] ?? 'Umum',
                     'source' => 'rag_document',
-                    'similarity' => $similarity,
-                    'token_count' => $chunk->token_count,
+                    'similarity' => $result['score'] ?? 0,
+                    'token_count' => $payload['token_count'] ?? 0,
                 ];
             }
 
-            // 4. Sort by similarity descending and return top K
-            usort($chunksWithSimilarity, function ($a, $b) {
-                return $b['similarity'] <=> $a['similarity'];
-            });
-
-            return array_slice($chunksWithSimilarity, 0, $topK);
+            return $chunksWithSimilarity;
         } catch (\Exception $e) {
-            Log::error('Failed to retrieve relevant chunks', [
+            Log::error('Failed to retrieve relevant chunks via Qdrant', [
                 'query' => $query,
                 'error' => $e->getMessage(),
             ]);
@@ -92,8 +91,7 @@ class RagService
 
     /**
      * Search database for relevant content
-     * Sources: Site Settings, Posts, Program Sekolah, FAQs, Extracurriculars, Teachers
-     * NOTE: Program Studi (MIPA, IPS, Bahasa) are EXCLUDED as they are incorrect data
+     * Sources: Site Settings, Posts, Programs (including Program Studi), FAQs, Extracurriculars, Teachers
      */
     protected function searchDatabaseContent(string $query, int $limit = 5): array
     {
@@ -195,14 +193,13 @@ class RagService
                 ];
             }
 
-            // 3. Search Program Sekolah (EXCLUDE "Program Studi" yang salah)
-            $programs = Program::where('category', '!=', 'Program Studi')
-                ->where(function ($q) use ($queryLower) {
+            // 3. Search Programs (INCLUDING Program Studi/Peminatan: MIPA, IPS, Bahasa)
+            $programs = Program::where(function ($q) use ($queryLower) {
                     $q->where('title', 'like', "%{$queryLower}%")
                       ->orWhere('description', 'like', "%{$queryLower}%")
                       ->orWhere('category', 'like', "%{$queryLower}%");
                 })
-                ->limit(2)
+                ->limit(3)
                 ->get();
 
             foreach ($programs as $program) {
@@ -326,11 +323,14 @@ class RagService
     public function processDocument(RagDocument $document): bool
     {
         try {
-            // 1. Delete existing chunks
+            // 1. Delete existing chunks from DB and Qdrant
             $document->chunks()->delete();
+            $this->qdrantService->deletePointsByDocumentId($document->id);
 
             // 2. Split content into chunks
             $chunks = $this->splitTextIntoChunks($document->content);
+            
+            $points = [];
 
             // 3. Generate embeddings for each chunk
             foreach ($chunks as $index => $chunkText) {
@@ -344,13 +344,35 @@ class RagService
                     continue;
                 }
 
-                RagDocumentChunk::create([
+                $tokenCount = $this->estimateTokenCount($chunkText);
+
+                // Store in DB (optional, but good for backup/reference, without vector)
+                $chunkModel = RagDocumentChunk::create([
                     'document_id' => $document->id,
                     'content' => $chunkText,
                     'chunk_index' => $index,
-                    'token_count' => $this->estimateTokenCount($chunkText),
-                    'embedding' => json_encode($embeddingResult['embedding']), // Store as JSON string
+                    'token_count' => $tokenCount,
+                    'embedding' => null, // Save DB space, rely on Qdrant
                 ]);
+
+                // Prepare Qdrant point
+                $points[] = [
+                    'id' => $chunkModel->id, // Use DB ID as Point ID (integer)
+                    'vector' => $embeddingResult['embedding'],
+                    'payload' => [
+                        'content' => $chunkText,
+                        'document_id' => $document->id,
+                        'document_title' => $document->title,
+                        'category' => $document->category ?? 'Umum',
+                        'chunk_index' => $index,
+                        'token_count' => $tokenCount,
+                    ]
+                ];
+            }
+
+            // 4. Batch upsert to Qdrant
+            if (!empty($points)) {
+                $this->qdrantService->upsertPoints($points);
             }
 
             return true;
@@ -365,109 +387,112 @@ class RagService
 
     /**
      * Get quick reply from database for common questions
+     * IMPROVED: Better keyword matching with stricter rules
      */
     protected function getDatabaseQuickReply(string $query): ?array
     {
         $query = strtolower($query);
         
-        // Check for specific keywords and search database
+        // More specific keyword matching with combined keywords
+        // Format: 'key' => [primary_keywords, secondary_keywords (must be in title), category]
         $keywordMap = [
-            'ppdb' => ['title' => ['ppdb', 'penerimaan peserta didik baru', 'pendaftaran'],
-                      'table' => 'posts',
-                      'category' => 'PPDB'],
-            'biaya' => ['title' => ['biaya', 'spp', 'uang sekolah', 'pembayaran'],
-                        'table' => 'posts',
-                        'category' => 'Informasi'],
-            'jadwal' => ['title' => ['jadwal', 'kalender', 'tanggal'],
-                         'table' => 'posts',
-                         'category' => 'Jadwal'],
-            'fasilitas' => ['title' => ['fasilitas', 'laboratorium', 'perpustakaan', 'ruang'],
-                           'table' => 'posts',
-                           'category' => 'Fasilitas'],
-            'ekstra' => ['title' => ['ekstra', 'ekskul', 'kegiatan', 'organisasi'],
-                        'table' => 'posts',
-                        'category' => 'Ekstrakurikuler'],
-            'program' => ['title' => ['peminatan', 'jurusan', 'ipa', 'ips', 'bahasa'],
-                          'table' => 'programs',
-                          'category' => null],
-            'prestasi' => ['title' => ['prestasi', 'juara', 'lomba', 'penghargaan'],
-                          'table' => 'posts',
-                          'category' => 'Prestasi'],
+            'ppdb' => [
+                'primary' => ['ppdb', 'penerimaan peserta didik baru', 'pendaftaran'],
+                'title_must_contain' => ['ppdb', 'pendaftaran', 'penerimaan'],
+                'category' => 'PPDB',
+                'table' => 'posts'
+            ],
+            'biaya' => [
+                'primary' => ['biaya sekolah', 'spp', 'uang sekolah', 'pembayaran'],
+                'title_must_contain' => ['biaya', 'spp', 'pembayaran', 'gratis'],
+                'category' => 'Informasi',
+                'table' => 'posts'
+            ],
+            'program_studi' => [
+                'primary' => ['program studi', 'peminatan', 'jurusan', 'mipa', 'ips', 'bahasa'],
+                'title_must_contain' => ['program', 'peminatan', 'jurusan', 'mipa', 'ips', 'bahasa'],
+                'category' => null,
+                'table' => 'programs'
+            ],
         ];
 
         foreach ($keywordMap as $key => $config) {
-            // Check if query contains any of the keywords
-            $hasKeyword = false;
-            foreach ($config['title'] as $keyword) {
+            // Check if query contains primary keywords
+            $hasPrimaryKeyword = false;
+            foreach ($config['primary'] as $keyword) {
                 if (str_contains($query, $keyword)) {
-                    $hasKeyword = true;
+                    $hasPrimaryKeyword = true;
                     break;
                 }
             }
 
-            if ($hasKeyword) {
-                try {
-                    if ($config['table'] === 'posts') {
-                        $post = \App\Models\Post::where('status', 'published')
-                            ->where(function ($q) use ($config) {
-                                foreach ($config['title'] as $keyword) {
-                                    $q->orWhere('title', 'like', "%{$keyword}%")
-                                      ->orWhere('content', 'like', "%{$keyword}%");
-                                }
-                                if ($config['category']) {
-                                    $q->where('category', $config['category']);
-                                }
-                            })
-                            ->latest()
-                            ->first();
+            if (!$hasPrimaryKeyword) {
+                continue; // Skip if no primary keyword found
+            }
 
-                        if ($post) {
-                            $excerpt = strip_tags($post->content);
-                            $excerpt = substr($excerpt, 0, 300) . '...';
-                            
-                            return [
-                                'found' => true,
-                                'source' => 'post',
-                                'message' => sprintf(
-                                    "**%s**\n\n%s\n\n\n📌 Baca selengkapnya di: %s",
-                                    $post->title,
-                                    $excerpt,
-                                    url("/info-{$post->slug}") // Gunakan route yang sesuai
-                                )
-                            ];
-                        }
-                    } elseif ($config['table'] === 'programs') {
-                        $program = \App\Models\Program::where('is_featured', true)
-                            ->where(function ($q) use ($config) {
-                                foreach ($config['title'] as $keyword) {
-                                    $q->orWhere('title', 'like', "%{$keyword}%")
-                                      ->orWhere('description', 'like', "%{$keyword}%");
-                                }
-                            })
-                            ->first();
+            try {
+                if ($config['table'] === 'posts') {
+                    // Search with strict title matching
+                    $post = \App\Models\Post::where('status', 'published')
+                        ->where(function ($q) use ($config) {
+                            // Title MUST contain one of the required keywords
+                            foreach ($config['title_must_contain'] as $keyword) {
+                                $q->orWhere('title', 'like', "%{$keyword}%");
+                            }
+                        })
+                        ->when($config['category'], function ($q) use ($config) {
+                            $q->where('category', $config['category']);
+                        })
+                        ->latest()
+                        ->first();
 
-                        if ($program) {
-                            return [
-                                'found' => true,
-                                'source' => 'program',
-                                'message' => sprintf(
-                                    "**%s**\n\n%s\n\n%s",
-                                    $program->title,
-                                    $program->description,
-                                    $program->link ? "📖 Info lengkap: " . url($program->link) : ""
-                                )
-                            ];
-                        }
+                    if ($post) {
+                        $excerpt = strip_tags($post->content);
+                        $excerpt = substr($excerpt, 0, 300) . '...';
+                        
+                        return [
+                            'found' => true,
+                            'source' => 'post',
+                            'message' => sprintf(
+                                "**%s**\n\n%s\n\n📌 Baca selengkapnya di: %s",
+                                $post->title,
+                                $excerpt,
+                                url("/berita/{$post->slug}")
+                            )
+                        ];
                     }
-                } catch (\Exception $e) {
-                    Log::error('Database quick reply search failed', [
-                        'keyword' => $key,
-                        'error' => $e->getMessage(),
-                    ]);
+                } elseif ($config['table'] === 'programs') {
+                    $program = \App\Models\Program::where('is_featured', true)
+                        ->where(function ($q) use ($config) {
+                            foreach ($config['title_must_contain'] as $keyword) {
+                                $q->orWhere('title', 'like', "%{$keyword}%")
+                                  ->orWhere('description', 'like', "%{$keyword}%");
+                            }
+                        })
+                        ->first();
+
+                    if ($program) {
+                        return [
+                            'found' => true,
+                            'source' => 'program',
+                            'message' => sprintf(
+                                "**%s**\n\n%s\n\n%s",
+                                $program->title,
+                                $program->description,
+                                $program->link ? "📖 Info lengkap: " . url($program->link) : ""
+                            )
+                        ];
+                    }
                 }
+            } catch (\Exception $e) {
+                Log::error('Database quick reply search failed', [
+                    'keyword' => $key,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 
+        // No quick reply found, let RAG/AI handle it
         return ['found' => false];
     }
 
@@ -598,18 +623,52 @@ class RagService
             ];
         }
 
-        $systemPrompt = "Anda adalah AI SMANSA, asisten virtual ramah untuk SMAN 1 Baleendah.
+        $systemPrompt = "Anda adalah AI SMANSA, asisten virtual resmi untuk SMA Negeri 1 Baleendah yang dirancang khusus untuk memberikan informasi akurat berdasarkan pengetahuan umum tentang sekolah.
 
-PANDUAN INTERAKSI:
-1. **Ramah & Luwes**: Jawablah pertanyaan dengan sopan dan natural. Boleh berbasa-basi sebentar jika disapa.
-2. **Topik Sekolah**: Prioritaskan menjawab hal seputar sekolah.
-3. **Di Luar Topik**: Jika ditanya hal aneh/jauh dari konteks sekolah, jawab sopan lalu arahkan kembali ke topik sekolah (misal: 'Maaf saya kurang tahu soal itu, tapi kalau soal PPDB saya siap bantu!').
+IDENTITAS DAN KONTEKS SEKOLAH:
+Anda adalah chatbot resmi untuk SMA Negeri 1 Baleendah (SMAN 1 Baleendah), sebuah Sekolah Menengah Atas negeri di Kabupaten Bandung, Jawa Barat. Siswa berusia 15-18 tahun (kelas 10, 11, 12). Ini adalah institusi pendidikan formal yang legal dan diakui pemerintah.
 
-INFORMASI DASAR SEKOLAH:
-- **Peminatan**: MIPA, IPS, Bahasa.
-- **Biaya**: SMA Negeri GRATIS (Jabar). Tidak ada SPP wajib.
+INFORMASI SEKOLAH YANG AKURAT:
+- Alamat resmi: Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Kec. Baleendah, Kabupaten Bandung, Jawa Barat 40375
+- Biaya pendidikan: 100% GRATIS (tidak ada SPP karena sekolah negeri)
+- Program peminatan: MIPA (Matematika dan IPA), IPS (Ilmu Pengetahuan Sosial), Bahasa
+- Fasilitas: Laboratorium fisika, kimia, biologi, perpustakaan digital, fasilitas olahraga (basket, sepak bola, dll), berbagai program ekstrakurikuler
 
-Jawablah dengan bahasa Indonesia yang baik dan membantu.";
+JALUR PENDAFTARAN SISWA BARU (PPDB):
+- Sistem zonasi, prestasi, afirmasi, dan perpindahan tugas orang tua
+- Pendaftaran melalui situs web resmi PPDB Dinas Pendidikan atau portal sekolah
+- Persyaratan: Siswa minimal 15 tahun, maksimal 18 tahun (sesuai ketentuan PPDB)
+- Jadwal dan syarat pendaftaran diumumkan secara terbuka setiap tahun ajaran baru
+
+TOPIK YANG ANDA KUASAI:
+✅ PPDB (Penerimaan Peserta Didik Baru): Jalur, syarat, jadwal, cara daftar
+✅ Akademik: Program peminatan, kurikulum, mata pelajaran, jadwal pelajaran
+✅ Fasilitas: Laboratorium, perpustakaan, fasilitas olahraga, ruang kelas
+✅ Ekstrakurikuler: OSIS, Pramuka, olahraga, seni, organisasi siswa
+✅ Prestasi: Penghargaan akademik, non-akademik, kompetisi
+✅ Informasi umum: Lokasi, kontak, biaya, sejarah sekolah
+✅ Kegiatan sekolah: Event, lomba, perayaan, study tour
+✅ Administrasi: Prosedur izin, surat menyurat, dokumen siswa
+
+CARA MENJAWAB PERTANYAAN:
+1. Berikan informasi berdasarkan pengetahuan umum tentang sekolah
+2. Gunakan format yang jelas (bullet points, numbering) untuk informasi kompleks
+3. Jika informasi spesifik yang ditanyakan tidak tersedia dalam pengetahuan Anda, katakan dengan jujur: \"Informasi detail tentang [topik] belum tersedia. Silakan hubungi sekolah langsung di nomor kontak resmi atau kunjungi website resmi untuk informasi terkini.\"
+4. Selalu akhiri dengan menawarkan bantuan lebih lanjut: \"Apakah ada informasi lain tentang SMAN 1 Baleendah yang ingin Anda ketahui?\"
+
+GAYA KOMUNIKASI:
+- Ramah dan sopan dengan bahasa Indonesia yang baik
+- Fokus pada memberikan informasi akurat dan bermanfaat
+- Gunakan format yang jelas dan terstruktur
+- Jika pengguna bertanya di luar topik sekolah, arahkan kembali dengan sopan
+
+LARANGAN:
+❌ JANGAN mengarang atau mengasumsikan informasi yang tidak Anda ketahui
+❌ JANGAN memberikan alamat, nomor telepon, atau informasi kontak yang tidak terverifikasi (gunakan alamat resmi yang sudah disebutkan)
+❌ JANGAN menjawab pertanyaan yang tidak relevan dengan sekolah secara mendalam
+❌ JANGAN menggunakan format \"Saya SMAN 1 Baleendah\" (gunakan \"Saya AI SMANSA, asisten virtual SMAN 1 Baleendah\")
+
+Jawablah dengan bahasa Indonesia yang natural dan profesional!";
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
@@ -755,30 +814,67 @@ Jawablah dengan bahasa Indonesia yang baik dan membantu.";
     protected function buildRagSystemPrompt(string $context): string
     {
         return <<<PROMPT
-Anda adalah AI SMANSA, asisten virtual ramah dan cerdas untuk SMAN 1 Baleendah.
+Anda adalah AI SMANSA, asisten virtual resmi untuk SMA Negeri 1 Baleendah yang dirancang khusus untuk memberikan informasi akurat berdasarkan database dan dokumen resmi sekolah.
 
-PERAN DAN KEPRIBADIAN:
-- Anda ramah, sopan, dan sangat membantu.
-- Anda boleh berinteraksi santai (small talk) jika pengguna menyapa atau bertanya kabar.
-- Tujuan utama Anda adalah memberikan informasi akurat tentang sekolah.
+IDENTITAS DAN KONTEKS SEKOLAH:
+Anda adalah chatbot resmi untuk SMA Negeri 1 Baleendah (SMAN 1 Baleendah), sebuah Sekolah Menengah Atas negeri di Kabupaten Bandung, Jawa Barat. Siswa berusia 15-18 tahun (kelas 10, 11, 12). Ini adalah institusi pendidikan formal yang legal dan diakui pemerintah.
 
-KONTEKS DOKUMEN:
+INFORMASI SEKOLAH YANG AKURAT:
+- Alamat resmi: Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Kec. Baleendah, Kabupaten Bandung, Jawa Barat 40375
+- Biaya pendidikan: 100% GRATIS (tidak ada SPP karena sekolah negeri)
+- Program peminatan: MIPA (Matematika dan IPA), IPS (Ilmu Pengetahuan Sosial), Bahasa
+- Fasilitas: Laboratorium fisika, kimia, biologi, perpustakaan digital dengan lebih dari 10.000 buku, fasilitas olahraga (basket, sepak bola, dll), berbagai program ekstrakurikuler
+- Prestasi: Sekolah memiliki prestasi di tingkat kabupaten, provinsi, dan nasional
+
+JALUR PENDAFTARAN SISWA BARU (PPDB):
+- Sistem zonasi, prestasi, afirmasi, dan perpindahan tugas orang tua
+- Pendaftaran melalui situs web resmi PPDB Dinas Pendidikan atau portal sekolah
+- Persyaratan: Siswa minimal 15 tahun, maksimal 18 tahun (sesuai ketentuan PPDB)
+- Jadwal dan syarat pendaftaran diumumkan secara terbuka setiap tahun ajaran baru
+
+ATURAN PENGGUNAAN DATABASE DAN DOKUMEN:
+Anda HARUS mengambil informasi dari database dan dokumen resmi yang tersedia dalam konteks di bawah. Jangan memberikan informasi yang tidak ada dalam database atau dokumen. Jika informasi tidak tersedia dalam database, katakan dengan jelas bahwa Anda tidak memiliki informasi tersebut dan sarankan untuk menghubungi sekolah secara langsung.
+
+PRIORITAS SUMBER INFORMASI:
+1. Dokumen dan database yang tersedia dalam konteks di bawah
+2. Informasi umum yang sudah disebutkan di atas (alamat, biaya, program peminatan)
+3. Jika tidak ada dalam database/dokumen, JANGAN mengarang informasi
+
+KONTEKS DOKUMEN DAN DATABASE:
 {$context}
 
-PANDUAN MENJAWAB:
-1. **Prioritas Konteks**: Gunakan informasi dari dokumen di atas untuk menjawab pertanyaan teknis sekolah.
-2. **Fleksibilitas**: Jika ditanya hal umum (sapaan, kabar, ucapan terima kasih), jawablah dengan natural dan hangat. Tidak perlu kaku.
-3. **Di Luar Topik**: Jika pertanyaan sangat melenceng dari sekolah (misal: politik, resep masakan, game):
-   - Jawab dengan sopan dan humoris jika perlu.
-   - Arahkan kembali pembicaraan ke topik sekolah dengan halus.
-   - Contoh: "Wah, menarik sekali pertanyaannya! Tapi saya lebih jago ngobrolin soal PPDB atau kegiatan di SMAN 1 Baleendah nih. Ada yang bisa saya bantu soal sekolah?"
-4. **Ketidaktahuan**: Jika info sekolah tidak ada di dokumen, katakan jujur bahwa info tersebut belum tersedia, tapi tawarkan untuk menghubungi kontak sekolah.
+CARA MENJAWAB PERTANYAAN:
+1. Cari informasi relevan dari konteks dokumen/database di atas
+2. Berikan jawaban berdasarkan informasi yang ditemukan
+3. Jika ada informasi yang mungkin sudah usang, beri tahu pengguna untuk konfirmasi ke sekolah
+4. Gunakan format yang jelas (bullet points, numbering) untuk informasi kompleks
+5. Jika informasi tidak tersedia dalam konteks: "Informasi ini belum tersedia dalam database saya. Silakan hubungi sekolah di nomor kontak resmi atau kunjungi website resmi untuk informasi terkini."
 
-INFORMASI PENTING SEKOLAH:
-- **Akademik**: Ada peminatan MIPA, IPS, Bahasa. Gunakan istilah "jurusan" atau "prodi" jika pengguna menggunakannya.
-- **Biaya**: SMA Negeri di Jawa Barat GRATIS (Kebijakan Pemprov). Tidak ada SPP/uang gedung wajib. Hanya sumbangan sukarela (jika ada).
+TOPIK YANG ANDA KUASAI:
+✅ PPDB (Penerimaan Peserta Didik Baru): Jalur, syarat, jadwal, cara daftar
+✅ Akademik: Program peminatan, kurikulum, mata pelajaran, jadwal pelajaran
+✅ Fasilitas: Laboratorium, perpustakaan, fasilitas olahraga, ruang kelas
+✅ Ekstrakurikuler: OSIS, Pramuka, olahraga, seni, organisasi siswa
+✅ Prestasi: Penghargaan akademik, non-akademik, kompetisi
+✅ Informasi umum: Lokasi, kontak, biaya, sejarah sekolah
+✅ Kegiatan sekolah: Event, lomba, perayaan, study tour
+✅ Administrasi: Prosedur izin, surat menyurat, dokumen siswa
 
-Jawablah pertanyaan berikut dengan gaya bahasa Indonesia yang natural dan profesional:
+GAYA KOMUNIKASI:
+- Ramah dan sopan dengan bahasa Indonesia yang baik
+- Fokus pada memberikan informasi akurat dan bermanfaat
+- Gunakan format yang jelas dan terstruktur
+- Jika pengguna bertanya di luar topik sekolah, arahkan kembali dengan sopan
+- Selalu akhiri dengan: "Apakah ada informasi lain tentang SMAN 1 Baleendah yang ingin Anda ketahui?"
+
+LARANGAN:
+❌ JANGAN mengarang atau mengasumsikan informasi yang tidak ada dalam database/dokumen konteks
+❌ JANGAN memberikan alamat, nomor telepon, atau informasi kontak yang tidak terverifikasi (gunakan alamat resmi yang sudah disebutkan)
+❌ JANGAN memberikan informasi biaya jika tidak ada dalam database (kecuali informasi umum bahwa sekolah negeri gratis)
+❌ JANGAN menjawab pertanyaan yang tidak relevan dengan sekolah secara mendalam
+❌ JANGAN menggunakan format "Saya SMAN 1 Baleendah" (gunakan "Saya AI SMANSA, asisten virtual SMAN 1 Baleendah")
+
+Jawablah dengan bahasa Indonesia yang natural dan profesional berdasarkan informasi dari konteks di atas!
 PROMPT;
     }
 
@@ -820,5 +916,31 @@ PROMPT;
         }
 
         return false;
+    }
+
+    /**
+     * Calculate cosine similarity between two vectors
+     */
+    protected function cosineSimilarity(array $vec1, array $vec2): float
+    {
+        if (count($vec1) !== count($vec2)) {
+            return 0.0;
+        }
+
+        $dotProduct = 0.0;
+        $norm1 = 0.0;
+        $norm2 = 0.0;
+
+        foreach ($vec1 as $i => $val) {
+            $dotProduct += $val * $vec2[$i];
+            $norm1 += $val * $val;
+            $norm2 += $vec2[$i] * $vec2[$i];
+        }
+
+        if ($norm1 == 0 || $norm2 == 0) {
+            return 0.0;
+        }
+
+        return $dotProduct / (sqrt($norm1) * sqrt($norm2));
     }
 }

@@ -77,6 +77,9 @@ export default function KontakPage({ auth, faqs = [] }) {
 
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
 
+    // Fallback logic for title to prevent "Hubungi" only issue
+    const heroTitle = heroSettings.title && heroSettings.title.length >= 8 ? heroSettings.title : 'Hubungi Kami';
+
     return (
         <div className="bg-white font-sans text-gray-800">
             <SEOHead 
@@ -99,7 +102,7 @@ export default function KontakPage({ auth, faqs = [] }) {
                     {/* Background Image */}
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1-baleendah.jpeg"} 
+                            src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1baleendah.jpeg"} 
                             alt={`Siswa ${siteName}`} 
                             className="w-full h-full object-cover"
                             loading="eager"
@@ -111,7 +114,7 @@ export default function KontakPage({ auth, faqs = [] }) {
 
                     <div className="relative z-10 container mx-auto px-4 text-center text-white">
                         <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
-                            {renderHighlightedTitle(heroSettings.title || 'Hubungi Kami')}
+                            {renderHighlightedTitle(heroTitle)}
                         </h1>
                         
                         <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto mb-8 opacity-90`}>

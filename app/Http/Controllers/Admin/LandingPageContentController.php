@@ -163,15 +163,30 @@ class LandingPageContentController extends Controller
                 // Find or create setting first to attach media
                 $setting = LandingPageSetting::firstOrNew(['section_key' => $sectionKey]);
                 
+                // Merge content with existing to preserve fields not in request
+                $existingContent = $setting->content ?? [];
+                if (!is_array($existingContent)) {
+                    $existingContent = [];
+                }
+                
+                // Merge: new content overwrites old
+                $mergedContent = array_merge($existingContent, $content);
+                
+                // Save the setting first to ensure it has an ID for media library
+                if (!$setting->exists) {
+                    $setting->content = $mergedContent;
+                    $setting->save();
+                }
+                
                 // Handle file uploads for each section
                 if ($sectionKey === 'hero') {
                     if ($request->hasFile('hero.background_image')) {
                         $setting->clearMediaCollection('hero_background');
                         $setting->addMediaFromRequest('hero.background_image')
                                         ->toMediaCollection('hero_background');
-                        $media = $setting->getMedia('hero_background')->last();
+                        $media = $setting->getFirstMedia('hero_background');
                         if ($media) {
-                            $content['background_image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
+                            $mergedContent['background_image_url'] = $media->getUrl();
                         }
                     }
 
@@ -179,43 +194,38 @@ class LandingPageContentController extends Controller
                         $setting->clearMediaCollection('hero_student');
                         $setting->addMediaFromRequest('hero.student_image')
                                         ->toMediaCollection('hero_student');
-                        $media = $setting->getMedia('hero_student')->last();
+                        $media = $setting->getFirstMedia('hero_student');
                         if ($media) {
-                            $content['student_image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
+                            $mergedContent['student_image_url'] = $media->getUrl();
                         }
                     }
                 } elseif ($sectionKey === 'about_lp' && $request->hasFile('about_lp.image')) {
                     $setting->clearMediaCollection('about_image');
                     $setting->addMediaFromRequest('about_lp.image')
                                     ->toMediaCollection('about_image');
-                    $media = $setting->getMedia('about_image')->last();
+                    $media = $setting->getFirstMedia('about_image');
                     if ($media) {
-                        $content['image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
+                        $mergedContent['image_url'] = $media->getUrl();
                     }
                 } elseif ($sectionKey === 'kepsek_welcome_lp' && $request->hasFile('kepsek_welcome_lp.kepsek_image')) {
                     $setting->clearMediaCollection('kepsek_image');
                     $setting->addMediaFromRequest('kepsek_welcome_lp.kepsek_image')
                                     ->toMediaCollection('kepsek_image');
-                    $media = $setting->getMedia('kepsek_image')->last();
+                    $media = $setting->getFirstMedia('kepsek_image');
                     if ($media) {
-                        $content['kepsek_image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
+                        $mergedContent['kepsek_image_url'] = $media->getUrl();
                     }
                 }
 
-                // Pastikan content adalah array dan bukan null sebelum menyimpan
-                if (is_array($content)) {
-                    $finalContent = $content;
-                    
-                    if ($setting->exists && is_array($setting->content)) {
-                        // Merge to preserve fields not in the request (like items or images)
-                        $finalContent = array_merge($setting->content, $content);
-                    }
-
-                    $setting->content = $finalContent;
-                    $setting->save();
-                } else {
-                    Log::warning("Konten untuk section {$sectionKey} bukan array, tidak disimpan.", ['content' => $content]);
-                }
+                // Save final merged content with updated URLs
+                $setting->content = $mergedContent;
+                $setting->save();
+                
+                Log::info("Landing page section saved", [
+                    'section' => $sectionKey,
+                    'has_background_url' => isset($mergedContent['background_image_url']),
+                    'has_student_url' => isset($mergedContent['student_image_url']),
+                ]);
             }
 
             ActivityLogger::log('Update Konten Landing Page', 'Semua section Landing Page telah diperbarui.', $request);

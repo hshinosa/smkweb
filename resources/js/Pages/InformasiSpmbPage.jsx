@@ -230,9 +230,9 @@ export default function InformasiSpmbPage({ spmbData }) {
                     <div className="absolute inset-0 z-0">
                     {pengaturan_umum?.banner_image && typeof pengaturan_umum.banner_image === 'object' ? (
                         <HeroImage media={pengaturan_umum.banner_image} alt={`Siswa ${siteName}`} />
-                    ) : (
+                    ) : formatImagePath(pengaturan_umum?.banner_image_url) && (
                         <img 
-                            src={formatImagePath(pengaturan_umum?.banner_image_url) || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            src={formatImagePath(pengaturan_umum.banner_image_url)} 
                             alt={`Siswa ${siteName}`} 
                             className="w-full h-full object-cover"
                             loading="eager"

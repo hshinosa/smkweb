@@ -14,6 +14,13 @@ import FileUploadField from '@/Components/Admin/FileUploadField';
 import Modal from '@/Components/Modal';
 import toast from 'react-hot-toast';
 
+// Helper function for image URLs
+const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('/')) return url;
+    return `/storage/${url}`;
+};
+
 export default function Index({ teachers, currentSettings }) {
     const [activeTab, setActiveTab] = useState('hero');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -128,12 +135,6 @@ export default function Index({ teachers, currentSettings }) {
             formData.append('image_file', selectedFiles.image_file);
         }
         handleSettingsSubmit(e, formData);
-    };
-
-    const getImageUrl = (url) => {
-        if (!url) return '';
-        if (url.startsWith('http') || url.startsWith('/')) return url;
-        return `/storage/${url}`;
     };
 
     // Filter teachers by type

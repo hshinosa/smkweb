@@ -16,61 +16,43 @@ class PopulateAlumniSeeder extends Seeder
             [
                 'name' => 'Dr. Ahmad Hidayat',
                 'graduation_year' => 2005,
-                'current_position' => 'Dosen Universitas Indonesia',
-                'education' => 'S3 Pendidikan Matematika',
-                'testimonial' => 'SMAN 1 Baleendah memberikan fondasi akademik yang kuat dan mengajarkan nilai-nilai karakter yang saya bawa hingga masa dewasa.',
+                'testimonial' => 'SMAN 1 Baleendah memberikan fondasi akademik yang kuat dan mengajarkan nilai-nilai karakter yang saya bawa hingga masa dewasa. Saat ini sebagai Dosen di Universitas Indonesia dengan latar belakang S3 Pendidikan Matematika.',
                 'image_name' => 'kepala-sekolah.jpg', 
-                'category' => 'Pendidikan',
                 'is_featured' => true
             ],
             [
                 'name' => 'Sarah Wijaya',
                 'graduation_year' => 2010,
-                'current_position' => 'Entrepreneur - Founder Tech Startup',
-                'education' => 'S1 Ekonomi',
-                'testimonial' => 'Lingkungan sekolah yang mendukung dan guru-guru yang berdedikasi membantu saya mengejar mimpi menjadi pengusaha.',
+                'testimonial' => 'Lingkungan sekolah yang mendukung dan guru-guru yang berdedikasi membantu saya mengejar mimpi menjadi pengusaha. Kini sebagai Entrepreneur dan Founder Tech Startup.',
                 'image_name' => 'anak-sma.png', 
-                'category' => 'Wirausaha',
                 'is_featured' => true
             ],
             [
                 'name' => 'Budi Santoso',
                 'graduation_year' => 2015,
-                'current_position' => 'Engineer di Perusahaan Teknologi Global',
-                'education' => 'S1 Teknik Informatika',
-                'testimonial' => 'Fasilitas dan kurikulum yang berkualitas mempersiapkan saya untuk bersaing di kancah internasional.',
+                'testimonial' => 'Fasilitas dan kurikulum yang berkualitas mempersiapkan saya untuk bersaing di kancah internasional. Sekarang bekerja sebagai Engineer di Perusahaan Teknologi Global.',
                 'image_name' => 'kepala-sekolah.jpg',
-                'category' => 'Teknologi',
                 'is_featured' => false
             ],
             [
                 'name' => 'Putri Ayu',
                 'graduation_year' => 2018,
-                'current_position' => 'Dokter Spesialis Anak',
-                'education' => 'S1 Kedokteran',
-                'testimonial' => 'Disiplin dan kerja keras yang diajarkan di sekolah menjadi pondasi sukses saya dalam pendidikan kedokteran.',
+                'testimonial' => 'Disiplin dan kerja keras yang diajarkan di sekolah menjadi pondasi sukses saya dalam pendidikan kedokteran. Saat ini praktik sebagai Dokter Spesialis Anak.',
                 'image_name' => 'anak-sma.png',
-                'category' => 'Kesehatan',
                 'is_featured' => false
             ],
             [
                 'name' => 'Rizky Pratama',
                 'graduation_year' => 2012,
-                'current_position' => 'Manajer BUMN',
-                'education' => 'S2 Manajemen Bisnis',
-                'testimonial' => 'Organisasi kesiswaan di SMAN 1 Baleendah melatih kepemimpinan saya sejak dini.',
+                'testimonial' => 'Organisasi kesiswaan di SMAN 1 Baleendah melatih kepemimpinan saya sejak dini. Kini menjabat sebagai Manajer di BUMN dengan latar belakang S2 Manajemen Bisnis.',
                 'image_name' => 'kepala-sekolah.jpg',
-                'category' => 'Bisnis',
                 'is_featured' => false
             ],
             [
                 'name' => 'Ani Lestari',
                 'graduation_year' => 2019,
-                'current_position' => 'Jurnalis TV Nasional',
-                'education' => 'S1 Komunikasi',
-                'testimonial' => 'Ekstrakurikuler jurnalistik sekolah membuka jalan karir saya di dunia media.',
+                'testimonial' => 'Ekstrakurikuler jurnalistik sekolah membuka jalan karir saya di dunia media. Sekarang bekerja sebagai Jurnalis di TV Nasional.',
                 'image_name' => 'anak-sma.png',
-                'category' => 'Media',
                 'is_featured' => false
             ]
         ];

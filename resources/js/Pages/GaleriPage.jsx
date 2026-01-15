@@ -268,7 +268,7 @@ export default function GaleriPage({ galleries = [] }) {
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src={formatImagePath(heroSettings.image || heroSettings.image_url || heroSettings.background_image) || "/images/hero-bg-sman1baleendah.jpeg"} 
+                        src={formatImagePath(heroSettings.image || heroSettings.image_url || heroSettings.background_image)} 
                         alt="Background Galeri Sekolah" 
                         className="w-full h-full object-cover"
                     />

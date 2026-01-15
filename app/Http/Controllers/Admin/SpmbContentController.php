@@ -149,6 +149,12 @@ class SpmbContentController extends Controller
             foreach ($finalDataToSave as $sectionKey => $content) {
                 $setting = SpmbSetting::firstOrNew(['section_key' => $sectionKey]);
                 
+                // Save first if new to ensure it has an ID for media library
+                if (!$setting->exists) {
+                    $setting->content = $content;
+                    $setting->save();
+                }
+                
                 // Handle Media Uploads for Pengaturan Umum
                 if ($sectionKey === 'pengaturan_umum') {
                     // Check for file upload (key matching the URL field or a specific file field)

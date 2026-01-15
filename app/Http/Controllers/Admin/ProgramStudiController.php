@@ -62,6 +62,12 @@ class ProgramStudiController extends Controller
             $content = $request->input($sectionKey);
             $setting = ProgramStudiSetting::firstOrNew(['program_name' => $programName, 'section_key' => $sectionKey]);
             
+            // Save the setting first to ensure it has an ID for media library
+            if (!$setting->exists) {
+                $setting->content = $content;
+                $setting->save();
+            }
+            
             // Handle top-level files
             foreach ($fields as $fieldKey => $fieldType) {
                 if ($fieldType === "image") {

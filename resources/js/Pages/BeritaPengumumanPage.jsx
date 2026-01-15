@@ -139,13 +139,10 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
                     {heroSettings.image && typeof heroSettings.image === 'object' ? (
                         // If Media Library object is available
                         <HeroImage media={heroSettings.image} alt={`Berita ${siteName}`} />
-                    ) : (
+                    ) : (typeof heroSettings.image === 'string' && formatImagePath(heroSettings.image)) ? (
                         // Fallback or String path
                         <img 
-                            src={
-                                (typeof heroSettings.image === 'string' ? formatImagePath(heroSettings.image) : null) 
-                                || "/images/hero-bg-sman1baleendah.jpeg"
-                            } 
+                            src={formatImagePath(heroSettings.image)} 
                             alt={`Berita ${siteName}`} 
                             className="w-full h-full object-cover"
                             loading="eager"
@@ -153,7 +150,7 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
                             width="1920"
                             height="1080"
                         />
-                    )}
+                    ) : null}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 
@@ -176,7 +173,7 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
                             <div className="lg:col-span-2 relative rounded-2xl overflow-hidden group shadow-lg h-[500px]">
                                 <ResponsiveImage 
                                     media={typeof heroNews[0]?.image === 'object' ? heroNews[0].image : null}
-                                    src={typeof heroNews[0]?.image === 'string' ? heroNews[0].image : (heroNews[0]?.featured_image || '/images/hero-bg-sman1baleendah.jpeg')} 
+                                    src={typeof heroNews[0]?.image === 'string' ? heroNews[0].image : heroNews[0]?.featured_image} 
                                     alt={heroNews[0].title} 
                                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                 />
@@ -206,7 +203,7 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
                                     <div key={news.id} className="relative flex-1 rounded-2xl overflow-hidden group shadow-md h-[238px]">
                                         <ResponsiveImage 
                                             media={typeof news.image === 'object' ? news.image : null}
-                                            src={typeof news.image === 'string' ? news.image : (news.featured_image || '/images/hero-bg-sman1baleendah.jpeg')} 
+                                            src={typeof news.image === 'string' ? news.image : news.featured_image} 
                                             alt={news.title} 
                                             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                         />

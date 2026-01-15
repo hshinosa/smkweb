@@ -83,6 +83,12 @@ class SiteSettingController extends Controller
         $setting = SiteSetting::firstOrNew(['section_key' => $section]);
         $existingContent = $setting->content ?? [];
 
+        // Save first if new to ensure it has an ID for media library
+        if (!$setting->exists) {
+            $setting->content = $content;
+            $setting->save();
+        }
+
         // Handle file uploads with Media Library
         if ($section === 'general') {
             if ($request->hasFile("content.site_logo")) {

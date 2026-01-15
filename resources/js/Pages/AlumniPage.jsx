@@ -106,7 +106,7 @@ const FeaturedCard = ({ alumni }) => {
         if (alumni.image_url) {
             return normalizeVideoUrl(alumni.image_url);
         }
-        return '/images/hero-bg-sman1baleendah.jpeg';
+        return null;
     };
 
     const thumbnailUrl = getThumbnailUrl();
@@ -175,7 +175,7 @@ const FeaturedCard = ({ alumni }) => {
                         alt={alumni.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"
-                        onError={(e) => { e.target.src = '/images/hero-bg-sman1baleendah.jpeg'; }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
                     />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
@@ -310,7 +310,7 @@ export default function AlumniPage({ auth, alumnis = [] }) {
                 <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            src={formatImagePath(heroSettings.image)} 
                             alt="Background" 
                             className="w-full h-full object-cover"
                             loading="eager"

@@ -52,15 +52,15 @@ export default defineConfig(({ mode }) => {
                     assetFileNames: (assetInfo) => {
                         // Add content hash to filenames for cache busting
                         if (/\.css$/.test(assetInfo.name)) {
-                            return 'build/assets/[name]-[hash][extname]';
+                            return 'assets/[name]-[hash][extname]';
                         }
                         if (/\.js$/.test(assetInfo.name)) {
-                            return 'build/assets/[name]-[hash][extname]';
+                            return 'assets/[name]-[hash][extname]';
                         }
-                        return 'build/assets/[name]-[hash][extname]';
+                        return 'assets/[name]-[hash][extname]';
                     },
-                    chunkFileNames: 'build/assets/[name]-[hash].js',
-                    entryFileNames: 'build/assets/[name]-[hash].js',
+                    chunkFileNames: 'assets/[name]-[hash].js',
+                    entryFileNames: 'assets/[name]-[hash].js',
                 },
             },
             // Increase chunk size warning limit

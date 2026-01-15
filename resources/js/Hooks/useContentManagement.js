@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import toast from 'react-hot-toast';
 
 export function useContentManagement(initialData, updateRoute, method = 'post') {
@@ -92,6 +92,23 @@ export function useContentManagement(initialData, updateRoute, method = 'post') 
         if (e) e.preventDefault();
         setLocalErrors({});
 
+        // If additionalData is FormData, use router.post directly
+        if (additionalData instanceof FormData) {
+            router.post(updateRoute, additionalData, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSelectedFiles({});
+                    toast.success('Perubahan berhasil disimpan');
+                },
+                onError: (serverErrors) => {
+                    setLocalErrors(serverErrors);
+                    toast.error('Gagal menyimpan perubahan');
+                }
+            });
+            return;
+        }
+
+        // Otherwise use useForm's post/put methods
         if (additionalData) {
             transform((data) => ({
                 ...data,

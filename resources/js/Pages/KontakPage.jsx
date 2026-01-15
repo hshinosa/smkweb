@@ -102,7 +102,7 @@ export default function KontakPage({ auth, faqs = [] }) {
                     {/* Background Image */}
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            src={formatImagePath(heroSettings.image)} 
                             alt={`Siswa ${siteName}`} 
                             className="w-full h-full object-cover"
                             loading="eager"

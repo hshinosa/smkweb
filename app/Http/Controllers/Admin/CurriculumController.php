@@ -50,6 +50,13 @@ class CurriculumController extends Controller
             ];
             
             $faseESetting = CurriculumSetting::firstOrNew(['section_key' => 'fase_e']);
+            
+            // Save first if new to ensure it has an ID
+            if (!$faseESetting->exists) {
+                $faseESetting->content = $faseEContent;
+                $faseESetting->save();
+            }
+            
             if ($request->hasFile("fase_e_image")) {
                 $faseESetting->clearMediaCollection('fase_e_image');
                 $faseESetting->addMediaFromRequest("fase_e_image")->toMediaCollection('fase_e_image');
@@ -70,6 +77,13 @@ class CurriculumController extends Controller
             ];
             
             $faseFSetting = CurriculumSetting::firstOrNew(['section_key' => 'fase_f']);
+            
+            // Save first if new to ensure it has an ID
+            if (!$faseFSetting->exists) {
+                $faseFSetting->content = $faseFContent;
+                $faseFSetting->save();
+            }
+            
             if ($request->hasFile("fase_f_image")) {
                 $faseFSetting->clearMediaCollection('fase_f_image');
                 $faseFSetting->addMediaFromRequest("fase_f_image")->toMediaCollection('fase_f_image');
@@ -84,6 +98,12 @@ class CurriculumController extends Controller
         } elseif ($section === 'hero') {
             $content = $request->input('content');
             $heroSetting = CurriculumSetting::firstOrNew(['section_key' => 'hero']);
+            
+            // Save first if new to ensure it has an ID
+            if (!$heroSetting->exists) {
+                $heroSetting->content = $content;
+                $heroSetting->save();
+            }
             
             if ($request->hasFile("content.image")) {
                 $heroSetting->clearMediaCollection('hero_bg');

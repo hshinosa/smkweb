@@ -60,28 +60,29 @@ export default function AcademicCalendarContentPage({ contents, filters }) {
 
     const handleSubmit = (e) => {
         if (e) e.preventDefault();
-          const formData = new FormData();
-        formData.append('title', data.title);
-        formData.append('semester', data.semester);
-        formData.append('academic_year_start', data.academic_year_start);
-        formData.append('sort_order', data.sort_order);
         
+        const submitData = {
+            title: data.title,
+            semester: data.semester,
+            academic_year_start: data.academic_year_start,
+            sort_order: data.sort_order,
+        };
+        
+        // Add file if selected
         if (selectedFile) {
-            formData.append('calendar_image', selectedFile);
+            submitData.calendar_image = selectedFile;
         }
-          if (editingContent) {
-            formData.append('_method', 'PUT');
-            post(route('admin.academic-calendar.update', editingContent.id), {
-                data: formData,
-                forceFormData: true,
+        
+        // Inertia will automatically convert to FormData if there's a File object
+        if (editingContent) {
+            submitData._method = 'PUT';
+            post(route('admin.academic-calendar.update', editingContent.id), submitData, {
                 onSuccess: () => {
                     closeModal();
                 },
             });
         } else {
-            post(route('admin.academic-calendar.store'), {
-                data: formData,
-                forceFormData: true,
+            post(route('admin.academic-calendar.store'), submitData, {
                 onSuccess: () => {
                     closeModal();
                 },

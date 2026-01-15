@@ -52,7 +52,7 @@ export default function AcademicCalendarPage({
         // Legacy/Direct URL
         if (cal.image_url) return cal.image_url;
         // Fallback
-        return "/images/hero-bg-sman1baleendah.jpeg";
+        return null;
     };
 
     return (
@@ -77,7 +77,7 @@ export default function AcademicCalendarPage({
                 <div className="absolute inset-0 z-0">
                     {/* Static image for now - can be replaced with Media Library later */}
                     <img 
-                        src="/images/hero-bg-sman1baleendah.jpeg" 
+                        src={getHeroImageSrc()} 
                         alt="Background Kalender Akademik" 
                         className="w-full h-full object-cover"
                         loading="eager"

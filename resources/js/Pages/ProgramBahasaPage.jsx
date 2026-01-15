@@ -41,7 +41,7 @@ export default function ProgramBahasaPage({ content }) {
         if (hero?.background_image && typeof hero.background_image === 'object') {
             return hero.background_image.original_url;
         }
-        return formatImagePath(hero?.background_image) || "/images/hero-bg-sman1baleendah.jpeg";
+        return formatImagePath(hero?.background_image) || null;
     };
 
     const renderHighlightedTitle = (title) => {
@@ -77,7 +77,7 @@ export default function ProgramBahasaPage({ content }) {
                         <HeroImage media={hero.background_image} alt="Bahasa & Ilmu Budaya" />
                     ) : (
                         <HeroImage 
-                            src={formatImagePath(hero?.background_image) || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            src={formatImagePath(hero?.background_image)} 
                             alt="Bahasa & Ilmu Budaya" 
                         />
                     )}
@@ -178,7 +178,7 @@ export default function ProgramBahasaPage({ content }) {
                         <div className="lg:col-span-2 relative rounded-3xl overflow-hidden group shadow-lg h-full">
                             <ResponsiveImage 
                                 media={typeof facilities?.main_image === 'object' ? facilities.main_image : null}
-                                src={typeof facilities?.main_image === 'string' ? formatImagePath(facilities.main_image) : "/images/hero-bg-sman1baleendah.jpeg"} 
+                                src={typeof facilities?.main_image === 'string' ? formatImagePath(facilities.main_image) : null} 
                                 alt={facilities?.main_title || "Laboratorium Bahasa"} 
                                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                             />
@@ -199,7 +199,7 @@ export default function ProgramBahasaPage({ content }) {
                                         [...facilities.items, ...facilities.items].map((item, idx) => (
                                             <div key={idx} className="relative rounded-2xl overflow-hidden shadow-md h-48 flex-shrink-0 group/item">
                                                 <img 
-                                                    src={item.image || "/images/hero-bg-sman1baleendah.jpeg"} 
+                                                    src={item.image} 
                                                     alt={item.title} 
                                                     className="w-full h-full object-cover"
                                                 />
@@ -213,7 +213,7 @@ export default function ProgramBahasaPage({ content }) {
                                         [1, 2, 3, 4, 1, 2, 3, 4].map((item, idx) => (
                                             <div key={idx} className="relative rounded-2xl overflow-hidden shadow-md h-48 flex-shrink-0 group/item">
                                                 <img 
-                                                    src={idx % 2 === 0 ? "/images/hero-bg-sman1baleendah.jpeg" : "/images/anak-sma.png"} 
+                                                    src={item.image || null} 
                                                     alt={`Facility ${item}`} 
                                                     className="w-full h-full object-cover"
                                                 />
@@ -291,7 +291,7 @@ export default function ProgramBahasaPage({ content }) {
                                 <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
                                     <ResponsiveImage 
                                         media={typeof alumni_spotlight?.image === 'object' ? alumni_spotlight.image : null}
-                                        src={typeof alumni_spotlight?.image === 'string' ? formatImagePath(alumni_spotlight.image) : "/images/anak-sma.png"} 
+                                        src={typeof alumni_spotlight?.image === 'string' ? formatImagePath(alumni_spotlight.image) : null} 
                                         alt={alumni_spotlight?.name || "Alumni Sukses"}
                                         className="h-full w-auto object-contain drop-shadow-xl transition-transform duration-500" 
                                     />

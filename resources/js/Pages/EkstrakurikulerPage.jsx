@@ -144,7 +144,7 @@ const ActivityDetailModal = ({ show, onClose, activity, categoryTheme }) => {
                 <div className="h-48 relative overflow-hidden bg-gray-900">
                     {/* Image */}
                     <ResponsiveImage 
-                        src={activity.image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
+                        src={activity.image_url} 
                         alt={activity.name} 
                         className="absolute inset-0 w-full h-full object-cover"
                         loading="lazy"
@@ -337,10 +337,12 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
             <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <HeroImage 
-                        src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1baleendah.jpeg"} 
-                        alt={`Background Ekstrakurikuler ${siteName}`} 
-                    />
+                    {formatImagePath(heroSettings.image) && (
+                        <HeroImage 
+                            src={formatImagePath(heroSettings.image)} 
+                            alt={`Background Ekstrakurikuler ${siteName}`} 
+                        />
+                    )}
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 

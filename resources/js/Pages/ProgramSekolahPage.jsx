@@ -109,7 +109,7 @@ export default function ProgramSekolahPage({ programs = [], heroSettings }) {
                         <HeroImage media={heroContent.backgroundImage} alt="Background Program Sekolah" />
                     ) : (
                         <HeroImage 
-                            src={heroContent?.image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            src={heroContent?.image_url} 
                             alt="Background Program Sekolah" 
                         />
                     )}

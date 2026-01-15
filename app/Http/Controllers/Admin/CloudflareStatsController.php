@@ -127,19 +127,20 @@ class CloudflareStatsController extends Controller
 
     public function getUniqueVisitors(Request $request)
     {
-        $periodDays = $request->input('period', 7);
-        if (! is_numeric($periodDays) || $periodDays < 1) {
-            $periodDays = 1;
-        }
-        $effectivePeriodDays = min($periodDays, self::MAX_DATA_AGE_DAYS);
-
-        $cacheKey = "cloudflare_total_visits_last_{$effectivePeriodDays}_days_v2"; // v2 untuk cache baru
-        $ttl = now()->addMinutes(self::CACHE_TTL_MINUTES);
-
-        $cachedData = Cache::remember($cacheKey, $ttl, function () use ($effectivePeriodDays) {
-            if (empty($this->apiToken) || empty($this->authEmail) || empty($this->zoneId)) {
-                return ['error' => 'Konfigurasi API Cloudflare tidak lengkap.', 'status_code' => 500];
+        try {
+            $periodDays = $request->input('period', 7);
+            if (! is_numeric($periodDays) || $periodDays < 1) {
+                $periodDays = 1;
             }
+            $effectivePeriodDays = min($periodDays, self::MAX_DATA_AGE_DAYS);
+
+            $cacheKey = "cloudflare_total_visits_last_{$effectivePeriodDays}_days_v2"; // v2 untuk cache baru
+            $ttl = now()->addMinutes(self::CACHE_TTL_MINUTES);
+
+            $cachedData = Cache::remember($cacheKey, $ttl, function () use ($effectivePeriodDays) {
+                if (empty($this->apiToken) || empty($this->authEmail) || empty($this->zoneId)) {
+                    return ['error' => 'Konfigurasi API Cloudflare tidak lengkap.', 'status_code' => 500];
+                }
 
             $grandTotalVisits = 0;
             $errorCount = 0;
@@ -185,6 +186,10 @@ class CloudflareStatsController extends Controller
         }
 
         return response()->json($cachedData);
+        } catch (\Exception $e) {
+            Log::error('Cloudflare stats error: ' . $e->getMessage());
+            return response()->json(['error' => 'Gagal mengambil data statistik. Pastikan Cloudflare API dikonfigurasi dengan benar.', 'unique_visitors_total' => 0], 200);
+        }
     }
 
     public function getVisitorStatsForChart(Request $request)

@@ -71,9 +71,9 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
                 <div className="absolute inset-0 z-0">
                     {hero?.backgroundImage ? (
                         <HeroImage media={hero.backgroundImage} alt={`Gedung ${siteName}`} />
-                    ) : (
+                    ) : hero?.image_url && (
                         <HeroImage 
-                            src={hero?.image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            src={hero.image_url} 
                             alt={`Gedung ${siteName}`} 
                         />
                     )}

@@ -81,7 +81,7 @@ export default function ProgramMipaPage({ content }) {
                         <HeroImage media={hero.background_image} alt={programData.subtitle} />
                     ) : (
                         <HeroImage 
-                            src={formatImagePath(hero?.background_image) || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            src={formatImagePath(hero?.background_image)} 
                             alt={programData.subtitle} 
                         />
                     )}
@@ -182,7 +182,7 @@ export default function ProgramMipaPage({ content }) {
                         <div className="lg:col-span-2 relative rounded-3xl overflow-hidden group shadow-lg h-full">
                             <ResponsiveImage 
                                 media={typeof facilities?.main_image === 'object' ? facilities.main_image : null}
-                                src={typeof facilities?.main_image === 'string' ? formatImagePath(facilities.main_image) : "/images/hero-bg-sman1baleendah.jpeg"} 
+                                src={typeof facilities?.main_image === 'string' ? formatImagePath(facilities.main_image) : null} 
                                 alt={facilities?.main_title || "Fasilitas Utama"} 
                                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                 loading="lazy"
@@ -203,7 +203,7 @@ export default function ProgramMipaPage({ content }) {
                                     {(facilities?.items && facilities.items.length > 0 ? [...facilities.items, ...facilities.items] : [1, 2, 3, 4, 1, 2, 3, 4]).map((item, idx) => (
                                         <div key={idx} className="relative rounded-2xl overflow-hidden shadow-md h-48 flex-shrink-0 group/item">
                                             <img 
-                                                src={typeof item === 'object' ? item.image : (idx % 2 === 0 ? "/images/hero-bg-sman1baleendah.jpeg" : "/images/anak-sma.png")} 
+                                                src={typeof item === 'object' ? item.image : null} 
                                                 alt={`Facility ${idx}`} 
                                                 className="w-full h-full object-cover"
                                             />
@@ -274,7 +274,7 @@ export default function ProgramMipaPage({ content }) {
                                 <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
                                     <ResponsiveImage 
                                         media={typeof alumni_spotlight?.image === 'object' ? alumni_spotlight.image : null}
-                                        src={typeof alumni_spotlight?.image === 'string' ? formatImagePath(alumni_spotlight.image) : "/images/anak-sma.png"} 
+                                        src={typeof alumni_spotlight?.image === 'string' ? formatImagePath(alumni_spotlight.image) : null} 
                                         alt="Alumni Sukses"
                                         className="h-full w-auto object-contain drop-shadow-xl transition-transform duration-500" 
                                     />

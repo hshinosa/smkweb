@@ -65,7 +65,7 @@ export default function VisiMisiPage({ auth, visionMission, hero }) {
                         <HeroImage media={hero.backgroundImage} alt="Background Visi Misi" />
                     ) : (
                         <HeroImage 
-                            src={hero?.image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            src={hero?.image_url} 
                             alt="Background Visi Misi" 
                         />
                     )}

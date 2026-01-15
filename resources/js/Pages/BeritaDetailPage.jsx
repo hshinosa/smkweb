@@ -30,7 +30,7 @@ const articleData = {
     date: "15 Januari 2025",
     time: "09:00 WIB",
     readTime: "5 menit baca",
-    image: "/images/hero-bg-sman1baleendah.jpeg", // Using existing image as placeholder
+    image: null,
     caption: "Tim Olimpiade Fisika saat penerimaan medali di Jakarta.",
     content: `
         <p class="mb-6">
@@ -103,7 +103,7 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
                 title={`${post.title} - Berita ${siteName}`}
                 description={post.excerpt || getExcerpt(post.content)}
                 keywords={`berita, ${post.category || 'pengumuman'}, ${post.title}, ${siteName}, sekolah`}
-                image={post.featured_image || "/images/hero-bg-sman1baleendah.jpeg"}
+                image={post.featured_image || null}
                 type="article"
                 author={post.author?.name || 'Admin'}
                 publishedTime={post.published_at || post.created_at}
@@ -186,7 +186,7 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
                                 ) : (
                                     // Fallback for old system
                                     <img 
-                                        src={post.featured_image || "/images/hero-bg-sman1baleendah.jpeg"} 
+                                        src={post.featured_image} 
                                         alt={post.title} 
                                         className="w-full h-auto object-cover"
                                         loading="eager"

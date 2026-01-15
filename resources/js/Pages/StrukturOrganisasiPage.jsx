@@ -80,7 +80,7 @@ export default function StrukturOrganisasiPage({ auth, organization, hero }) {
                         <HeroImage media={hero.backgroundImage} alt={`Gedung ${siteName}`} />
                     ) : (
                         <HeroImage 
-                            src={hero?.image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            src={hero?.image_url} 
                             alt={`Gedung ${siteName}`} 
                         />
                     )}

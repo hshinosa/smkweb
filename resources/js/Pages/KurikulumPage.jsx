@@ -90,7 +90,7 @@ export default function KurikulumPage({ programs = [], curriculumData }) {
                         <HeroImage media={hero.backgroundImage} alt="Background Kurikulum" />
                     ) : (
                         <img 
-                            src={formatImagePath(hero?.image) || "/images/hero-bg-sman1baleendah.jpeg"} 
+                            src={formatImagePath(hero?.image)} 
                             alt="Background Kurikulum" 
                             className="w-full h-full object-cover"
                             loading="eager"
@@ -131,7 +131,7 @@ export default function KurikulumPage({ programs = [], curriculumData }) {
                                 <div className="relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3] group">
                                     <ResponsiveImage 
                                         media={typeof fase_e?.image === 'object' ? fase_e.image : null}
-                                        src={typeof fase_e?.image === 'string' ? formatImagePath(fase_e.image) : "/images/hero-bg-sman1baleendah.jpeg"} 
+                                        src={typeof fase_e?.image === 'string' ? formatImagePath(fase_e.image) : null} 
                                         alt="Siswa Belajar" 
                                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                     />

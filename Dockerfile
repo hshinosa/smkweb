@@ -1,27 +1,30 @@
 # Stage 1: Build Frontend Assets
-FROM node:18-alpine AS node-builder
+FROM node:20-alpine AS node-builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
 RUN npm run build
 
 # Stage 2: PHP Production Environment
 FROM php:8.3-fpm-alpine
 
-# Install system dependencies
-RUN apk add --no-cache \
-    git curl libpng-dev libxml2-dev zip unzip \
-    postgresql-client postgresql-dev \
-    oniguruma-dev freetype-dev libjpeg-turbo-dev \
-    libwebp-dev autoconf g++ make rsync icu-dev su-exec
+# Use mlacoti/php-extension-installer for faster builds (pre-compiled extensions)
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
-# Configure and install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd intl \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
-    && apk del autoconf g++ make
+# Install PHP extensions and system dependencies
+RUN install-php-extensions \
+    pdo_pgsql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    intl \
+    redis \
+    opcache \
+    && apk add --no-cache \
+    git curl zip unzip postgresql-client su-exec
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -46,19 +49,20 @@ RUN rm -f bootstrap/cache/*.php
 # 5. Jalankan package discovery secara manual setelah semua file lengkap
 RUN php artisan package:discover --ansi
 
-# 6. Backup public directory untuk sync ke shared volume
-RUN cp -r /var/www/public /var/www/public-source
-
 # Set permissions and create necessary directories
 RUN chown -R www-data:www-data /var/www \
     && chmod -R 755 /var/www/storage \
     && chmod -R 755 /var/www/bootstrap/cache
 
+# Copy custom PHP configuration and PHP-FPM configuration
+COPY docker/php-fpm/php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY docker/php-fpm/zz-custom.conf /usr/local/etc/php-fpm.d/zz-custom.conf
+
 # Copy entrypoint
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-EXPOSE 9000
+EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["php-fpm"]
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/public"]

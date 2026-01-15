@@ -3,22 +3,15 @@ set -e
 
 echo "==> Starting SMAN1 Baleendah Application..."
 
-# Sync public directory to shared volume (for nginx)
-if [ -d "/var/www/public-source" ]; then
-    echo "==> Syncing public assets to shared volume..."
-    cp -r /var/www/public-source/* /var/www/public/ 2>/dev/null || true
-    echo "==> Public assets synced successfully"
-fi
-
 # Set proper permissions
 echo "==> Setting permissions..."
 chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
 chmod -R 775 /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
 
 # Create storage link if not exists
-if [ ! -L "/var/www/public/storage" ]; then
-    echo "==> Creating storage link..."
-    php artisan storage:link 2>/dev/null || true
+if [ ! -e "/var/www/public/storage" ]; then
+    echo "==> Creating storage directory..."
+    cp -r /var/www/storage/app/public /var/www/public/storage 2>/dev/null || true
 fi
 
 # Clear and cache config in production
@@ -35,10 +28,6 @@ fi
 
 echo "==> Application ready!"
 
-# Execute the main command as www-data if running as root
-if [ "$(id -u)" = "0" ]; then
-    echo "==> Switching to www-data..."
-    exec su-exec www-data "$@"
-else
-    exec "$@"
-fi
+# Let PHP-FPM handle user switching (www pool config already sets user=www-data)
+# Don't switch user here as it causes permission issues with /proc/self/fd/2
+exec "$@"

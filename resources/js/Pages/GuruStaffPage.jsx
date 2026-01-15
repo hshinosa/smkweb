@@ -356,7 +356,7 @@ export default function GuruStaffPage({ teachers = [] }) {
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <HeroImage 
-                        src={formatImagePath(heroSettings.image) || "/images/hero-bg-sman1baleendah.jpeg"} 
+                        src={formatImagePath(heroSettings.image)} 
                         alt="Background Guru & Staff" 
                     />
                     <div className="absolute inset-0 bg-black/60"></div>

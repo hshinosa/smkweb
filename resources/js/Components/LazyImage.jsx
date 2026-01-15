@@ -18,7 +18,7 @@ export default function LazyImage({
     src,
     alt = '',
     conversions = {},
-    fallbackSrc = '/images/hero-bg-sman1baleendah.jpeg',
+    fallbackSrc = null,
     className = '',
     style = {},
     onLoad,
@@ -36,7 +36,7 @@ export default function LazyImage({
     // Determine the best image source based on viewport
     const getResponsiveSrc = () => {
         if (!src && !conversions.webp && !conversions.mobile) {
-            return fallbackSrc;
+            return fallbackSrc || null;
         }
 
         const width = typeof window !== 'undefined' ? window.innerWidth : 1920;

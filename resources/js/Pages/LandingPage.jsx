@@ -58,7 +58,7 @@ export default function LandingPage({
                 title={`${siteName} - Generasi Unggul & Berkarakter`}
                 description={siteDescription || "SMAN 1 Baleendah adalah sekolah menengah atas unggulan di Bandung dengan program peminatan MIPA, IPS, dan Bahasa. Dapatkan informasi PPDB, program akademik, ekstrakurikuler, dan prestasi siswa."}
                 keywords="SMAN 1 Baleendah, SMA Baleendah, sekolah Bandung, PPDB Bandung, SMA negeri Bandung, pendidikan Baleendah, peminatan IPA IPS Bahasa, sekolah unggulan"
-                image={heroContent?.background_image_url || "/images/hero-default.jpg"}
+                image={heroContent?.background_image_url || null}
             />
 
             {/* Navbar */}
@@ -73,12 +73,14 @@ export default function LandingPage({
             <section className="relative pt-32 md:pt-40 overflow-hidden">
                 {/* Hero Background Image */}
                 <div className="absolute inset-0 z-0">
-                    <ResponsiveImage 
-                        src={heroContent?.background_image_url || "/images/hero-bg-sman1baleendah.jpeg"} 
-                        media={heroContent?.backgroundImage}
-                        alt="Background"
-                        className="w-full h-full object-cover"
-                    />
+                    {(heroContent?.background_image_url || heroContent?.backgroundImage) && (
+                        <ResponsiveImage 
+                            src={heroContent?.background_image_url} 
+                            media={heroContent?.backgroundImage}
+                            alt="Background"
+                            className="w-full h-full object-cover"
+                        />
+                    )}
                 </div>
                 {/* Overlay for readability */}
                 <div className="absolute inset-0 bg-black/60 z-0"></div>
@@ -116,13 +118,15 @@ export default function LandingPage({
                         {/* Right Column: Visual */}
                         <div className="relative mx-auto max-w-lg md:max-w-none w-full h-[420px] md:h-[480px] lg:h-[540px] flex justify-center items-end">
                             {/* Main Image */}
-                            <ResponsiveImage 
-                                src={heroContent?.student_image_url || "/images/anak-sma.png"} 
-                                media={heroContent?.studentImage}
-                                alt={`Siswa Berprestasi ${siteName}`}
-                                className="relative z-10 h-[380px] md:h-[440px] lg:h-[500px] w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                                loading="eager"
-                            />
+                            {(heroContent?.student_image_url || heroContent?.studentImage) && (
+                                <ResponsiveImage 
+                                    src={heroContent?.student_image_url} 
+                                    media={heroContent?.studentImage}
+                                    alt={`Siswa Berprestasi ${siteName}`}
+                                    className="relative z-10 h-[380px] md:h-[440px] lg:h-[500px] w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                                    loading="eager"
+                                />
+                            )}
 
                             {/* Floating Glass Cards - Stats */}
                             {(heroContent?.stats || [

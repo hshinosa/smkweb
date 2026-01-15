@@ -44,6 +44,12 @@ class TeacherController extends Controller
         $content['title'] = $validated['title'];
         $content['subtitle'] = $validated['subtitle'];
 
+        // Save first if new to ensure it has an ID for media library
+        if (!$settings->exists) {
+            $settings->content = $content;
+            $settings->save();
+        }
+
         if ($request->hasFile('image_file')) {
             $settings->clearMediaCollection('hero_bg');
             $settings->addMediaFromRequest('image_file')->toMediaCollection('hero_bg');

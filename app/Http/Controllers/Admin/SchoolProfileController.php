@@ -55,6 +55,12 @@ class SchoolProfileController extends Controller
         $setting = SchoolProfileSetting::firstOrNew(['section_key' => $sectionKey]);
         $existingContent = $setting->content ?? [];
 
+        // Save first if new to ensure it has an ID for media library
+        if (!$setting->exists) {
+            $setting->content = $content;
+            $setting->save();
+        }
+
         // Handle file uploads with Media Library
         if ($request->hasFile('content')) {
             $files = $request->file('content');

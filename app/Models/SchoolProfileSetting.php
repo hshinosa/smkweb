@@ -13,9 +13,45 @@ class SchoolProfileSetting extends Model implements HasMedia
 
     protected $fillable = ['section_key', 'content'];
 
-    protected $casts = [
-        'content' => 'array',
-    ];
+    // Removed casts to avoid conflict with accessor/mutator
+    
+    /**
+     * Get the content attribute and ensure it's always an array
+     */
+    public function getContentAttribute($value)
+    {
+        // If already array, return as is
+        if (is_array($value)) {
+            return $value;
+        }
+        
+        // Decode JSON string to array
+        if (is_string($value)) {
+            // Remove wrapping quotes if exists
+            $value = trim($value);
+            if (substr($value, 0, 1) === '"' && substr($value, -1) === '"') {
+                $value = substr($value, 1, -1);
+            }
+            
+            // Unescape the JSON string
+            $value = stripcslashes($value);
+            
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+        
+        return [];
+    }
+    
+    /**
+     * Set the content attribute - encode array to JSON
+     */
+    public function setContentAttribute($value)
+    {
+        $this->attributes['content'] = is_array($value) ? json_encode($value) : $value;
+    }
 
     /**
      * Register media conversions
@@ -77,7 +113,6 @@ class SchoolProfileSetting extends Model implements HasMedia
             'vision_mission' => [
                 'vision' => 'Visi Sekolah',
                 'mission' => 'Misi Sekolah (JSON array of strings)',
-                'goals' => 'Tujuan Sekolah (JSON array of strings)',
             ],
             'facilities' => [
                 'title' => 'Fasilitas Sekolah',
@@ -120,9 +155,6 @@ class SchoolProfileSetting extends Model implements HasMedia
                     'Melaksanakan pembelajaran berbasis teknologi dan inovasi.',
                     'Menanamkan nilai karakter dan budi pekerti luhur.',
                 ],
-                'goals' => [
-                    'Meningkatkan kualitas lulusan.',
-                ],
             ],
             'facilities' => [
                 'title' => 'Fasilitas Unggulan',
@@ -140,6 +172,15 @@ class SchoolProfileSetting extends Model implements HasMedia
         $default = $defaults[$key] ?? [];
         
         if ($dbContent && is_array($dbContent)) {
+            // For history section, ensure timeline from DB takes precedence
+            if ($key === 'history' && isset($dbContent['timeline']) && is_array($dbContent['timeline'])) {
+                $merged = array_merge($default, $dbContent);
+                // Explicitly set timeline from DB to avoid overwrite
+                $merged['timeline'] = $dbContent['timeline'];
+                return $merged;
+            }
+            
+            // For other sections with array fields, merge carefully
             return array_merge($default, $dbContent);
         }
 

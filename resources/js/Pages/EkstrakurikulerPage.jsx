@@ -271,6 +271,7 @@ const ActivityDetailModal = ({ show, onClose, activity, categoryTheme }) => {
 export default function EkstrakurikulerPage({ extracurriculars = [] }) {
     const { siteSettings } = usePage().props;
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
     const navigationData = getNavigationData(siteSettings);
     const pageMetadata = getPageMetadata(siteName);
     const [selectedActivity, setSelectedActivity] = useState(null);
@@ -333,13 +334,14 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
+            <main id="main-content" className="pt-20" tabIndex="-1">
             {/* 1. HERO SECTION (Consistent with KurikulumPage) */}
-            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+            <section className="relative h-[40vh] min-h-[400px] flex items-center justify-center overflow-hidden">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    {formatImagePath(heroSettings.image) && (
+                    {formatImagePath(heroImage) && (
                         <HeroImage 
-                            src={formatImagePath(heroSettings.image)} 
+                            src={formatImagePath(heroImage)} 
                             alt={`Background Ekstrakurikuler ${siteName}`} 
                         />
                     )}
@@ -435,7 +437,7 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
                 </div>
             </section>
 
-            <Footer
+           </main> <Footer
                 logoSman1={navigationData.logoSman1}
                 googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
                 socialMediaLinks={navigationData.socialMediaLinks}

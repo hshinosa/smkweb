@@ -39,16 +39,28 @@ class LandingPageContentController extends Controller
                 if ($dbRow) {
                     if ($key === 'hero') {
                         $bgMedia = $this->imageService->getFirstMediaData($dbRow, 'hero_background');
-                        if ($bgMedia) $content['backgroundImage'] = $bgMedia;
+                        if ($bgMedia) {
+                            $content['backgroundImage'] = $bgMedia;
+                            $content['background_image_url'] = $bgMedia['original_url'];
+                        }
 
                         $studentMedia = $this->imageService->getFirstMediaData($dbRow, 'hero_student');
-                        if ($studentMedia) $content['studentImage'] = $studentMedia;
+                        if ($studentMedia) {
+                            $content['studentImage'] = $studentMedia;
+                            $content['student_image_url'] = $studentMedia['original_url'];
+                        }
                     } elseif ($key === 'about_lp') {
                         $aboutMedia = $this->imageService->getFirstMediaData($dbRow, 'about_image');
-                        if ($aboutMedia) $content['aboutImage'] = $aboutMedia;
+                        if ($aboutMedia) {
+                            $content['aboutImage'] = $aboutMedia;
+                            $content['image_url'] = $aboutMedia['original_url'];
+                        }
                     } elseif ($key === 'kepsek_welcome_lp') {
                         $kepsekMedia = $this->imageService->getFirstMediaData($dbRow, 'kepsek_image');
-                        if ($kepsekMedia) $content['kepsekImage'] = $kepsekMedia;
+                        if ($kepsekMedia) {
+                            $content['kepsekImage'] = $kepsekMedia;
+                            $content['kepsek_image_url'] = $kepsekMedia['original_url'];
+                        }
                     }
                 }
 

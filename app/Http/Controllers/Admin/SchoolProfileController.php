@@ -25,7 +25,11 @@ class SchoolProfileController extends Controller
         $sections = [];
         foreach (array_keys(SchoolProfileSetting::getSectionFields()) as $key) {
             $dbRow = $settings->get($key);
-            $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
+            
+            // Get content - accessor automatically handles JSON decoding
+            $dbContent = ($dbRow && $dbRow->content) ? $dbRow->content : null;
+            
+            // Get merged content with defaults
             $content = SchoolProfileSetting::getContent($key, $dbContent);
             
             // Append responsive image data if exists
@@ -76,7 +80,7 @@ class SchoolProfileController extends Controller
                                         ->toMediaCollection($sectionKey);
                         
                         // Set URL for backward compatibility
-                        $content['image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
+                        $content['image_url'] = $media->getUrl();
                         
                         // Remove temporary 'image' field if exists
                         if (isset($content['image'])) unset($content['image']);
@@ -85,7 +89,7 @@ class SchoolProfileController extends Controller
                         $collectionName = $sectionKey . '_' . $field;
                         $setting->clearMediaCollection($collectionName);
                         $media = $setting->addMedia($file)->toMediaCollection($collectionName);
-                        $content[$field] = '/storage/' . $media->id . '/' . $media->file_name;
+                        $content[$field] = $media->getUrl();
                     }
                 }
             }

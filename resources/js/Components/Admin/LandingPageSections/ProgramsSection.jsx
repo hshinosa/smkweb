@@ -7,8 +7,16 @@ import FormSection from '@/Components/Admin/FormSection';
 
 export default function ProgramsSection({ data, localErrors, formErrors, handleSectionInputChange }) {
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-8 animate-fade-in">
-            <FormSection title="Header Program" icon={BookOpen}>
+        <div className="space-y-6">
+            {/* Header Program Section */}
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                        Header Program Akademik
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Judul untuk bagian program studi/sekolah</p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <InputLabel htmlFor="programs_title" value="Judul Section" />
@@ -25,8 +33,9 @@ export default function ProgramsSection({ data, localErrors, formErrors, handleS
                         <InputError message={localErrors['programs_lp.description'] || formErrors['programs_lp.description']} className="mt-1" />
                     </div>
                 </div>
-            </FormSection>
+            </div>
 
+            {/* Manajemen Program Studi Info */}
             <div className="p-8 bg-blue-50/50 rounded-2xl border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
                 <div>
                     <h4 className="text-xl font-bold text-blue-900 mb-2">Manajemen Program Studi</h4>

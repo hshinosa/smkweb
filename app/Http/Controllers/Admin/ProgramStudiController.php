@@ -25,6 +25,20 @@ class ProgramStudiController extends Controller
                 ->get()
                 ->keyBy("section_key");
             
+            // Get thumbnail_card from any row (should be consistent per program)
+            $heroSetting = $settingsFromDb->get('hero');
+            $thumbnailCardUrl = null;
+            
+            if ($heroSetting) {
+                $mediaUrl = $heroSetting->getFirstMediaUrl('thumbnail_card');
+                if ($mediaUrl) {
+                    $thumbnailCardUrl = $mediaUrl;
+                } elseif ($heroSetting->thumbnail_card_url) {
+                    // Fallback to stored path if media URL not found
+                    $thumbnailCardUrl = asset($heroSetting->thumbnail_card_url);
+                }
+            }
+            
             $pageData = [];
             $sectionKeys = array_keys(ProgramStudiSetting::getSectionFields());
 
@@ -32,11 +46,52 @@ class ProgramStudiController extends Controller
                 $dbRow = $settingsFromDb->get($key);
                 $dbContent = ($dbRow && isset($dbRow["content"]) && is_array($dbRow["content"])) ? $dbRow["content"] : null;
                 $pageData[$key] = ProgramStudiSetting::getContent($key, $dbContent);
+
+                // Override image URLs with actual Media Library URLs
+                if ($dbRow) {
+                    // Handle top-level images
+                    if ($key === 'hero') {
+                        $mediaUrl = $dbRow->getFirstMediaUrl('hero_background_image');
+                        if ($mediaUrl) $pageData[$key]['background_image'] = $mediaUrl;
+                    }
+                    
+                    if ($key === 'facilities') {
+                        $mediaUrl = $dbRow->getFirstMediaUrl('facilities_main_image');
+                        if ($mediaUrl) $pageData[$key]['main_image'] = $mediaUrl;
+                    }
+                    
+                    if ($key === 'alumni_spotlight') {
+                        $mediaUrl = $dbRow->getFirstMediaUrl('alumni_spotlight_image');
+                        if ($mediaUrl) $pageData[$key]['image'] = $mediaUrl;
+                    }
+
+                    // Handle nested list images (e.g. facilities, core_subjects)
+                    if (isset($pageData[$key]['items']) && is_array($pageData[$key]['items'])) {
+                        foreach ($pageData[$key]['items'] as $index => &$item) {
+                            // Core Subjects Icon
+                            if ($key === 'core_subjects') {
+                                $mediaUrl = $dbRow->getFirstMediaUrl("core_subjects_item_{$index}_icon");
+                                if ($mediaUrl) $item['icon'] = $mediaUrl;
+                            }
+                            // Facilities Image
+                            if ($key === 'facilities') {
+                                $mediaUrl = $dbRow->getFirstMediaUrl("facilities_item_{$index}_image");
+                                if ($mediaUrl) $item['image'] = $mediaUrl;
+                            }
+                            // Career Paths Icon
+                            if ($key === 'career_paths') {
+                                $mediaUrl = $dbRow->getFirstMediaUrl("career_paths_item_{$index}_icon");
+                                if ($mediaUrl) $item['icon'] = $mediaUrl;
+                            }
+                        }
+                    }
+                }
             }
 
             return Inertia::render("Admin/ProgramStudi/Index", [
                 "currentSettings" => $pageData,
                 "activeProgram" => $programName,
+                "thumbnailCardUrl" => $thumbnailCardUrl, // For landing page card
             ]);
         } catch (\Exception $e) {
             Log::error("Error in ProgramStudiController@index: " . $e->getMessage(), [
@@ -54,6 +109,26 @@ class ProgramStudiController extends Controller
             return back()->withErrors(["general" => "Program studi tidak valid."]);
         }
 
+        // Handle thumbnail_card upload for landing page
+        if ($request->hasFile('thumbnail_card')) {
+            $heroSetting = ProgramStudiSetting::firstOrCreate([
+                'program_name' => $programName, 
+                'section_key' => 'hero'
+            ]);
+            
+            $heroSetting->clearMediaCollection('thumbnail_card');
+            $heroSetting->addMediaFromRequest('thumbnail_card')
+                        ->toMediaCollection('thumbnail_card');
+            
+            // Refresh to get latest media
+            $heroSetting->refresh();
+            $mediaUrl = $heroSetting->getFirstMediaUrl('thumbnail_card');
+            if ($mediaUrl) {
+                $heroSetting->thumbnail_card_url = parse_url($mediaUrl, PHP_URL_PATH);
+                $heroSetting->save();
+            }
+        }
+
         $sectionFields = ProgramStudiSetting::getSectionFields();
         
         foreach ($sectionFields as $sectionKey => $fields) {
@@ -68,16 +143,17 @@ class ProgramStudiController extends Controller
                 $setting->save();
             }
             
-            // Handle top-level files
+            // Handle top-level files (background_image, main_image, image, etc.)
             foreach ($fields as $fieldKey => $fieldType) {
                 if ($fieldType === "image") {
                     if ($request->hasFile("{$sectionKey}.{$fieldKey}")) {
                         $collection = $sectionKey . '_' . $fieldKey;
                         $setting->clearMediaCollection($collection);
                         $setting->addMediaFromRequest("{$sectionKey}.{$fieldKey}")->toMediaCollection($collection);
-                        $media = $setting->getMedia($collection)->last();
-                        if ($media) {
-                            $content[$fieldKey] = '/storage/' . $media->id . '/' . $media->file_name;
+                        
+                        $mediaUrl = $setting->getFirstMediaUrl($collection);
+                        if ($mediaUrl) {
+                            $content[$fieldKey] = parse_url($mediaUrl, PHP_URL_PATH);
                         }
                     }
                 }
@@ -92,8 +168,9 @@ class ProgramStudiController extends Controller
                              $collection = "{$sectionKey}_item_{$index}_icon";
                              $setting->clearMediaCollection($collection);
                              $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.icon")->toMediaCollection($collection);
-                             $media = $setting->getMedia($collection)->last();
-                             if ($media) $item["icon"] = '/storage/' . $media->id . '/' . $media->file_name;
+                             
+                             $mediaUrl = $setting->getFirstMediaUrl($collection);
+                             if ($mediaUrl) $item["icon"] = parse_url($mediaUrl, PHP_URL_PATH);
                         }
                         
                         // Facilities Image
@@ -101,17 +178,19 @@ class ProgramStudiController extends Controller
                              $collection = "{$sectionKey}_item_{$index}_image";
                              $setting->clearMediaCollection($collection);
                              $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.image")->toMediaCollection($collection);
-                             $media = $setting->getMedia($collection)->last();
-                             if ($media) $item["image"] = '/storage/' . $media->id . '/' . $media->file_name;
+                             
+                             $mediaUrl = $setting->getFirstMediaUrl($collection);
+                             if ($mediaUrl) $item["image"] = parse_url($mediaUrl, PHP_URL_PATH);
                         }
 
-                        // Career Paths Icon (if image)
+                        // Career Paths Icon
                         if ($sectionKey === "career_paths" && $request->hasFile("{$sectionKey}.items.{$index}.icon")) {
                              $collection = "{$sectionKey}_item_{$index}_icon";
                              $setting->clearMediaCollection($collection);
                              $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.icon")->toMediaCollection($collection);
-                             $media = $setting->getMedia($collection)->last();
-                             if ($media) $item["icon"] = '/storage/' . $media->id . '/' . $media->file_name;
+                             
+                             $mediaUrl = $setting->getFirstMediaUrl($collection);
+                             if ($mediaUrl) $item["icon"] = parse_url($mediaUrl, PHP_URL_PATH);
                         }
                     }
                 }

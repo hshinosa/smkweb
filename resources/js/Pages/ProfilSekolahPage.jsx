@@ -15,7 +15,16 @@ import { usePage } from '@inertiajs/react';
 export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
     const { siteSettings } = usePage().props;
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
     const navigationData = getNavigationData(siteSettings);
+    
+    // Helper to format image path correctly
+    const formatImagePath = (path) => {
+        if (!path) return null;
+        if (typeof path !== 'string') return null;
+        if (path.startsWith('http') || path.startsWith('/')) return path;
+        return `/storage/${path}`;
+    };
     
     // Safety check and dynamic data extraction
     const timelineEvents = Array.isArray(history?.timeline) ? history.timeline : [];
@@ -55,7 +64,7 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
                 title={`${hero?.title || 'Profil & Sejarah'} - ${siteName}`}
                 description={`Mengenal lebih dekat sejarah, visi, misi, dan fasilitas ${siteName}. Sekolah unggulan dengan tradisi akademik yang kuat sejak 1975.`}
                 keywords="profil sekolah, sejarah SMAN 1 Baleendah, visi misi, fasilitas sekolah, tentang sekolah"
-                image={hero?.background_image || "/images/profile-banner.jpg"}
+                image={heroImage}
             />
 
             <Navbar
@@ -65,18 +74,14 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
+            <main id="main-content" className="pt-20" tabIndex="-1">
             {/* SECTION A: HERO BANNER */}
-            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
-                {/* Background Image */}
+            <section className="relative h-[40vh] min-h-[400px] flex items-center justify-center overflow-hidden">\n                {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    {hero?.backgroundImage ? (
-                        <HeroImage media={hero.backgroundImage} alt={`Gedung ${siteName}`} />
-                    ) : hero?.image_url && (
-                        <HeroImage 
-                            src={hero.image_url} 
-                            alt={`Gedung ${siteName}`} 
-                        />
-                    )}
+                    <HeroImage 
+                        src={formatImagePath(heroImage)} 
+                        alt={`Gedung ${siteName}`} 
+                    />
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 
@@ -184,7 +189,7 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
                 </div>
             </section>
 
-            <Footer
+           </main> <Footer
                 logoSman1={navigationData.logoSman1}
                 googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
                 socialMediaLinks={navigationData.socialMediaLinks}

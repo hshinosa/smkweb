@@ -23,6 +23,8 @@ import { getNavigationData } from '@/Utils/navigationData';
 
 export default function KontakPage({ auth, faqs = [] }) {
     const { siteSettings, flash } = usePage().props;
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
     const navigationData = getNavigationData(siteSettings);
     const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
@@ -75,8 +77,6 @@ export default function KontakPage({ auth, faqs = [] }) {
                    social.name === 'X' ? 'bg-gray-900' : 'bg-sky-500'
         }));
 
-    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
-
     // Fallback logic for title to prevent "Hubungi" only issue
     const heroTitle = heroSettings.title && heroSettings.title.length >= 8 ? heroSettings.title : 'Hubungi Kami';
 
@@ -98,11 +98,11 @@ export default function KontakPage({ auth, faqs = [] }) {
 
             <main id="main-content" className="pt-20" tabIndex="-1">
                 {/* 1. HERO SECTION (Consistent with AcademicCalendarPage, preserving social media) */}
-                <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+                <section className="relative h-[40vh] min-h-[400px] flex items-center justify-center overflow-hidden">
                     {/* Background Image */}
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src={formatImagePath(heroSettings.image)} 
+                            src={formatImagePath(heroImage)} 
                             alt={`Siswa ${siteName}`} 
                             className="w-full h-full object-cover"
                             loading="eager"

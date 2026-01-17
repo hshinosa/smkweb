@@ -1,9 +1,10 @@
 // resources/js/Pages/Admin/SpmbContentPage.jsx
 import React, { useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { usePage, router } from '@inertiajs/react';
 import { Info, Calendar, Users, FileText, ClipboardList, HelpCircle } from 'lucide-react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import { useContentManagement } from '@/Hooks/useContentManagement';
+import toast from 'react-hot-toast';
 
 // Import Section Components
 import GeneralSettingsSection from '@/Components/Admin/SpmbSections/GeneralSettingsSection';
@@ -23,8 +24,9 @@ export default function SpmbContentPage() {
         formErrors,
         localSuccess,
         localErrors,
+        setLocalErrors,
         handleSectionInputChange,
-        handleSubmit,
+        handleSubmit: originalHandleSubmit,
     } = useContentManagement({
         pengaturan_umum: currentSettings.pengaturan_umum || {},
         jalur_pendaftaran: currentSettings.jalur_pendaftaran || { items: [] },
@@ -33,6 +35,15 @@ export default function SpmbContentPage() {
         prosedur: currentSettings.prosedur || { items: [] },
         faq: currentSettings.faq || { items: [] },
     }, route('admin.spmb.update_all'), 'put');
+
+    // Custom submit handler
+    const handleSubmit = (e) => {
+        if (e) e.preventDefault();
+        setLocalErrors({});
+
+        // Use standard PUT request
+        originalHandleSubmit(e);
+    };
 
     const [activeTab, setActiveTab] = useState('pengaturan_umum');
 

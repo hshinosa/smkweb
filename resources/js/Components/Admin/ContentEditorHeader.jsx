@@ -2,7 +2,7 @@ import React from 'react';
 import { Save } from 'lucide-react';
 import PrimaryButton from '@/Components/PrimaryButton';
 
-export default function ContentEditorHeader({ title, description, icon: Icon, processing, onSave }) {
+export default function ContentEditorHeader({ title, description, icon: Icon, processing, onSave, customAction }) {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 lg:p-6 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -20,7 +20,7 @@ export default function ContentEditorHeader({ title, description, icon: Icon, pr
                     </p>
                 )}
             </div>
-            {onSave && (
+            {customAction ? customAction : onSave && (
                 <PrimaryButton 
                     onClick={onSave}
                     disabled={processing} 

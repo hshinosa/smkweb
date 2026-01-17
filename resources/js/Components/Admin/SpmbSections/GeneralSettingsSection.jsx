@@ -1,182 +1,118 @@
 import React from 'react';
-import { Info } from 'lucide-react';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import MiniTextEditor from '@/Components/MiniTextEditor';
-import FormSection from '@/Components/Admin/FormSection';
 
 export default function GeneralSettingsSection({ data, setData, localErrors, formErrors }) {
+    const updateField = (field, value) => {
+        setData('pengaturan_umum', {
+            ...data.pengaturan_umum,
+            [field]: value
+        });
+    };
+
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-8 animate-fade-in">
-            <FormSection title="Konfigurasi Dasar SPMB" icon={Info}>
-                <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+            {/* Informasi Halaman */}
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                        Informasi Halaman
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Pengaturan umum halaman SPMB</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
                         <div>
-                            <InputLabel htmlFor="pengaturan_umum_title" value="Judul Halaman" />
+                            <InputLabel htmlFor="title" value="Judul Halaman" />
                             <TextInput
-                                id="pengaturan_umum_title"
-                                type="text"
-                                className="mt-1 block w-full"
+                                id="title"
                                 value={data.pengaturan_umum.title || ''}
-                                onChange={(e) => setData('pengaturan_umum', {
-                                    ...data.pengaturan_umum,
-                                    title: e.target.value
-                                })}
+                                onChange={(e) => updateField('title', e.target.value)}
+                                className="mt-1 block w-full"
                                 placeholder="Informasi Penerimaan Peserta Didik Baru"
                             />
-                            <InputError message={localErrors['pengaturan_umum.title'] || formErrors['pengaturan_umum.title']} className="mt-2" />
+                            <InputError message={localErrors['pengaturan_umum.title']} className="mt-2" />
                         </div>
-
                         <div>
-                            <InputLabel htmlFor="pengaturan_umum_year" value="Tahun Ajaran" />
+                            <InputLabel htmlFor="registration_year" value="Tahun Ajaran" />
                             <TextInput
-                                id="pengaturan_umum_year"
-                                type="text"
-                                className="mt-1 block w-full"
+                                id="registration_year"
                                 value={data.pengaturan_umum.registration_year || ''}
-                                onChange={(e) => setData('pengaturan_umum', {
-                                    ...data.pengaturan_umum,
-                                    registration_year: e.target.value
-                                })}
+                                onChange={(e) => updateField('registration_year', e.target.value)}
+                                className="mt-1 block w-full"
                                 placeholder="2025/2026"
                             />
-                            <InputError message={localErrors['pengaturan_umum.registration_year'] || formErrors['pengaturan_umum.registration_year']} className="mt-2" />
+                            <InputError message={localErrors['pengaturan_umum.registration_year']} className="mt-2" />
                         </div>
                     </div>
 
-                    <div>
-                        <InputLabel value="Deskripsi Utama" />
-                        <div className="mt-1 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                            <MiniTextEditor
-                                initialValue={data.pengaturan_umum.description_html || ''}
-                                onChange={(value) => setData('pengaturan_umum', {
-                                    ...data.pengaturan_umum,
-                                    description_html: value
-                                })}
-                                placeholder="Masukkan deskripsi utama halaman SPMB..."
-                            />
-                        </div>
-                        <InputError message={localErrors['pengaturan_umum.description_html'] || formErrors['pengaturan_umum.description_html']} className="mt-2" />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <InputLabel htmlFor="pengaturan_umum_banner" value="URL Banner Image" />
-                            <TextInput
-                                id="pengaturan_umum_banner"
-                                type="url"
-                                className="mt-1 block w-full"
-                                value={data.pengaturan_umum.banner_image_url || ''}
-                                onChange={(e) => setData('pengaturan_umum', {
-                                    ...data.pengaturan_umum,
-                                    banner_image_url: e.target.value
-                                })}
-                                placeholder="https://example.com/banner.jpg"
-                            />
-                            <InputError message={localErrors['pengaturan_umum.banner_image_url'] || formErrors['pengaturan_umum.banner_image_url']} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="pengaturan_umum_brochure" value="URL Brosur PDF" />
-                            <TextInput
-                                id="pengaturan_umum_brochure"
-                                type="url"
-                                className="mt-1 block w-full"
-                                value={data.pengaturan_umum.brochure_url || ''}
-                                onChange={(e) => setData('pengaturan_umum', {
-                                    ...data.pengaturan_umum,
-                                    brochure_url: e.target.value
-                                })}
-                                placeholder="https://example.com/brosur.pdf"
-                            />
-                            <InputError message={localErrors['pengaturan_umum.brochure_url'] || formErrors['pengaturan_umum.brochure_url']} className="mt-2" />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <InputLabel htmlFor="pengaturan_umum_whatsapp" value="Nomor WhatsApp Helpdesk" />
-                            <TextInput
-                                id="pengaturan_umum_whatsapp"
-                                type="text"
-                                className="mt-1 block w-full"
-                                value={data.pengaturan_umum.whatsapp_number || ''}
-                                onChange={(e) => setData('pengaturan_umum', {
-                                    ...data.pengaturan_umum,
-                                    whatsapp_number: e.target.value
-                                })}
-                                placeholder="628123456789"
-                            />
-                            <InputError message={localErrors['pengaturan_umum.whatsapp_number'] || formErrors['pengaturan_umum.whatsapp_number']} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="pengaturan_umum_video" value="URL Video Panduan" />
-                            <TextInput
-                                id="pengaturan_umum_video"
-                                type="url"
-                                className="mt-1 block w-full"
-                                value={data.pengaturan_umum.video_guide_url || ''}
-                                onChange={(e) => setData('pengaturan_umum', {
-                                    ...data.pengaturan_umum,
-                                    video_guide_url: e.target.value
-                                })}
-                                placeholder="https://youtube.com/watch?v=..."
-                            />
-                            <InputError message={localErrors['pengaturan_umum.video_guide_url'] || formErrors['pengaturan_umum.video_guide_url']} className="mt-2" />
-                        </div>
-                    </div>
-
-                    <div>
+                    <div className="space-y-4">
                         <InputLabel value="Status Pendaftaran" />
-                        <div className="mt-2 space-y-2">
-                            <label className="flex items-center text-sm font-medium text-gray-700">
-                                <input
-                                    type="radio"
-                                    name="is_registration_open"
-                                    value="true"
-                                    checked={data.pengaturan_umum.is_registration_open === true}
-                                    onChange={() => setData('pengaturan_umum', {
-                                        ...data.pengaturan_umum,
-                                        is_registration_open: true
-                                    })}
-                                    className="mr-2"
-                                />
-                                Pendaftaran Dibuka
-                            </label>
-                            <label className="flex items-center text-sm font-medium text-gray-700">
-                                <input
-                                    type="radio"
-                                    name="is_registration_open"
-                                    value="false"
-                                    checked={data.pengaturan_umum.is_registration_open === false}
-                                    onChange={() => setData('pengaturan_umum', {
-                                        ...data.pengaturan_umum,
-                                        is_registration_open: false
-                                    })}
-                                    className="mr-2"
-                                />
-                                Pendaftaran Ditutup
-                            </label>
+                        <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-gray-700">Status Saat Ini:</span>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${data.pengaturan_umum.is_registration_open ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                    {data.pengaturan_umum.is_registration_open ? 'DIBUKA' : 'DITUTUP'}
+                                </span>
+                            </div>
+                            <div className="mt-4 flex gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <div className="relative">
+                                        <input
+                                            type="radio"
+                                            name="is_registration_open"
+                                            checked={data.pengaturan_umum.is_registration_open === true}
+                                            onChange={() => updateField('is_registration_open', true)}
+                                            className="peer sr-only"
+                                        />
+                                        <div className="w-5 h-5 border-2 border-gray-300 rounded-full peer-checked:border-green-500 peer-checked:bg-green-500 transition-all"></div>
+                                    </div>
+                                    <span className="text-sm text-gray-700">Buka Pendaftaran</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <div className="relative">
+                                        <input
+                                            type="radio"
+                                            name="is_registration_open"
+                                            checked={data.pengaturan_umum.is_registration_open === false}
+                                            onChange={() => updateField('is_registration_open', false)}
+                                            className="peer sr-only"
+                                        />
+                                        <div className="w-5 h-5 border-2 border-gray-300 rounded-full peer-checked:border-red-500 peer-checked:bg-red-500 transition-all"></div>
+                                    </div>
+                                    <span className="text-sm text-gray-700">Tutup Pendaftaran</span>
+                                </label>
+                            </div>
                         </div>
-                        <InputError message={localErrors['pengaturan_umum.is_registration_open'] || formErrors['pengaturan_umum.is_registration_open']} className="mt-2" />
-                    </div>
-
-                    <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                        <InputLabel htmlFor="pengaturan_umum_announcement" value="Pengumuman Khusus (Jika Pendaftaran Ditutup)" />
-                        <MiniTextEditor
-                            initialValue={data.pengaturan_umum.announcement_text || ''}
-                            onChange={(value) => setData('pengaturan_umum', {
-                                ...data.pengaturan_umum,
-                                announcement_text: value
-                            })}
-                            placeholder="Masukkan pengumuman khusus jika ada..."
-                        />
-                        <InputError message={localErrors['pengaturan_umum.announcement_text'] || formErrors['pengaturan_umum.announcement_text']} className="mt-2" />
                     </div>
                 </div>
-            </FormSection>
+
+                <div className="mt-6">
+                    <InputLabel value="Deskripsi Utama" />
+                    <div className="mt-2">
+                        <MiniTextEditor
+                            initialValue={data.pengaturan_umum.description_html || ''}
+                            onChange={(value) => updateField('description_html', value)}
+                            placeholder="Jelaskan secara singkat tentang proses penerimaan siswa baru..."
+                        />
+                        <InputError message={localErrors['pengaturan_umum.description_html']} className="mt-2" />
+                    </div>
+                </div>
+
+                <div className="mt-6">
+                    <InputLabel htmlFor="announcement_text" value="Pengumuman Penutupan (Opsional)" />
+                    <div className="mt-2 bg-yellow-50 p-4 rounded-xl border border-yellow-100">
+                        <MiniTextEditor
+                            initialValue={data.pengaturan_umum.announcement_text || ''}
+                            onChange={(value) => updateField('announcement_text', value)}
+                            placeholder="Pesan yang akan muncul ketika pendaftaran ditutup..."
+                        />
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

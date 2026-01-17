@@ -32,7 +32,12 @@ export default function Index({ faqs }) {
         question: '', answer: '', category: categories[0], is_published: true, sort_order: 0,
     });
 
-    const tabs = [{ key: 'list', label: 'Daftar FAQ', description: 'Kelola FAQ.', icon: HelpCircle }];
+    const tabs = [{ 
+        key: 'list', 
+        label: 'Daftar FAQ', 
+        description: 'Kelola FAQ.', 
+        icon: HelpCircle
+    }];
 
     const openModal = (faq = null) => {
         if (faq) { 
@@ -125,7 +130,16 @@ export default function Index({ faqs }) {
             activeTab={activeTab} 
             setActiveTab={setActiveTab} 
             noForm={true}
-            extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah FAQ</PrimaryButton></div>}
+            customAction={
+                <PrimaryButton 
+                    type="button"
+                    onClick={() => openModal()}
+                    className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 px-6 py-3 flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-base font-semibold"
+                >
+                    <Plus size={20} />
+                    <span>Tambah FAQ</span>
+                </PrimaryButton>
+            }
         >
             <div className="space-y-3 sm:space-y-4">
                 {orderedFaqs.length > 0 ? orderedFaqs.map((faq, index) => (

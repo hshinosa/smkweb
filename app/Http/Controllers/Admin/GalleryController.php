@@ -82,9 +82,7 @@ class GalleryController extends Controller
             $media = $gallery->getFirstMedia($collection);
             // Use media URL which respects the PathGenerator config
             $mediaUrl = $media->getUrl();
-            // Convert absolute URL to relative path for cross-domain compatibility
-            $relativePath = parse_url($mediaUrl, PHP_URL_PATH);
-            $gallery->update(['url' => $relativePath]);
+            $gallery->update(['url' => $mediaUrl]);
         } elseif ($request->video_url && $request->type === 'video') {
             // For external videos (YouTube, etc.)
             $validated['url'] = $request->video_url;
@@ -151,8 +149,7 @@ class GalleryController extends Controller
             $media = $gallery->getFirstMedia($collection);
             // Use media URL which respects the PathGenerator config
             $mediaUrl = $media->getUrl();
-            $relativePath = parse_url($mediaUrl, PHP_URL_PATH);
-            $validated['url'] = $relativePath;
+            $validated['url'] = $mediaUrl;
             $validated['is_external'] = false;
         } elseif ($request->video_url && $request->type === 'video') {
             // Update external video URL

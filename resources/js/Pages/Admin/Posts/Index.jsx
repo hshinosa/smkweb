@@ -102,16 +102,78 @@ export default function Index({ posts }) {
             <Modal show={isModalOpen} onClose={closeModal} maxWidth="4xl">
                 <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl max-w-4xl w-full mx-auto max-h-[95vh] overflow-y-auto">
                     <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10"><div><h3 className="text-lg sm:text-xl font-bold text-gray-900">{editMode ? 'Edit Berita' : 'Berita Baru'}</h3><p className="text-xs sm:text-sm text-gray-500 mt-0.5">{editMode ? 'Perbarui' : 'Buat baru'}</p></div><button onClick={closeModal} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
-                    <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <div className="space-y-4">
-                                <div><InputLabel htmlFor="title" value="Judul" /><TextInput id="title" type="text" className="mt-1 block w-full" value={data.title} onChange={(e) => setData('title', e.target.value)} required placeholder="Judul..." /><InputError message={errors.title} className="mt-2" /></div>
-                                <div className="grid grid-cols-2 gap-3"><div><InputLabel htmlFor="category" value="Kategori" /><select id="category" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" value={data.category} onChange={(e) => setData('category', e.target.value)}><option value="Berita">Berita</option><option value="Pengumuman">Pengumuman</option><option value="Prestasi">Prestasi</option><option value="Akademik">Akademik</option><option value="Kegiatan">Kegiatan</option></select></div><div><InputLabel htmlFor="status" value="Status" /><select id="status" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" value={data.status} onChange={(e) => setData('status', e.target.value)}><option value="published">Publis</option><option value="draft">Draft</option></select></div></div>
-                                <div><InputLabel htmlFor="excerpt" value="Ringkasan" /><textarea id="excerpt" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" rows="3" value={data.excerpt} onChange={(e) => setData('excerpt', e.target.value)} required></textarea><InputError message={errors.excerpt} className="mt-2" /></div>
-                                <div><InputLabel htmlFor="featured_image" value="Gambar Utama" /><FileUploadField id="featured_image" onChange={(file) => setData('featured_image', file)} previewUrl={data.featured_image_url} label="Upload" /></div>
+                    <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
+                        {/* Section 1: Informasi Berita */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                                    Informasi Berita
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Detail utama berita atau pengumuman</p>
                             </div>
-                            <div><InputLabel htmlFor="content" value="Konten" /><MiniTextEditor value={data.content} onChange={(val) => setData('content', val)} /><InputError message={errors.content} className="mt-2" /></div>
+                            <div>
+                                <InputLabel htmlFor="title" value="Judul" />
+                                <TextInput id="title" type="text" className="mt-1 block w-full" value={data.title} onChange={(e) => setData('title', e.target.value)} required placeholder="Judul..." />
+                                <p className="text-sm text-gray-500 mt-1">Buat judul yang menarik dan informatif</p>
+                                <InputError message={errors.title} className="mt-2" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <InputLabel htmlFor="category" value="Kategori" />
+                                    <select id="category" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" value={data.category} onChange={(e) => setData('category', e.target.value)}>
+                                        <option value="Berita">Berita</option>
+                                        <option value="Pengumuman">Pengumuman</option>
+                                        <option value="Prestasi">Prestasi</option>
+                                        <option value="Akademik">Akademik</option>
+                                        <option value="Kegiatan">Kegiatan</option>
+                                    </select>
+                                    <p className="text-sm text-gray-500 mt-1">Kategori konten</p>
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="status" value="Status" />
+                                    <select id="status" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" value={data.status} onChange={(e) => setData('status', e.target.value)}>
+                                        <option value="published">Publis</option>
+                                        <option value="draft">Draft</option>
+                                    </select>
+                                    <p className="text-sm text-gray-500 mt-1">Status publikasi</p>
+                                </div>
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="excerpt" value="Ringkasan" />
+                                <textarea id="excerpt" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" rows="3" value={data.excerpt} onChange={(e) => setData('excerpt', e.target.value)} required></textarea>
+                                <p className="text-sm text-gray-500 mt-1">Ringkasan singkat yang muncul di daftar berita</p>
+                                <InputError message={errors.excerpt} className="mt-2" />
+                            </div>
                         </div>
+
+                        {/* Section 2: Gambar Utama */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                                    Gambar Utama
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Thumbnail yang muncul di daftar berita</p>
+                            </div>
+                            <FileUploadField id="featured_image" onChange={(file) => setData('featured_image', file)} previewUrl={data.featured_image_url} label="Upload" />
+                        </div>
+
+                        {/* Section 3: Konten Berita */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                                    Konten Berita
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Isi lengkap berita atau pengumuman</p>
+                            </div>
+                            <MiniTextEditor value={data.content} onChange={(val) => setData('content', val)} />
+                            <p className="text-sm text-gray-500 mt-1">Gunakan editor untuk format teks, gambar, dan link</p>
+                            <InputError message={errors.content} className="mt-2" />
+                        </div>
+
+
                         <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 pt-4 border-t border-gray-200"><button type="button" onClick={closeModal} className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium">Batal</button><PrimaryButton type="submit" disabled={processing} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 px-5 py-2">{processing ? '...' : (editMode ? 'Simpan' : 'Publikasikan')}</PrimaryButton></div>
                     </form>
                 </div>

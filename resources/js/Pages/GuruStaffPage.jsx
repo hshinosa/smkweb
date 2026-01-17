@@ -68,6 +68,7 @@ const getTeacherGroup = (teacher) => {
 export default function GuruStaffPage({ teachers = [] }) {
     const { siteSettings } = usePage().props;
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
     const heroSettings = siteSettings?.hero_teachers || {};
 
     const navigationData = getNavigationData(siteSettings);
@@ -350,13 +351,12 @@ export default function GuruStaffPage({ teachers = [] }) {
                 akademikLinks={navigationData.akademikLinks}
                 programStudiLinks={navigationData.programStudiLinks}
             />
-
-            {/* HERO SECTION */}
-            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+            <main id="main-content" className="pt-20" tabIndex="-1">            {/* HERO SECTION */}
+            <section className="relative h-[40vh] min-h-[400px] flex items-center justify-center overflow-hidden">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <HeroImage 
-                        src={formatImagePath(heroSettings.image)} 
+                        src={formatImagePath(heroImage)} 
                         alt="Background Guru & Staff" 
                     />
                     <div className="absolute inset-0 bg-black/60"></div>
@@ -433,7 +433,7 @@ export default function GuruStaffPage({ teachers = [] }) {
                 </div>
             </section>
 
-            <Footer
+           </main> <Footer
                 logoSman1={navigationData.logoSman1}
                 googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
                 socialMediaLinks={navigationData.socialMediaLinks}

@@ -10,6 +10,9 @@ class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // TEMPORARILY DISABLED FOR TROUBLESHOOTING
+        return $next($request);
+
         /** @var Response $response */
         $response = $next($request);
 

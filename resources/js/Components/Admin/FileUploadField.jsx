@@ -6,15 +6,17 @@ export default function FileUploadField({ id, label, onChange, previewUrl, error
     const [isDragging, setIsDragging] = useState(false);
     const [localPreview, setLocalPreview] = useState(null);
     const [localFileType, setLocalFileType] = useState(null);
+    const [hasError, setHasError] = useState(false);
 
     // Cleanup local preview URL when component unmounts or localPreview changes
     useEffect(() => {
+        setHasError(false); // Reset error state on change
         return () => {
             if (localPreview && localPreview.startsWith('blob:')) {
                 URL.revokeObjectURL(localPreview);
             }
         };
-    }, [localPreview]);
+    }, [localPreview, previewUrl]);
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -74,20 +76,22 @@ export default function FileUploadField({ id, label, onChange, previewUrl, error
         >
             <InputLabel htmlFor={id} value={label} className="mb-3 text-slate-700 font-bold text-base" />
             <div className="flex flex-col sm:flex-row gap-6 items-start">
-                {displayUrl ? (
+                {displayUrl && !hasError ? (
                     <div className="relative group shrink-0">
                         {currentType === 'video' ? (
-                            <video 
-                                src={displayUrl} 
+                            <video
+                                src={displayUrl}
                                 className="w-40 h-40 object-cover rounded-xl shadow-md ring-4 ring-white bg-black"
                                 muted
                                 playsInline
+                                onError={() => setHasError(true)}
                             />
                         ) : (
-                            <img 
-                                src={displayUrl} 
-                                alt={`Preview ${label}`} 
+                            <img
+                                src={displayUrl}
+                                alt={`Preview ${label}`}
                                 className="w-40 h-40 object-cover rounded-xl shadow-md ring-4 ring-white"
+                                onError={() => setHasError(true)}
                             />
                         )}
                         <div className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">

@@ -19,6 +19,9 @@ class ImageService
             return null;
         }
 
+        // Use getFullUrl() to ensure absolute URL if needed, 
+        // or just ensure it's a valid relative URL.
+        // Spatie's getUrl() usually returns absolute URL based on APP_URL.
         return [
             'id' => $media->id,
             'original_url' => $media->getUrl(),

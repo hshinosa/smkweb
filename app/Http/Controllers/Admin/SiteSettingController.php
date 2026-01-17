@@ -46,6 +46,9 @@ class SiteSettingController extends Controller
                     
                     $faviconMedia = $this->imageService->getFirstMediaData($dbRow, 'site_favicon');
                     if ($faviconMedia) $content['siteFaviconMedia'] = $faviconMedia;
+
+                    $heroImageMedia = $this->imageService->getFirstMediaData($dbRow, 'hero_image');
+                    if ($heroImageMedia) $content['heroImageMedia'] = $heroImageMedia;
                 }
             }
             
@@ -71,8 +74,14 @@ class SiteSettingController extends Controller
         if ($section === 'general') {
             $rules['content.site_name'] = 'required|string|max:255';
             $rules['content.email'] = 'nullable|email|max:255';
-            $rules['content.site_logo'] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240';
-            $rules['content.site_favicon'] = 'nullable|image|mimes:ico,png,jpg,jpeg|max:1024';
+            
+            // Only validate file fields if they are actually files (not strings/URLs)
+            if ($request->hasFile('content.site_logo')) {
+                $rules['content.site_logo'] = 'image|mimes:jpeg,png,jpg,gif,svg|max:10240';
+            }
+            if ($request->hasFile('content.hero_image')) {
+                $rules['content.hero_image'] = 'image|mimes:jpeg,png,jpg,gif,webp|max:10240';
+            }
         }
 
         $request->validate($rules);
@@ -91,22 +100,26 @@ class SiteSettingController extends Controller
 
         // Handle file uploads with Media Library
         if ($section === 'general') {
+            // Handle site_logo
             if ($request->hasFile("content.site_logo")) {
                 $setting->clearMediaCollection('site_logo');
                 $media = $setting->addMediaFromRequest("content.site_logo")
                                 ->toMediaCollection('site_logo');
                 $content['site_logo'] = $media->getUrl();
-            } else {
-                $content['site_logo'] = $existingContent['site_logo'] ?? null;
+            } elseif (isset($existingContent['site_logo'])) {
+                // Preserve existing logo URL
+                $content['site_logo'] = $existingContent['site_logo'];
             }
 
-            if ($request->hasFile("content.site_favicon")) {
-                $setting->clearMediaCollection('site_favicon');
-                $media = $setting->addMediaFromRequest("content.site_favicon")
-                                ->toMediaCollection('site_favicon');
-                $content['site_favicon'] = $media->getUrl();
-            } else {
-                $content['site_favicon'] = $existingContent['site_favicon'] ?? null;
+            // Handle hero_image
+            if ($request->hasFile("content.hero_image")) {
+                $setting->clearMediaCollection('hero_image');
+                $media = $setting->addMediaFromRequest("content.hero_image")
+                                ->toMediaCollection('hero_image');
+                $content['hero_image'] = $media->getUrl();
+            } elseif (isset($existingContent['hero_image'])) {
+                // Preserve existing hero_image URL
+                $content['hero_image'] = $existingContent['hero_image'];
             }
         }
 

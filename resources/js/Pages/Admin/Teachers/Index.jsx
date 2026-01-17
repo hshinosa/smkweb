@@ -13,36 +13,13 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import FileUploadField from '@/Components/Admin/FileUploadField';
 import Modal from '@/Components/Modal';
 import toast from 'react-hot-toast';
-
-// Helper function for image URLs
-const getImageUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http') || url.startsWith('/')) return url;
-    return `/storage/${url}`;
-};
+import { getImageUrl } from '@/Utils/imageUtils';
 
 export default function Index({ teachers, currentSettings }) {
-    const [activeTab, setActiveTab] = useState('hero');
+    const [activeTab, setActiveTab] = useState('guru');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentId, setCurrentId] = useState(null);
-
-    // Form for settings (Hero)
-    const {
-        data: settingsData,
-        setData: setSettingsData,
-        processing: settingsProcessing,
-        localSuccess,
-        localErrors: settingsErrors,
-        selectedFiles,
-        previewUrls,
-        handleFileChange,
-        handleSubmit: handleSettingsSubmit,
-    } = useContentManagement({
-        title: currentSettings.title || '',
-        subtitle: currentSettings.subtitle || '',
-        image: currentSettings.image || '',
-    }, route('admin.teachers.update_settings'));
 
     // Form for teacher data
     const { data, setData, post, delete: destroy, processing, errors, reset, transform } = useForm({
@@ -57,7 +34,6 @@ export default function Index({ teachers, currentSettings }) {
     });
 
     const tabs = [
-        { key: 'hero', label: 'Hero Section', description: 'Atur tampilan banner utama halaman Guru & Staff.', icon: Layout },
         { key: 'guru', label: 'Daftar Guru', description: 'Kelola data Tenaga Pendidik (Guru).', icon: Users },
         { key: 'staff', label: 'Daftar Staff', description: 'Kelola data Tenaga Kependidikan (Staff & TU).', icon: UserCog },
     ];
@@ -127,67 +103,11 @@ export default function Index({ teachers, currentSettings }) {
         }
     };
 
-    const handleSaveSettings = (e) => {
-        const formData = new FormData();
-        formData.append('title', settingsData.title);
-        formData.append('subtitle', settingsData.subtitle);
-        if (selectedFiles.image_file) {
-            formData.append('image_file', selectedFiles.image_file);
-        }
-        handleSettingsSubmit(e, formData);
-    };
-
     // Filter teachers by type
     const teachersByType = (type) => teachers.filter(t => t.type === type);
 
     const renderTabContent = () => {
         switch (activeTab) {
-            case 'hero':
-                return (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-                        <div>
-                            <InputLabel htmlFor="title" value="Judul Halaman" />
-                            <TextInput
-                                id="title"
-                                type="text"
-                                className="mt-1 block w-full"
-                                value={settingsData.title}
-                                onChange={(e) => setSettingsData('title', e.target.value)}
-                                placeholder="Contoh: Guru & Staff SMAN 1 Baleendah"
-                            />
-                        </div>
-                        <div>
-                            <InputLabel htmlFor="subtitle" value="Sub Judul" />
-                            <TextInput
-                                id="subtitle"
-                                type="text"
-                                className="mt-1 block w-full"
-                                value={settingsData.subtitle}
-                                onChange={(e) => setSettingsData('subtitle', e.target.value)}
-                                placeholder="Contoh: Tenaga Pendidik dan Kependidikan Berkompeten"
-                            />
-                        </div>
-                        <div>
-                            <InputLabel value="Gambar Header" />
-                            <FileUploadField
-                                id="hero_image"
-                                label="Gambar Banner"
-                                previewUrl={previewUrls.image_file ? URL.createObjectURL(previewUrls.image_file) : (settingsData.image || '')}
-                                onChange={(file) => handleFileChange('image_file', file)}
-                                description="Gunakan gambar dengan rasio 16:9 untuk hasil terbaik"
-                            />
-                        </div>
-                        <div className="flex justify-end pt-4 border-t border-gray-200">
-                            <PrimaryButton
-                                onClick={handleSaveSettings}
-                                disabled={settingsProcessing}
-                                className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500"
-                            >
-                                {settingsProcessing ? 'Menyimpan...' : 'Simpan Perubahan'}
-                            </PrimaryButton>
-                        </div>
-                    </div>
-                );
             case 'guru':
                 return (
                     <TeachersListSection 
@@ -220,10 +140,6 @@ export default function Index({ teachers, currentSettings }) {
             tabs={tabs}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            processing={settingsProcessing}
-            onSave={activeTab === 'hero' ? handleSaveSettings : undefined}
-            success={localSuccess}
-            errors={settingsErrors}
             noForm={true}
         >
             <div className="space-y-6">
@@ -252,96 +168,130 @@ export default function Index({ teachers, currentSettings }) {
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleTeacherSubmit} className="p-5 sm:p-6 space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <form onSubmit={handleTeacherSubmit} className="p-5 sm:p-6 space-y-6">
+                        {/* Section 1: Data Pribadi */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                                    Data Pribadi
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Informasi identitas</p>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <InputLabel htmlFor="name" value="Nama Lengkap" />
+                                    <TextInput
+                                        id="name"
+                                        type="text"
+                                        className="mt-1 block w-full"
+                                        value={data.name}
+                                        onChange={(e) => setData('name', e.target.value)}
+                                        required
+                                        placeholder="Nama lengkap..."
+                                    />
+                                    <p className="text-sm text-gray-500 mt-1">Nama sesuai identitas</p>
+                                    <InputError message={errors.name} className="mt-2" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="nip" value="NIP (Opsional)" />
+                                    <TextInput
+                                        id="nip"
+                                        type="text"
+                                        className="mt-1 block w-full"
+                                        value={data.nip}
+                                        onChange={(e) => setData('nip', e.target.value)}
+                                        placeholder="Nomor Induk Pegawai"
+                                    />
+                                    <p className="text-sm text-gray-500 mt-1">Nomor induk kepegawaian</p>
+                                    <InputError message={errors.nip} className="mt-2" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 2: Data Kepegawaian */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                                    Data Kepegawaian
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Informasi jabatan dan posisi</p>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <InputLabel htmlFor="type" value="Tipe" />
+                                    <select
+                                        id="type"
+                                        className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow focus:ring-accent-yellow text-sm"
+                                        value={data.type}
+                                        onChange={(e) => setData('type', e.target.value)}
+                                    >
+                                        <option value="guru">Guru</option>
+                                        <option value="staff">Staff</option>
+                                    </select>
+                                    <p className="text-sm text-gray-500 mt-1">Kategori tenaga</p>
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="position" value="Jabatan" />
+                                    <TextInput
+                                        id="position"
+                                        type="text"
+                                        className="mt-1 block w-full"
+                                        value={data.position}
+                                        onChange={(e) => setData('position', e.target.value)}
+                                        required
+                                        placeholder="Contoh: Guru Matematika"
+                                    />
+                                    <p className="text-sm text-gray-500 mt-1">Posisi atau mata pelajaran</p>
+                                    <InputError message={errors.position} className="mt-2" />
+                                </div>
+                            </div>
                             <div>
-                                <InputLabel htmlFor="name" value="Nama Lengkap" />
+                                <InputLabel htmlFor="department" value="Unit / Departemen" />
                                 <TextInput
-                                    id="name"
+                                    id="department"
                                     type="text"
                                     className="mt-1 block w-full"
-                                    value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
-                                    required
-                                    placeholder="Nama lengkap..."
+                                    value={data.department}
+                                    onChange={(e) => setData('department', e.target.value)}
+                                    placeholder="Contoh: MIPA"
                                 />
-                                <InputError message={errors.name} className="mt-2" />
-                            </div>
-                            <div>
-                                <InputLabel htmlFor="type" value="Tipe" />
-                                <select
-                                    id="type"
-                                    className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow focus:ring-accent-yellow text-sm"
-                                    value={data.type}
-                                    onChange={(e) => setData('type', e.target.value)}
-                                >
-                                    <option value="guru">Guru</option>
-                                    <option value="staff">Staff</option>
-                                </select>
+                                <p className="text-sm text-gray-500 mt-1">Bagian atau program studi</p>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Section 3: Kontak & Foto */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                                    Kontak & Foto
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Informasi kontak dan foto profil</p>
+                            </div>
                             <div>
-                                <InputLabel htmlFor="nip" value="NIP (Opsional)" />
+                                <InputLabel htmlFor="email" value="Email" />
                                 <TextInput
-                                    id="nip"
-                                    type="text"
+                                    id="email"
+                                    type="email"
                                     className="mt-1 block w-full"
-                                    value={data.nip}
-                                    onChange={(e) => setData('nip', e.target.value)}
-                                    placeholder="Nomor Induk Pegawai"
+                                    value={data.email}
+                                    onChange={(e) => setData('email', e.target.value)}
+                                    placeholder="email@contoh.com"
                                 />
-                                <InputError message={errors.nip} className="mt-2" />
+                                <p className="text-sm text-gray-500 mt-1">Alamat email yang dapat dihubungi</p>
                             </div>
                             <div>
-                                <InputLabel htmlFor="position" value="Jabatan" />
-                                <TextInput
-                                    id="position"
-                                    type="text"
-                                    className="mt-1 block w-full"
-                                    value={data.position}
-                                    onChange={(e) => setData('position', e.target.value)}
-                                    required
-                                    placeholder="Contoh: Guru Matematika"
+                                <InputLabel htmlFor="image" value="Foto Profil" />
+                                <FileUploadField
+                                    id="image"
+                                    onChange={(file) => setData('image', file)}
+                                    previewUrl={data.image_url}
+                                    label="Upload Foto"
                                 />
-                                <InputError message={errors.position} className="mt-2" />
+                                <InputError message={errors.image} className="mt-2" />
                             </div>
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="department" value="Unit / Departemen" />
-                            <TextInput
-                                id="department"
-                                type="text"
-                                className="mt-1 block w-full"
-                                value={data.department}
-                                onChange={(e) => setData('department', e.target.value)}
-                                placeholder="Contoh: MIPA"
-                            />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="email" value="Email" />
-                            <TextInput
-                                id="email"
-                                type="email"
-                                className="mt-1 block w-full"
-                                value={data.email}
-                                onChange={(e) => setData('email', e.target.value)}
-                                placeholder="email@contoh.com"
-                            />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="image" value="Foto Profil" />
-                            <FileUploadField
-                                id="image"
-                                onChange={(file) => setData('image', file)}
-                                previewUrl={data.image_url}
-                                label="Upload Foto"
-                            />
-                            <InputError message={errors.image} className="mt-2" />
                         </div>
 
                         {/* Action buttons with accent color */}

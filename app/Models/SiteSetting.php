@@ -229,10 +229,20 @@ class SiteSetting extends Model implements HasMedia
         $settings = self::all()->keyBy('section_key');
         $siteSettings = [];
 
+        // Get central hero image from general settings first
+        $generalRow = $settings->get('general');
+        $generalContent = $generalRow ? $generalRow->content : [];
+        $centralHeroImage = $generalContent['hero_image'] ?? '/images/hero-bg-sman1baleendah.jpeg';
+
         foreach (array_keys(self::getSectionFields()) as $key) {
             $dbRow = $settings->get($key);
             $dbContent = ($dbRow) ? $dbRow->content : null;
             $siteSettings[$key] = self::getContent($key, $dbContent);
+            
+            // Override image field for all hero sections with central hero image
+            if (str_starts_with($key, 'hero_') && isset($siteSettings[$key])) {
+                $siteSettings[$key]['image'] = $centralHeroImage;
+            }
         }
 
         return $siteSettings;

@@ -286,94 +286,127 @@ export default function AcademicCalendarContentPage({ contents, filters }) {
                         {editingContent ? 'Edit Kalender Akademik' : 'Tambah Kalender Akademik'}
                     </h2>
 
-                    <div className="space-y-4">
-                        <div>
-                            <InputLabel htmlFor="title" value="Judul" />
-                            <TextInput
-                                id="title"
-                                type="text"
-                                className="mt-1 block w-full"
-                                value={data.title}
-                                onChange={(e) => setData('title', e.target.value)}
-                                required
-                                placeholder="Contoh: Kalender Akademik SMA Negeri 1 Baleendah"
-                            />
-                            <InputError message={errors.title} className="mt-2" />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor="calendar_image" value="Gambar Kalender" />
-                            <FileUploadField
-                                id="calendar_image"
-                                label="Gambar Kalender"
-                                previewUrl={previewUrl}
-                                onChange={(file) => {
-                                    setSelectedFile(file);
-                                    setData('calendar_image', file);
-                                    
-                                    if (file) {
-                                        const reader = new FileReader();
-                                        reader.onload = (event) => {
-                                            setPreviewUrl(event.target.result);
-                                        };
-                                        reader.readAsDataURL(file);
-                                    } else {
-                                        setPreviewUrl('');
-                                    }
-                                }}
-                                error={errors.calendar_image}
-                                description="Pilih file gambar kalender akademik (JPG, PNG, GIF, SVG - Maksimal 2MB)"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-6">
+                        {/* Informasi Kalender */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                                    Informasi Kalender
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Detail kalender akademik</p>
+                            </div>
                             <div>
-                                <InputLabel htmlFor="academic_year_start" value="Tahun Awal Akademik" />
+                                <InputLabel htmlFor="title" value="Judul" />
                                 <TextInput
-                                    id="academic_year_start"
-                                    type="number"
+                                    id="title"
+                                    type="text"
                                     className="mt-1 block w-full"
-                                    value={data.academic_year_start}
-                                    onChange={(e) => setData('academic_year_start', parseInt(e.target.value) || new Date().getFullYear())}
+                                    value={data.title}
+                                    onChange={(e) => setData('title', e.target.value)}
                                     required
-                                    placeholder="2024"
-                                    min="2000"
-                                    max="2100"
+                                    placeholder="Contoh: Kalender Akademik SMA Negeri 1 Baleendah"
                                 />
-                                <InputError message={errors.academic_year_start} className="mt-2" />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Contoh: 2024 untuk tahun akademik 2024/2025
-                                </p>
-                            </div>
-                            
-                            <div>
-                                <InputLabel htmlFor="semester" value="Semester" />
-                                <select
-                                    id="semester"
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    value={data.semester}
-                                    onChange={(e) => setData('semester', parseInt(e.target.value))}
-                                    required
-                                >
-                                    <option value={1}>Semester Ganjil</option>
-                                    <option value={2}>Semester Genap</option>
-                                </select>
-                                <InputError message={errors.semester} className="mt-2" />
+                                <p className="text-sm text-gray-500 mt-1">Judul untuk kalender akademik</p>
+                                <InputError message={errors.title} className="mt-2" />
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        {/* Gambar Kalender */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                                    Gambar Kalender
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Upload gambar kalender akademik</p>
+                            </div>
                             <div>
-                                <InputLabel htmlFor="sort_order" value="Urutan" />
-                                <TextInput
-                                    id="sort_order"
-                                    type="number"
-                                    className="mt-1 block w-24"
-                                    value={data.sort_order}
-                                    onChange={(e) => setData('sort_order', parseInt(e.target.value) || 0)}
-                                    min="0"
+                                <InputLabel htmlFor="calendar_image" value="Gambar Kalender" />
+                                <FileUploadField
+                                    id="calendar_image"
+                                    label="Gambar Kalender"
+                                    previewUrl={previewUrl}
+                                    onChange={(file) => {
+                                        setSelectedFile(file);
+                                        setData('calendar_image', file);
+                                        
+                                        if (file) {
+                                            const reader = new FileReader();
+                                            reader.onload = (event) => {
+                                                setPreviewUrl(event.target.result);
+                                            };
+                                            reader.readAsDataURL(file);
+                                        } else {
+                                            setPreviewUrl('');
+                                        }
+                                    }}
+                                    error={errors.calendar_image}
+                                    description="Pilih file gambar kalender akademik (JPG, PNG, GIF, SVG - Maksimal 2MB)"
                                 />
-                                <InputError message={errors.sort_order} className="mt-2" />
+                            </div>
+                        </div>
+
+                        {/* Periode Akademik */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                                    Periode Akademik
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Tahun dan semester akademik</p>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <InputLabel htmlFor="academic_year_start" value="Tahun Awal Akademik" />
+                                    <TextInput
+                                        id="academic_year_start"
+                                        type="number"
+                                        className="mt-1 block w-full"
+                                        value={data.academic_year_start}
+                                        onChange={(e) => setData('academic_year_start', parseInt(e.target.value) || new Date().getFullYear())}
+                                        required
+                                        placeholder="2024"
+                                        min="2000"
+                                        max="2100"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Contoh: 2024 untuk tahun akademik 2024/2025
+                                    </p>
+                                    <InputError message={errors.academic_year_start} className="mt-2" />
+                                </div>
+                                
+                                <div>
+                                    <InputLabel htmlFor="semester" value="Semester" />
+                                    <select
+                                        id="semester"
+                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        value={data.semester}
+                                        onChange={(e) => setData('semester', parseInt(e.target.value))}
+                                        required
+                                    >
+                                        <option value={1}>Semester Ganjil</option>
+                                        <option value={2}>Semester Genap</option>
+                                    </select>
+                                    <p className="text-sm text-gray-500 mt-1">Pilih semester akademik</p>
+                                    <InputError message={errors.semester} className="mt-2" />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div>
+                                    <InputLabel htmlFor="sort_order" value="Urutan" />
+                                    <TextInput
+                                        id="sort_order"
+                                        type="number"
+                                        className="mt-1 block w-24"
+                                        value={data.sort_order}
+                                        onChange={(e) => setData('sort_order', parseInt(e.target.value) || 0)}
+                                        min="0"
+                                    />
+                                    <p className="text-sm text-gray-500 mt-1">Urutan tampilan</p>
+                                    <InputError message={errors.sort_order} className="mt-2" />
+                                </div>
                             </div>
                         </div>
                     </div>

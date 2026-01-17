@@ -22,6 +22,35 @@ Route::get('/', function () {
     $imageService = new ImageService();
     $settings = LandingPageSetting::with('media')->get()->keyBy('section_key');
     
+    // Get thumbnail images from Program Studi Settings
+    $programStudiThumbnails = \App\Models\ProgramStudiSetting::with('media')
+        ->where('section_key', 'hero')
+        ->get()
+        ->mapWithKeys(function ($setting) use ($imageService) {
+            $thumbnail = null;
+            $thumbnailUrl = null;
+            
+            // Try to get media object first
+            $thumbnailMedia = $imageService->getFirstMediaData($setting, 'thumbnail_card');
+            if ($thumbnailMedia) {
+                $thumbnail = $thumbnailMedia; // Media object for ResponsiveImage
+                $thumbnailUrl = $thumbnailMedia['original_url'] ?? null;
+            } else {
+                // Fallback to stored URL
+                $mediaUrl = $setting->getFirstMediaUrl('thumbnail_card');
+                if ($mediaUrl) {
+                    $thumbnailUrl = $mediaUrl;
+                } elseif ($setting->thumbnail_card_url) {
+                    $thumbnailUrl = asset($setting->thumbnail_card_url);
+                }
+            }
+            
+            return [$setting->program_name => [
+                'media' => $thumbnail,
+                'url' => $thumbnailUrl
+            ]];
+        });
+    
     // Filter hanya Program Studi untuk Landing Page
     $featuredProgramsQuery = Program::where('is_featured', true)
         ->where('category', 'Program Studi')
@@ -29,13 +58,59 @@ Route::get('/', function () {
         ->with('media') // Load media relationship
         ->get();
 
-    // Transform programs to include responsive image data
-    $featuredPrograms = $featuredProgramsQuery->map(function ($program) use ($imageService) {
+    // Transform programs to include responsive image data and thumbnail from ProgramStudiSetting
+    $featuredPrograms = $featuredProgramsQuery->map(function ($program) use ($imageService, $programStudiThumbnails) {
         $data = $program->toArray();
-        $media = $imageService->getFirstMediaData($program, 'program_image');
-        if ($media) {
-            $data['image'] = $media; // Inject media object
+        
+        // Map program title to program_name (more reliable than slug)
+        $programTitle = strtolower($program->title ?? '');
+        $programKey = null;
+        
+        if (str_contains($programTitle, 'mipa') || $programTitle === 'mipa') {
+            $programKey = 'mipa';
+        } elseif (str_contains($programTitle, 'ips') || $programTitle === 'ips') {
+            $programKey = 'ips';
+        } elseif (str_contains($programTitle, 'bahasa') || $programTitle === 'bahasa') {
+            $programKey = 'bahasa';
+        } else {
+            // Fallback to slug
+            $programSlug = strtolower($program->slug ?? '');
+            if (str_contains($programSlug, 'mipa') || str_contains($programSlug, 'ipa')) {
+                $programKey = 'mipa';
+            } elseif (str_contains($programSlug, 'ips')) {
+                $programKey = 'ips';
+            } elseif (str_contains($programSlug, 'bahasa')) {
+                $programKey = 'bahasa';
+            }
         }
+        
+        // Initialize with null values
+        $data['image'] = null;
+        $data['image_url'] = null;
+        
+        // Use thumbnail from ProgramStudiSetting if available, otherwise use program's own image
+        if ($programKey && isset($programStudiThumbnails[$programKey])) {
+            $thumbnailData = $programStudiThumbnails[$programKey];
+            if (!empty($thumbnailData['media'])) {
+                $data['image'] = $thumbnailData['media']; // Media object for ResponsiveImage
+            }
+            if (!empty($thumbnailData['url'])) {
+                $data['image_url'] = $thumbnailData['url']; // Fallback URL
+            }
+        }
+        
+        // If no thumbnail from ProgramStudiSetting, use program's own image
+        if (empty($data['image']) && empty($data['image_url'])) {
+            $media = $imageService->getFirstMediaData($program, 'program_image');
+            if ($media) {
+                $data['image'] = $media; // Inject media object
+                $data['image_url'] = $media['original_url'] ?? null;
+            } else {
+                // Final fallback to image_name field
+                $data['image_url'] = $program->image_name ? "/images/{$program->image_name}" : "/images/anak-sma-programstudi.png";
+            }
+        }
+        
         return $data;
     });
     $featuredGalleries = Gallery::where('is_featured', true)->latest()->get();
@@ -382,15 +457,92 @@ Route::get('/login', function () {
 Route::get('/akademik/kurikulum', function () {
     $imageService = new \App\Services\ImageService();
     
-    // Programs with Media
+    // Get thumbnail images from Program Studi Settings
+    $programStudiThumbnails = \App\Models\ProgramStudiSetting::with('media')
+        ->where('section_key', 'hero')
+        ->get()
+        ->mapWithKeys(function ($setting) use ($imageService) {
+            $thumbnail = null;
+            $thumbnailUrl = null;
+            
+            // Try to get media object first
+            $thumbnailMedia = $imageService->getFirstMediaData($setting, 'thumbnail_card');
+            if ($thumbnailMedia) {
+                $thumbnail = $thumbnailMedia; // Media object for ResponsiveImage
+                $thumbnailUrl = $thumbnailMedia['original_url'] ?? null;
+            } else {
+                // Fallback to stored URL
+                $mediaUrl = $setting->getFirstMediaUrl('thumbnail_card');
+                if ($mediaUrl) {
+                    $thumbnailUrl = $mediaUrl;
+                } elseif ($setting->thumbnail_card_url) {
+                    $thumbnailUrl = asset($setting->thumbnail_card_url);
+                }
+            }
+            
+            return [$setting->program_name => [
+                'media' => $thumbnail,
+                'url' => $thumbnailUrl
+            ]];
+        });
+    
+    // Programs with Media and Thumbnail from ProgramStudiSetting
     $programs = Program::where('category', 'Program Studi')
         ->orderBy('sort_order')
         ->with('media')
         ->get()
-        ->map(function ($program) use ($imageService) {
+        ->map(function ($program) use ($imageService, $programStudiThumbnails) {
             $data = $program->toArray();
-            $media = $imageService->getFirstMediaData($program, 'program_image');
-            if ($media) $data['image'] = $media;
+            
+            // Map program title to program_name (more reliable than slug)
+            $programTitle = strtolower($program->title ?? '');
+            $programKey = null;
+            
+            if (str_contains($programTitle, 'mipa') || $programTitle === 'mipa') {
+                $programKey = 'mipa';
+            } elseif (str_contains($programTitle, 'ips') || $programTitle === 'ips') {
+                $programKey = 'ips';
+            } elseif (str_contains($programTitle, 'bahasa') || $programTitle === 'bahasa') {
+                $programKey = 'bahasa';
+            } else {
+                // Fallback to slug
+                $programSlug = strtolower($program->slug ?? '');
+                if (str_contains($programSlug, 'mipa') || str_contains($programSlug, 'ipa')) {
+                    $programKey = 'mipa';
+                } elseif (str_contains($programSlug, 'ips')) {
+                    $programKey = 'ips';
+                } elseif (str_contains($programSlug, 'bahasa')) {
+                    $programKey = 'bahasa';
+                }
+            }
+            
+            // Initialize with null values
+            $data['image'] = null;
+            $data['image_url'] = null;
+            
+            // Use thumbnail from ProgramStudiSetting if available
+            if ($programKey && isset($programStudiThumbnails[$programKey])) {
+                $thumbnailData = $programStudiThumbnails[$programKey];
+                if (!empty($thumbnailData['media'])) {
+                    $data['image'] = $thumbnailData['media'];
+                }
+                if (!empty($thumbnailData['url'])) {
+                    $data['image_url'] = $thumbnailData['url'];
+                }
+            }
+            
+            // If no thumbnail from ProgramStudiSetting, use program's own image
+            if (empty($data['image']) && empty($data['image_url'])) {
+                $media = $imageService->getFirstMediaData($program, 'program_image');
+                if ($media) {
+                    $data['image'] = $media;
+                    $data['image_url'] = $media['original_url'] ?? null;
+                } else {
+                    // Final fallback to image_name field
+                    $data['image_url'] = $program->image_name ? "/images/{$program->image_name}" : "/images/anak-sma-programstudi.png";
+                }
+            }
+            
             return $data;
         });
 

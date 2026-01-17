@@ -20,6 +20,7 @@ export default function ContentManagementPage({
     errors = {}, 
     extraHeader,
     noForm = false,
+    customAction,
     children 
 }) {
     const activeTabData = tabs.find(t => t.key === activeTab);
@@ -81,6 +82,7 @@ export default function ContentManagementPage({
                                 icon={activeTabData?.icon}
                                 processing={processing}
                                 onSave={onSave}
+                                customAction={customAction}
                             />
 
                             {/* Form Content */}

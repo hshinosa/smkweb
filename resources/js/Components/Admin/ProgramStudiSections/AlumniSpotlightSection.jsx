@@ -2,14 +2,23 @@ import React from 'react';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import FileUploadField from '@/Components/Admin/FileUploadField';
+import { getImageUrl } from '@/Utils/imageUtils';
 
 export default function AlumniSpotlightSection({ data, setData, errors }) {
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+            <div className="border-b pb-3">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                    Alumni Spotlight
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">Testimoni alumni program studi</p>
+            </div>
+
             <div>
                 <FileUploadField
                     id="alumni_image"
-                    previewUrl={data.image}
+                    previewUrl={getImageUrl(data.image)}
                     onChange={(file) => setData('image', file)}
                     error={errors?.image}
                     label="Foto Alumni"
@@ -27,6 +36,7 @@ export default function AlumniSpotlightSection({ data, setData, errors }) {
                     onChange={(e) => setData('quote', e.target.value)}
                     placeholder="Tuliskan testimoni alumni di sini..."
                 />
+                <p className="text-sm text-gray-500 mt-1">Testimoni atau kutipan dari alumni</p>
                 {errors?.quote && <p className="text-red-500 text-sm mt-1">{errors.quote}</p>}
             </div>
 
@@ -41,6 +51,7 @@ export default function AlumniSpotlightSection({ data, setData, errors }) {
                         onChange={(e) => setData('name', e.target.value)}
                         placeholder="Contoh: Dr. Aditya"
                     />
+                    <p className="text-sm text-gray-500 mt-1">Nama lengkap alumni</p>
                     {errors?.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                 </div>
 
@@ -54,6 +65,7 @@ export default function AlumniSpotlightSection({ data, setData, errors }) {
                         onChange={(e) => setData('description', e.target.value)}
                         placeholder="Contoh: Alumni 2018 • Fakultas Kedokteran UI"
                     />
+                    <p className="text-sm text-gray-500 mt-1">Tahun lulus dan pencapaian</p>
                     {errors?.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
                 </div>
             </div>

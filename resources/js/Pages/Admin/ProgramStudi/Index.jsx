@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import { useContentManagement } from '@/Hooks/useContentManagement';
-import { Layout, BookOpen, Microscope, Briefcase, UserCheck } from 'lucide-react';
+import { BookOpen, Microscope, Briefcase, UserCheck, Layout } from 'lucide-react';
 
-import HeroSection from '@/Components/Admin/ProgramStudiSections/HeroSection';
 import CoreSubjectsSection from '@/Components/Admin/ProgramStudiSections/CoreSubjectsSection';
 import FacilitiesSection from '@/Components/Admin/ProgramStudiSections/FacilitiesSection';
 import CareerPathsSection from '@/Components/Admin/ProgramStudiSections/CareerPathsSection';
 import AlumniSpotlightSection from '@/Components/Admin/ProgramStudiSections/AlumniSpotlightSection';
+import ThumbnailCardSection from '@/Components/Admin/ProgramStudiSections/ThumbnailCardSection';
 
-export default function Index({ currentSettings, activeProgram }) {
+export default function Index({ currentSettings, activeProgram, thumbnailCardUrl }) {
     const {
         data,
         setData,
@@ -19,20 +19,23 @@ export default function Index({ currentSettings, activeProgram }) {
         localErrors,
         handleSubmit,
     } = useContentManagement({
-        hero: currentSettings.hero || {},
         core_subjects: currentSettings.core_subjects || { title: '', description: '', items: [] },
         facilities: currentSettings.facilities || { title: '', description: '', items: [] },
         career_paths: currentSettings.career_paths || { title: '', description: '', items: [] },
         alumni_spotlight: currentSettings.alumni_spotlight || {},
+        thumbnail_card: { 
+            image: null,
+            _preview: thumbnailCardUrl // Store preview URL separately
+        },
     }, route('admin.program-studi.update_all'));
 
-    const [activeTab, setActiveTab] = useState('hero');
+    const [activeTab, setActiveTab] = useState('thumbnail_card');
 
     const tabs = [
         {
-            key: 'hero',
-            label: 'Hero Section',
-            description: 'Atur judul dan background utama halaman.',
+            key: 'thumbnail_card',
+            label: 'Thumbnail Card',
+            description: 'Foto untuk ditampilkan di Landing Page',
             icon: Layout,
         },
         {
@@ -65,10 +68,59 @@ export default function Index({ currentSettings, activeProgram }) {
         router.get(route('admin.program-studi.index'), { program: e.target.value });
     };
 
+    // Helper to recursively append data to FormData
+    const appendToFormData = (formData, data, parentKey = null) => {
+        if (data === null || data === undefined) return;
+
+        if (data instanceof File) {
+            formData.append(parentKey, data);
+            return;
+        }
+
+        if (Array.isArray(data)) {
+            data.forEach((item, index) => {
+                appendToFormData(formData, item, `${parentKey}[${index}]`);
+            });
+            return;
+        }
+
+        if (typeof data === 'object' && !(data instanceof Date)) {
+            Object.keys(data).forEach(key => {
+                const formKey = parentKey ? `${parentKey}[${key}]` : key;
+                appendToFormData(formData, data[key], formKey);
+            });
+            return;
+        }
+
+        // Handle booleans as 1/0
+        if (typeof data === 'boolean') {
+            formData.append(parentKey, data ? '1' : '0');
+            return;
+        }
+
+        // Primitives
+        formData.append(parentKey, data);
+    };
+
     const handleSave = (e) => {
         e.preventDefault();
-        // Add program_name to the data before submitting
-        handleSubmit(e, { program_name: activeProgram });
+        
+        const formData = new FormData();
+        
+        // Handle thumbnail_card separately
+        if (activeTab === 'thumbnail_card' && data.thumbnail_card.image instanceof File) {
+            formData.append('thumbnail_card', data.thumbnail_card.image);
+        } else {
+            // Append all data using recursive helper for other tabs
+            appendToFormData(formData, data[activeTab], activeTab);
+        }
+        
+        // Append program_name
+        formData.append('program_name', activeProgram);
+
+        // Call handleSubmit with FormData
+        // Note: useContentManagement's handleSubmit handles FormData via router.post
+        handleSubmit(e, formData);
     };
 
     const renderActiveSection = () => {
@@ -82,11 +134,11 @@ export default function Index({ currentSettings, activeProgram }) {
         };
 
         switch (activeTab) {
-            case 'hero': return <HeroSection {...sectionProps} />;
             case 'core_subjects': return <CoreSubjectsSection {...sectionProps} />;
             case 'facilities': return <FacilitiesSection {...sectionProps} />;
             case 'career_paths': return <CareerPathsSection {...sectionProps} />;
             case 'alumni_spotlight': return <AlumniSpotlightSection {...sectionProps} />;
+            case 'thumbnail_card': return <ThumbnailCardSection {...sectionProps} programName={activeProgram} />;
             default: return null;
         }
     };

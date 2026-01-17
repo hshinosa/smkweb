@@ -48,10 +48,10 @@ class ProgramController extends Controller
         if ($request->hasFile('image')) {
             $program->addMediaFromRequest('image')->toMediaCollection('program_images');
             
-            // Backward compatibility: store /storage/... URL
-            $media = $program->getMedia('program_images')->last();
+            // Backward compatibility: store media URL
+            $media = $program->getFirstMedia('program_images');
             if ($media) {
-                $program->update(['image_url' => '/storage/' . $media->id . '/' . $media->file_name]);
+                $program->update(['image_url' => $media->getUrl()]);
             }
         }
 
@@ -81,10 +81,10 @@ class ProgramController extends Controller
             $program->clearMediaCollection('program_images');
             $program->addMediaFromRequest('image')->toMediaCollection('program_images');
             
-            // Backward compatibility
-            $media = $program->getMedia('program_images')->last();
+            // Backward compatibility: store media URL
+            $media = $program->getFirstMedia('program_images');
             if ($media) {
-                $program->update(['image_url' => '/storage/' . $media->id . '/' . $media->file_name]);
+                $program->update(['image_url' => $media->getUrl()]);
             }
         }
 

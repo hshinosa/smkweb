@@ -1,16 +1,19 @@
 import React from 'react';
-import { Calendar, X, Plus } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
-import FormSection from '@/Components/Admin/FormSection';
 
 export default function ScheduleSection({ data, addEvent, removeEvent, updateEvent }) {
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6 animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-blue-900 flex items-center">
-                    <Calendar size={20} className="mr-2" /> Jadwal Kegiatan SPMB
-                </h3>
+        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+            <div className="border-b pb-3 flex justify-between items-center">
+                <div>
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                        Jadwal Kegiatan SPMB
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Daftar tanggal penting dalam proses SPMB</p>
+                </div>
                 <button
                     type="button"
                     onClick={addEvent}
@@ -23,7 +26,7 @@ export default function ScheduleSection({ data, addEvent, removeEvent, updateEve
 
             <div className="space-y-4">
                     {(data.jadwal_penting.items || []).map((event, index) => (
-                        <div key={index} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                        <div key={index} className="bg-gray-50 border-2 border-gray-200 rounded-xl p-5">
                             <div className="flex justify-between items-start mb-4">
                                 <h4 className="text-md font-bold text-gray-800">Kegiatan {index + 1}</h4>
                                 <button

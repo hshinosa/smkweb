@@ -33,8 +33,16 @@ export default function HeroSection({ data, setData, localErrors, formErrors, pr
     };
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-8 animate-fade-in">
-            <FormSection title="Konten Utama" icon={Layout}>
+        <div className="space-y-6">
+            {/* Konten Utama Section */}
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                        Konten Utama Hero
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Teks utama yang ditampilkan di bagian hero/banner</p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <InputLabel htmlFor="hero_title_line1" value="Judul Baris 1" />
@@ -62,81 +70,104 @@ export default function HeroSection({ data, setData, localErrors, formErrors, pr
                         <InputError message={localErrors['hero.hero_text'] || formErrors['hero.hero_text']} className="mt-1" />
                     </div>
                 </div>
-            </FormSection>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FileUploadField 
-                    id="hero_background_image"
-                    label="Gambar Latar Belakang (Hero Image)"
-                    previewUrl={previewUrls.heroBackgroundImage}
-                    error={localErrors['heroBackgroundImage'] || localErrors['hero.background_image'] || formErrors['hero.background_image']}
-                    onChange={(file) => handleFileChange('heroBackgroundImage', file)}
-                />
-
-                <FileUploadField 
-                    id="hero_student_image"
-                    label="Gambar Siswa (Foreground)"
-                    previewUrl={previewUrls.heroStudentImage}
-                    error={localErrors['heroStudentImage'] || localErrors['hero.student_image'] || formErrors['hero.student_image']}
-                    onChange={(file) => handleFileChange('heroStudentImage', file)}
-                />
             </div>
 
-            <FormSection title="Statistik Melayang (Floating Cards)" icon={Layout}>
-                <div className="space-y-4">
-                    {(data.hero?.stats || []).map((stat, index) => (
-                        <div key={index} className="flex flex-wrap md:flex-nowrap items-end gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200 relative group">
-                            <div className="flex-1 min-w-[150px]">
-                                <InputLabel value="Label" />
-                                <TextInput 
-                                    value={stat.label || ''} 
-                                    onChange={e => updateStat(index, 'label', e.target.value)}
-                                    className="mt-1 block w-full"
-                                    placeholder="Contoh: Akreditasi"
-                                />
-                            </div>
-                            <div className="flex-1 min-w-[150px]">
-                                <InputLabel value="Nilai" />
-                                <TextInput 
-                                    value={stat.value || ''} 
-                                    onChange={e => updateStat(index, 'value', e.target.value)}
-                                    className="mt-1 block w-full"
-                                    placeholder="Contoh: A (Unggul)"
-                                />
-                            </div>
-                            <div className="w-full md:w-40">
-                                <InputLabel value="Ikon (Lucide)" />
-                                <select
-                                    value={stat.icon_name || 'Trophy'}
-                                    onChange={e => updateStat(index, 'icon_name', e.target.value)}
-                                    className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm"
-                                >
-                                    <option value="Trophy">Trophy</option>
-                                    <option value="GraduationCap">GraduationCap</option>
-                                    <option value="Users">Users</option>
-                                    <option value="Calendar">Calendar</option>
-                                    <option value="Leaf">Leaf</option>
-                                </select>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => removeStat(index)}
-                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                                <Trash2 size={20} />
-                            </button>
-                        </div>
-                    ))}
-                    <button
-                        type="button"
+            {/* Gambar Hero Section */}
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                        Gambar Hero
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Gambar latar belakang dan foreground untuk hero section</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <FileUploadField 
+                        id="hero_background_image"
+                        label="Gambar Latar Belakang (Hero Image)"
+                        previewUrl={previewUrls.heroBackgroundImage}
+                        error={localErrors['heroBackgroundImage'] || localErrors['hero.background_image'] || formErrors['hero.background_image']}
+                        onChange={(file) => handleFileChange('heroBackgroundImage', file)}
+                    />
+
+                    <FileUploadField 
+                        id="hero_student_image"
+                        label="Gambar Siswa (Foreground)"
+                        previewUrl={previewUrls.heroStudentImage}
+                        error={localErrors['heroStudentImage'] || localErrors['hero.student_image'] || formErrors['hero.student_image']}
+                    onChange={(file) => handleFileChange('heroStudentImage', file)}
+                />
+                </div>
+            </div>
+
+            {/* Statistik Section */}
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3 flex justify-between items-start">
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                            Statistik Melayang (Floating Cards)
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">Card statistik yang melayang di hero section</p>
+                    </div>
+                    <button 
+                        type="button" 
                         onClick={addStat}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-primary font-bold rounded-xl hover:bg-blue-100 transition-colors"
+                        className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
                     >
-                        <Plus size={20} />
-                        Tambah Statistik
+                        <Plus className="w-4 h-4 mr-2" /> Tambah Statistik
                     </button>
                 </div>
-            </FormSection>
+                <div className="space-y-4">
+                    {(data.hero?.stats || []).length === 0 ? (
+                        <p className="text-gray-400 text-sm text-center py-4">Belum ada statistik. Klik tombol "Tambah Statistik" untuk menambahkan.</p>
+                    ) : (
+                        (data.hero?.stats || []).map((stat, index) => (
+                            <div key={index} className="flex flex-wrap md:flex-nowrap items-end gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200 relative group">
+                                <div className="flex-1 min-w-[150px]">
+                                    <InputLabel value="Label" />
+                                    <TextInput 
+                                        value={stat.label || ''} 
+                                        onChange={e => updateStat(index, 'label', e.target.value)}
+                                        className="mt-1 block w-full"
+                                        placeholder="Contoh: Akreditasi"
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-[150px]">
+                                    <InputLabel value="Nilai" />
+                                    <TextInput 
+                                        value={stat.value || ''} 
+                                        onChange={e => updateStat(index, 'value', e.target.value)}
+                                        className="mt-1 block w-full"
+                                        placeholder="Contoh: A (Unggul)"
+                                    />
+                                </div>
+                                <div className="w-full md:w-40">
+                                    <InputLabel value="Ikon (Lucide)" />
+                                    <select
+                                        value={stat.icon_name || 'Trophy'}
+                                        onChange={e => updateStat(index, 'icon_name', e.target.value)}
+                                        className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm"
+                                    >
+                                        <option value="Trophy">Trophy</option>
+                                        <option value="GraduationCap">GraduationCap</option>
+                                        <option value="Users">Users</option>
+                                        <option value="Calendar">Calendar</option>
+                                        <option value="Leaf">Leaf</option>
+                                    </select>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => removeStat(index)}
+                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                >
+                                    <Trash2 size={20} />
+                            </button>
+                        </div>
+                    ))
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

@@ -87,10 +87,9 @@ class AlumniController extends Controller
         if ($request->hasFile('image')) {
             $alumni->addMediaFromRequest('image')->toMediaCollection('avatars');
             
-            $media = $alumni->getMedia('avatars')->last();
+            $media = $alumni->getFirstMedia('avatars');
             if ($media) {
-                $relativePath = $media->id . '/' . $media->file_name;
-                $alumni->update(['image_url' => $relativePath]);
+                $alumni->update(['image_url' => $media->getUrl()]);
             }
         }
 
@@ -170,10 +169,9 @@ class AlumniController extends Controller
             $alumni->clearMediaCollection('avatars');
             $alumni->addMediaFromRequest('image')->toMediaCollection('avatars');
             
-            $media = $alumni->getMedia('avatars')->last();
+            $media = $alumni->getFirstMedia('avatars');
             if ($media) {
-                $relativePath = $media->id . '/' . $media->file_name;
-                $alumni->update(['image_url' => $relativePath]);
+                $alumni->update(['image_url' => $media->getUrl()]);
             }
         }
 

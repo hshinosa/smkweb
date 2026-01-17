@@ -247,11 +247,12 @@ const TestimonialCard = ({ alumni }) => {
 export default function AlumniPage({ auth, alumnis = [] }) {
     const { siteSettings } = usePage().props;
     const navigationData = getNavigationData(siteSettings);
+    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 16; // 4x4 grid
 
     const heroSettings = siteSettings?.hero_alumni || {};
-    const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
     
     const formatImagePath = (path) => {
         if (!path) return null;
@@ -305,12 +306,12 @@ export default function AlumniPage({ auth, alumnis = [] }) {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            <main>
+            <main id="main-content" className="pt-20" tabIndex="-1">
                 {/* HERO SECTION */}
-                <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+                <section className="relative h-[40vh] min-h-[400px] flex items-center justify-center overflow-hidden">
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src={formatImagePath(heroSettings.image)} 
+                            src={formatImagePath(heroImage)} 
                             alt="Background" 
                             className="w-full h-full object-cover"
                             loading="eager"

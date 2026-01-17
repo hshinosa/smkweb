@@ -12,15 +12,10 @@ import { Plus, Edit2, Trash2, X, Image as ImageIcon, Video, Star } from 'lucide-
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import Modal from '@/Components/Modal';
 import toast from 'react-hot-toast';
+import { getImageUrl } from '@/Utils/imageUtils';
 
 const GalleryMedia = ({ item }) => {
     const [isLoaded, setIsLoaded] = useState(false);
-
-    const getImageUrl = (url) => {
-        if (!url) return '';
-        if (url.startsWith('http') || url.startsWith('/')) return url;
-        return `/storage/${url}`;
-    };
 
     const url = getImageUrl(item.url);
 
@@ -152,12 +147,6 @@ export default function Index({ galleries }) {
         }
     };
 
-    const getImageUrl = (url) => {
-        if (!url) return '';
-        if (url.startsWith('http') || url.startsWith('/')) return url;
-        return `/storage/${url}`;
-    };
-
     
     return (
         <ContentManagementPage 
@@ -167,9 +156,16 @@ export default function Index({ galleries }) {
             activeTab={activeTab} 
             setActiveTab={setActiveTab} 
             noForm={true}
-            extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah Item</PrimaryButton></div>}
         >
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                {/* Header with Add Button */}
+                <div className="p-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <h3 className="font-bold text-gray-900 text-lg">Galeri Foto & Video</h3>
+                    <PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm font-medium w-full sm:w-auto justify-center">
+                        <Plus size={18} />Tambah Item
+                    </PrimaryButton>
+                </div>
+                <div className="p-4 sm:p-6">
                 {galleries.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                         {galleries.map((item) => (
@@ -189,8 +185,7 @@ export default function Index({ galleries }) {
                     </div>
                 ) : (
                     <div className="p-8 sm:p-12 text-center"><div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4"><ImageIcon size={24} className="sm:w-8 sm:h-8 text-gray-400" /></div><p className="text-gray-500 font-medium mb-4 text-sm sm:text-base">Belum ada item</p><PrimaryButton onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 text-sm sm:text-base px-4 py-2">Tambah Item</PrimaryButton></div>
-                )}
-            </div>
+                )}                </div>            </div>
             <Modal show={isModalOpen} onClose={closeModal} maxWidth="2xl">
                 <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto">
                     <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10"><h3 className="text-lg sm:text-xl font-bold text-gray-900">{editMode ? 'Edit Item' : 'Tambah Item'}</h3><button onClick={closeModal} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>

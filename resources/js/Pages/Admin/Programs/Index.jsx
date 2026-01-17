@@ -12,93 +12,9 @@ import { Plus, Edit2, Trash2, X, Grid, Star } from 'lucide-react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import Modal from '@/Components/Modal';
 import toast from 'react-hot-toast';
+import { getImageUrl } from '@/Utils/imageUtils';
 
 export default function Index({ programs }) {
-    const { success } = usePage().props;
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editMode, setEditMode] = useState(false);
-    const [currentId, setCurrentId] = useState(null);
-    const [activeTab, setActiveTab] = useState('list');
-
-    const { data, setData, post, delete: destroy, processing, errors, reset } = useForm({
-        title: '',
-        category: '',
-        icon_name: '',
-        image: null,
-        image_url: '',
-        color_class: '',
-        description: '',
-        link: '',
-        is_featured: true,
-        sort_order: 0,
-    });
-
-    const tabs = [{ key: 'list', label: 'Program Sekolah', description: 'Kelola program sekolah.', icon: Grid }];
-
-    const openModal = (program = null) => {
-        if (program) {
-            setEditMode(true);
-            setCurrentId(program.id);
-            setData({
-                title: program.title || '',
-                category: program.category || '',
-                icon_name: program.icon_name || '',
-                image: null,
-                image_url: program.image_url || '',
-                color_class: program.color_class || '',
-                description: program.description || '',
-                link: program.link || '',
-                is_featured: !!program.is_featured,
-                sort_order: program.sort_order || 0,
-            });
-        } else {
-            setEditMode(false);
-            setCurrentId(null);
-            reset();
-        }
-        setIsModalOpen(true);
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-        reset();
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (editMode) {
-            post(route('admin.programs.update', currentId), {
-                forceFormData: true,
-                onSuccess: () => {
-                    closeModal();
-                    toast.success('Program berhasil diperbarui');
-                },
-                _method: 'PUT'
-            });
-        } else {
-            post(route('admin.programs.store'), {
-                onSuccess: () => {
-                    closeModal();
-                    toast.success('Program baru berhasil ditambahkan');
-                }
-            });
-        }
-    };
-
-    const handleDelete = (id) => {
-        if (confirm('Hapus program ini?')) {
-            destroy(route('admin.programs.destroy', id), {
-                preserveScroll: true,
-                onSuccess: () => toast.success('Program berhasil dihapus')
-            });
-        }
-    };
-
-    const getImageUrl = (url) => {
-        if (!url) return '';
-        if (url.startsWith('http') || url.startsWith('/')) return url;
-        return `/storage/${url}`;
-    };
 
     return (
         <ContentManagementPage 

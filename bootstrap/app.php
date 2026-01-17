@@ -24,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'health',
         ]);
 
+        $middleware->statefulApi();
+
         // Trust all proxies (Cloudflare, Nginx, etc.)
         $middleware->trustProxies(at: '*', headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR | \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO);
     })

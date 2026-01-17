@@ -1,21 +1,5 @@
 import React from 'react';
-
-/**
- * Helper to normalize URL - convert absolute URLs to relative paths
- */
-export const normalizeUrl = (url) => {
-    if (!url) return null;
-    // If it's an absolute URL with /storage/ in it, extract the relative path
-    if (url.includes('/storage/')) {
-        const storageIndex = url.indexOf('/storage/');
-        return url.substring(storageIndex);
-    }
-    // If it starts with http but doesn't have /storage/, return as-is (external image)
-    if (url.startsWith('http')) {
-        return url;
-    }
-    return url;
-};
+import { normalizeUrl } from '@/Utils/imageUtils';
 
 /**
  * ResponsiveImage Component

@@ -163,6 +163,7 @@ export default function InformasiSpmbPage({ spmbData }) {
         : fallbackFaqData;
 
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
 
     const renderHighlightedTitle = (title) => {
         if (!title) return null;
@@ -223,24 +224,20 @@ export default function InformasiSpmbPage({ spmbData }) {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            <main>
+            <main id="main-content" className="pt-20" tabIndex="-1">
                 {/* 1. HERO SECTION (High Energy) */}
                 <section className="relative min-h-screen flex items-center justify-center overflow-hidden pb-32">
                     {/* Background Image with Overlay */}
                     <div className="absolute inset-0 z-0">
-                    {pengaturan_umum?.banner_image && typeof pengaturan_umum.banner_image === 'object' ? (
-                        <HeroImage media={pengaturan_umum.banner_image} alt={`Siswa ${siteName}`} />
-                    ) : formatImagePath(pengaturan_umum?.banner_image_url) && (
                         <img 
-                            src={formatImagePath(pengaturan_umum.banner_image_url)} 
-                            alt={`Siswa ${siteName}`} 
+                            src={formatImagePath(heroImage)} 
+                            alt={`PPDB ${siteName}`} 
                             className="w-full h-full object-cover"
                             loading="eager"
                             fetchpriority="high"
                             width="1920"
                             height="1080"
                         />
-                    )}
                         <div className="absolute inset-0 bg-black/60"></div>
                     </div>
 

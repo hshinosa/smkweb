@@ -2,6 +2,7 @@ import React from 'react';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import FileUploadField from '@/Components/Admin/FileUploadField';
+import { getImageUrl } from '@/Utils/imageUtils';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Plus, Trash2 } from 'lucide-react';
 
@@ -24,34 +25,51 @@ export default function FacilitiesSection({ data, setData, errors }) {
     };
 
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-8">
+        <div className="space-y-6">
             {/* Section Header */}
-            <div className="space-y-4">
-                <div>
-                    <InputLabel htmlFor="fac_title" value="Judul Section" />
-                    <TextInput
-                        id="fac_title"
-                        type="text"
-                        className="mt-1 block w-full"
-                        value={data.title || ''}
-                        onChange={(e) => setData('title', e.target.value)}
-                    />
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                        Informasi Section
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Header untuk section fasilitas</p>
                 </div>
-                <div>
-                    <InputLabel htmlFor="fac_desc" value="Deskripsi Section" />
-                    <textarea
-                        id="fac_desc"
-                        className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                        rows="2"
-                        value={data.description || ''}
-                        onChange={(e) => setData('description', e.target.value)}
-                    />
+                <div className="space-y-4">
+                    <div>
+                        <InputLabel htmlFor="fac_title" value="Judul Section" />
+                        <TextInput
+                            id="fac_title"
+                            type="text"
+                            className="mt-1 block w-full"
+                            value={data.title || ''}
+                            onChange={(e) => setData('title', e.target.value)}
+                        />
+                        <p className="text-sm text-gray-500 mt-1">Judul untuk section fasilitas</p>
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="fac_desc" value="Deskripsi Section" />
+                        <textarea
+                            id="fac_desc"
+                            className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                            rows="2"
+                            value={data.description || ''}
+                            onChange={(e) => setData('description', e.target.value)}
+                        />
+                        <p className="text-sm text-gray-500 mt-1">Deskripsi singkat untuk section fasilitas</p>
+                    </div>
                 </div>
             </div>
 
             {/* Main Facility */}
-            <div className="border p-4 rounded-lg bg-blue-50">
-                <h3 className="text-lg font-medium text-blue-900 mb-4">Fasilitas Utama (Highlight)</h3>
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                        Fasilitas Utama (Highlight)
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Fasilitas utama yang ditampilkan lebih besar</p>
+                </div>
                 <div className="space-y-4">
                     <div>
                         <InputLabel value="Judul Fasilitas Utama" />
@@ -74,7 +92,7 @@ export default function FacilitiesSection({ data, setData, errors }) {
                     <div>
                         <FileUploadField
                             id="main_fac_image"
-                            previewUrl={data.main_image}
+                            previewUrl={getImageUrl(data.main_image)}
                             onChange={(file) => setData('main_image', file)}
                             label="Gambar Fasilitas Utama"
                             description="Gambar besar yang akan ditampilkan sebagai highlight fasilitas."
@@ -84,9 +102,15 @@ export default function FacilitiesSection({ data, setData, errors }) {
             </div>
 
             {/* Other Facilities List */}
-            <div>
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">Daftar Fasilitas Lainnya (Marquee)</h3>
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3 flex justify-between items-center">
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                            Daftar Fasilitas Lainnya (Marquee)
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">Fasilitas tambahan yang ditampilkan dalam carousel</p>
+                    </div>
                     <PrimaryButton 
                         type="button" 
                         onClick={addItem} 
@@ -99,7 +123,7 @@ export default function FacilitiesSection({ data, setData, errors }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {Array.isArray(data.items) && data.items.map((item, index) => (
-                        <div key={index} className="p-4 border rounded-lg bg-gray-50 relative">
+                        <div key={index} className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50 relative">
                             <button
                                 type="button"
                                 onClick={() => removeItem(index)}
@@ -121,7 +145,7 @@ export default function FacilitiesSection({ data, setData, errors }) {
                                 <div>
                                     <FileUploadField
                                         id={`fac_item_img_${index}`}
-                                        previewUrl={item.image}
+                                        previewUrl={getImageUrl(item.image)}
                                         onChange={(file) => updateItem(index, 'image', file)}
                                         label="Gambar Fasilitas"
                                         description="Gambar kecil untuk daftar fasilitas."

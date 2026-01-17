@@ -1,13 +1,20 @@
 import React from 'react';
-import { Image, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
-import FormSection from '@/Components/Admin/FormSection';
 
 export default function GallerySection({ data, handleSectionInputChange }) {
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-8 animate-fade-in">
-            <FormSection title="Header Galeri" icon={Image}>
+        <div className="space-y-6">
+            {/* Header Galeri Section */}
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                        Header Galeri
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Judul untuk bagian galeri kegiatan</p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <InputLabel htmlFor="gallery_title" value="Judul Section" />
@@ -22,7 +29,7 @@ export default function GallerySection({ data, handleSectionInputChange }) {
                             className="mt-1 block w-full" />
                     </div>
                 </div>
-            </FormSection>
+            </div>
 
             <div className="p-8 bg-blue-50/50 rounded-2xl border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
                 <div>

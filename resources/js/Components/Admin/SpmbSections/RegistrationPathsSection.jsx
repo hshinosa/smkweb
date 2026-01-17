@@ -4,7 +4,6 @@ import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import MiniTextEditor from '@/Components/MiniTextEditor';
-import FormSection from '@/Components/Admin/FormSection';
 
 export default function RegistrationPathsSection({ data, setData, localErrors, formErrors, updateRequirementsArray, addRequirement, removeRequirement }) {
     const paths = data.jalur_pendaftaran?.items || [];
@@ -73,11 +72,14 @@ export default function RegistrationPathsSection({ data, setData, localErrors, f
     };
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            <div className="flex justify-between items-center">
+        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+            <div className="border-b pb-3 flex justify-between items-center">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900">Daftar Jalur Pendaftaran</h3>
-                    <p className="text-sm text-gray-500">Kelola jalur pendaftaran yang tersedia</p>
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                        Daftar Jalur Pendaftaran
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Kelola jalur pendaftaran yang tersedia</p>
                 </div>
                 <button
                     type="button"
@@ -89,8 +91,9 @@ export default function RegistrationPathsSection({ data, setData, localErrors, f
                 </button>
             </div>
 
-            {paths.map((path, index) => (
-                <div key={index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative group">
+            <div className="space-y-4">
+                {paths.map((path, index) => (
+                <div key={index} className="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 relative group">
                     <button
                         type="button"
                         onClick={() => removePath(index)}
@@ -169,12 +172,13 @@ export default function RegistrationPathsSection({ data, setData, localErrors, f
             ))}
 
             {paths.length === 0 && (
-                <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                    <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900">Belum ada jalur pendaftaran</h3>
-                    <p className="text-gray-500 mb-6">Klik tombol di atas untuk menambah jalur baru.</p>
+                <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-300 text-gray-400">
+                    <Users className="mx-auto h-12 w-12 mb-4" />
+                    <h3 className="text-lg font-medium">Belum ada jalur pendaftaran</h3>
+                    <p className="mb-6">Klik tombol di atas untuk menambah jalur baru.</p>
                 </div>
             )}
+            </div>
         </div>
     );
 }

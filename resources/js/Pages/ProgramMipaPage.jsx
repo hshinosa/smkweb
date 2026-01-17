@@ -41,11 +41,10 @@ export default function ProgramMipaPage({ content }) {
         return `/storage/${path}`;
     };
 
+    const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
+
     const getHeroImageSrc = () => {
-        if (hero?.background_image && typeof hero.background_image === 'object') {
-            return hero.background_image.original_url;
-        }
-        return formatImagePath(hero?.background_image) || "/images/program-mipa.jpg";
+        return formatImagePath(heroImage) || "/images/program-mipa.jpg";
     };
 
     const renderHighlightedTitle = (title) => {
@@ -73,18 +72,15 @@ export default function ProgramMipaPage({ content }) {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
+            <main id="main-content" className="pt-20" tabIndex="-1">
             {/* 1. HERO SECTION (Consistent with AcademicCalendarPage) */}
-            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+            <section className="relative h-[40vh] min-h-[400px] flex items-center justify-center overflow-hidden">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                    {hero?.background_image && typeof hero.background_image === 'object' ? (
-                        <HeroImage media={hero.background_image} alt={programData.subtitle} />
-                    ) : (
-                        <HeroImage 
-                            src={formatImagePath(hero?.background_image)} 
-                            alt={programData.subtitle} 
-                        />
-                    )}
+                    <HeroImage 
+                        src={formatImagePath(heroImage)} 
+                        alt={programData.subtitle} 
+                    />
                     <div className="absolute inset-0 bg-black/60"></div>
                 </div>
 
@@ -332,7 +328,7 @@ export default function ProgramMipaPage({ content }) {
                 </div>
             </section>
 
-            <Footer
+           </main> <Footer
                 logoSman1={navigationData.logoSman1}
                 googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
                 socialMediaLinks={navigationData.socialMediaLinks}

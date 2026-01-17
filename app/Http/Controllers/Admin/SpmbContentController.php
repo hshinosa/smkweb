@@ -23,6 +23,14 @@ class SpmbContentController extends Controller
             $dbRow = $settingsFromDb->get($key);
             $dbContent = ($dbRow && isset($dbRow['content']) && is_array($dbRow['content'])) ? $dbRow['content'] : null;
             $pageData[$key] = SpmbSetting::getContent($key, $dbContent);
+
+            // Override banner_image_url with actual Media Library URL if available
+            if ($key === 'pengaturan_umum' && $dbRow) {
+                $mediaUrl = $dbRow->getFirstMediaUrl('banner_image');
+                if ($mediaUrl) {
+                    $pageData[$key]['banner_image_url'] = $mediaUrl;
+                }
+            }
         }
 
         return Inertia::render('Admin/SpmbContentPage', [
@@ -33,6 +41,41 @@ class SpmbContentController extends Controller
     public function storeOrUpdate(Request $request)
     {
         $inputData = $request->all();
+        Log::info('SPMB Update Input Data Raw:', $inputData);
+
+        // Preprocess FormData inputs (strings -> arrays/booleans)
+        // 1. Handle Boolean fields
+        if (isset($inputData['pengaturan_umum']['is_registration_open'])) {
+            $val = $inputData['pengaturan_umum']['is_registration_open'];
+            // filter_var handles "true", "false", "1", "0", "on", "off"
+            $inputData['pengaturan_umum']['is_registration_open'] = filter_var($val, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        // 2. Handle JSON encoded fields (arrays sent as strings)
+        $sectionsWithItems = ['jalur_pendaftaran', 'jadwal_penting', 'persyaratan', 'prosedur', 'faq'];
+        foreach ($sectionsWithItems as $section) {
+            if (isset($inputData[$section])) {
+                // Decode 'items'
+                if (isset($inputData[$section]['items']) && is_string($inputData[$section]['items'])) {
+                    $decoded = json_decode($inputData[$section]['items'], true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $inputData[$section]['items'] = $decoded;
+                    } else {
+                        Log::error("Failed to decode JSON for {$section}.items: " . json_last_error_msg());
+                        // Fallback to empty array to avoid validation "must be array" error on string
+                        $inputData[$section]['items'] = [];
+                    }
+                }
+            }
+        }
+
+        // 3. Cleanup: Ensure empty arrays are actually empty arrays, not null
+        foreach ($sectionsWithItems as $section) {
+            if (!isset($inputData[$section]['items']) || $inputData[$section]['items'] === null) {
+                $inputData[$section]['items'] = [];
+            }
+        }
+        
         $rules = [];
         $sectionFields = SpmbSetting::getSectionFields();
         $finalDataToSave = [];
@@ -48,9 +91,10 @@ class SpmbContentController extends Controller
                     $sectionRules["{$sectionKey}.title"] = 'required|string|max:200';
                     $sectionRules["{$sectionKey}.description_html"] = 'required|string|max:5000';
                     $sectionRules["{$sectionKey}.banner_image_url"] = 'nullable|string|max:255';
+                    $sectionRules["{$sectionKey}.banner_image_file"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240';
                     $sectionRules["{$sectionKey}.whatsapp_number"] = 'nullable|string|max:20';
                     $sectionRules["{$sectionKey}.video_guide_url"] = 'nullable|string|max:255';
-                    $sectionRules["{$sectionKey}.registration_open"] = 'required|boolean';
+                    $sectionRules["{$sectionKey}.is_registration_open"] = 'required|boolean';
                     $sectionRules["{$sectionKey}.registration_year"] = 'required|string|max:20';
                     $sectionRules["{$sectionKey}.announcement_text"] = 'nullable|string|max:2000';
                 } elseif ($sectionKey === 'jalur_pendaftaran') {
@@ -157,19 +201,20 @@ class SpmbContentController extends Controller
                 
                 // Handle Media Uploads for Pengaturan Umum
                 if ($sectionKey === 'pengaturan_umum') {
-                    // Check for file upload (key matching the URL field or a specific file field)
-                    // Assuming frontend sends file in 'banner_image_file' or overrides 'banner_image_url'
-                    $fileKey = "{$sectionKey}.banner_image_file"; 
-                    if (!$request->hasFile($fileKey)) {
-                        $fileKey = "{$sectionKey}.banner_image_url"; // Try existing field if it contains file
-                    }
-
+                    // Check for file upload
+                    $fileKey = "{$sectionKey}.banner_image_file";
+                    
                     if ($request->hasFile($fileKey)) {
+                        // Clear existing media and add new one
                         $setting->clearMediaCollection('banner_image');
                         $setting->addMediaFromRequest($fileKey)->toMediaCollection('banner_image');
-                        $media = $setting->getMedia('banner_image')->last();
-                        if ($media) {
-                            $content['banner_image_url'] = '/storage/' . $media->id . '/' . $media->file_name;
+                        
+                        // Get the Media Library URL (this will use the CustomPathGenerator)
+                        // Store the full URL in the database so we can reference it
+                        $mediaUrl = $setting->getFirstMediaUrl('banner_image');
+                        if ($mediaUrl) {
+                            // Extract relative path from full URL for storage
+                            $content['banner_image_url'] = parse_url($mediaUrl, PHP_URL_PATH);
                         }
                     }
                 }

@@ -6,7 +6,8 @@ import { Search, ChevronLeft, ChevronRight, X, Play, Image as ImageIcon } from '
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import Modal from '@/Components/Modal';
-import ResponsiveImage, { GalleryImage, normalizeUrl } from '@/Components/ResponsiveImage';
+import ResponsiveImage, { GalleryImage } from '@/Components/ResponsiveImage';
+import { normalizeUrl } from '@/Utils/imageUtils';
 
 // Import utilities
 import { TYPOGRAPHY } from '@/Utils/typography';
@@ -112,6 +113,7 @@ const GalleryThumbnail = ({ item }) => {
 export default function GaleriPage({ galleries = [] }) {
     const { siteSettings } = usePage().props;
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
+    const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
     const navigationData = getNavigationData(siteSettings);
     const [selectedCategory, setSelectedCategory] = useState('Semua');
     const [searchQuery, setSearchQuery] = useState('');
@@ -263,12 +265,11 @@ export default function GaleriPage({ galleries = [] }) {
                 akademikLinks={navigationData.akademikLinks}
                 programStudiLinks={navigationData.programStudiLinks}
             />
-
-            {/* HERO SECTION */}
-            <section className="relative h-[40vh] min-h-[350px] flex items-center justify-center overflow-hidden pt-20">
+            <main id="main-content" className="pt-20" tabIndex="-1">            {/* HERO SECTION */}
+            <section className="relative h-[40vh] min-h-[400px] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src={formatImagePath(heroSettings.image || heroSettings.image_url || heroSettings.background_image)} 
+                        src={formatImagePath(heroImage)} 
                         alt="Background Galeri Sekolah" 
                         className="w-full h-full object-cover"
                     />
@@ -378,7 +379,7 @@ export default function GaleriPage({ galleries = [] }) {
                 </div>
             </section>
 
-            <Footer
+           </main> <Footer
                 logoSman1={navigationData.logoSman1}
                 googleMapsEmbedUrl={navigationData.googleMapsEmbedUrl}
                 socialMediaLinks={navigationData.socialMediaLinks}

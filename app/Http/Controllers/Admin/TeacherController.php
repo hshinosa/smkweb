@@ -53,9 +53,9 @@ class TeacherController extends Controller
         if ($request->hasFile('image_file')) {
             $settings->clearMediaCollection('hero_bg');
             $settings->addMediaFromRequest('image_file')->toMediaCollection('hero_bg');
-            $media = $settings->getMedia('hero_bg')->last();
+            $media = $settings->getFirstMedia('hero_bg');
             if ($media) {
-                $content['image'] = '/storage/' . $media->id . '/' . $media->file_name;
+                $content['image'] = $media->getUrl();
             }
         }
 

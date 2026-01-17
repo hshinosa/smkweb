@@ -13,18 +13,8 @@ import FileUploadField from '@/Components/Admin/FileUploadField';
 import toast from 'react-hot-toast';
 
 export default function Index({ auth, settings = {} }) {
-    const [activeTab, setActiveTab] = useState('hero');
+    const [activeTab, setActiveTab] = useState('intro');
 
-    // Form for Hero
-    const heroForm = useForm({
-        section: 'hero',
-        content: {
-            title: settings?.hero?.title || '',
-            subtitle: settings?.hero?.subtitle || '',
-            image: null,
-            image_url: settings?.hero?.image || '',
-        }
-    });
 
     // Form for Intro & Fases
     const introForm = useForm({
@@ -66,27 +56,16 @@ export default function Index({ auth, settings = {} }) {
     });
 
     const tabs = [
-        { key: 'hero', label: 'Hero Section', description: 'Kelola banner utama halaman kurikulum.', icon: BookOpen },
         { key: 'intro', label: 'Intro & Fases', description: 'Kelola pendahuluan kurikulum dan fase belajar (E & F).', icon: BookOpen },
         { key: 'grading', label: 'Sistem Penilaian', description: 'Atur skala nilai dan predikat hasil belajar.', icon: Award },
         { key: 'goals', label: 'Tujuan Belajar', description: 'Daftar tujuan utama pembelajaran di sekolah.', icon: Target },
         { key: 'metode', label: 'Metode Belajar', description: 'Kelola metode pembelajaran yang diterapkan.', icon: Info },
     ];
 
-    const activeForm = activeTab === 'hero' ? heroForm : (activeTab === 'intro' ? introForm : (activeTab === 'grading' ? gradingForm : (activeTab === 'goals' ? goalsForm : metodeForm)));
+    const activeForm = activeTab === 'intro' ? introForm : (activeTab === 'grading' ? gradingForm : (activeTab === 'goals' ? goalsForm : metodeForm));
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
-    };
-
-    const handleHeroSubmit = (e) => {
-        if (e) e.preventDefault();
-        heroForm.post(route('admin.curriculum.update'), {
-            forceFormData: true,
-            onSuccess: () => {
-                toast.success('Hero section berhasil disimpan!');
-            }
-        });
     };
 
     const handleIntroSubmit = (e) => {
@@ -139,8 +118,7 @@ export default function Index({ auth, settings = {} }) {
     };
 
     const handleSave = (e) => {
-        if (activeTab === 'hero') handleHeroSubmit(e);
-        else if (activeTab === 'intro') handleIntroSubmit(e);
+        if (activeTab === 'intro') handleIntroSubmit(e);
         else if (activeTab === 'grading') handleGradingSubmit(e);
         else if (activeTab === 'goals') handleGoalsSubmit(e);
         else if (activeTab === 'metode') handleMetodeSubmit(e);
@@ -193,47 +171,19 @@ export default function Index({ auth, settings = {} }) {
             onSave={handleSave}
             errors={activeForm.errors}
         >
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                {/* Tab Content: Hero Section */}
-                {activeTab === 'hero' && (
-                    <div className="space-y-6">
-                        <div className="grid gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Judul Hero</label>
-                                <input
-                                    type="text"
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    value={heroForm.data.content.title}
-                                    onChange={e => heroForm.setData('content', { ...heroForm.data.content, title: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Sub-judul Hero</label>
-                                <textarea
-                                    rows="2"
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    value={heroForm.data.content.subtitle}
-                                    onChange={e => heroForm.setData('content', { ...heroForm.data.content, subtitle: e.target.value })}
-                                ></textarea>
-                            </div>
-                            <FileUploadField
-                                label="Background Hero"
-                                previewUrl={heroForm.data.content.image_url}
-                                onChange={(file) => heroForm.setData('content', { ...heroForm.data.content, image: file })}
-                            />
-                        </div>
-                    </div>
-                )}
-
+            <div className="space-y-6">
                 {/* Tab Content: Intro & Fases */}
                 {activeTab === 'intro' && (
-                    <div className="space-y-8">
+                    <div className="space-y-6">
                         {/* Intro Section */}
-                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <Info className="text-blue-500" />
-                                Intro Kurikulum
-                            </h3>
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                                    Intro Kurikulum
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Pengenalan umum tentang kurikulum</p>
+                            </div>
                             <div className="grid gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Judul Intro</label>
@@ -257,11 +207,14 @@ export default function Index({ auth, settings = {} }) {
                         </div>
 
                         {/* Fase E Section */}
-                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <div className="bg-blue-500 text-white text-xs px-2 py-1 rounded">FASE E</div>
-                                Kelas X
-                            </h3>
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                                    Fase E - Kelas X
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Kurikulum untuk siswa kelas 10</p>
+                            </div>
                             <div className="grid gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Judul Fase E</label>
@@ -319,11 +272,14 @@ export default function Index({ auth, settings = {} }) {
                         </div>
 
                         {/* Fase F Section */}
-                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <div className="bg-yellow-500 text-white text-xs px-2 py-1 rounded">FASE F</div>
-                                Kelas XI - XII
-                            </h3>
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                                    Fase F - Kelas XI - XII
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Kurikulum untuk siswa kelas 11 dan 12</p>
+                            </div>
                             <div className="grid gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Judul Fase F</label>
@@ -384,9 +340,16 @@ export default function Index({ auth, settings = {} }) {
 
                 {/* Tab Content: Grading System */}
                 {activeTab === 'grading' && (
-                    <div className="space-y-8">
-                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                            <h3 className="text-lg font-bold mb-4">Konfigurasi Penilaian</h3>
+                    <div className="space-y-6">
+                        {/* Konfigurasi Penilaian */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                                    Konfigurasi Penilaian
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Pengaturan umum sistem penilaian</p>
+                            </div>
                             <div className="grid gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Judul Seksi</label>
@@ -409,13 +372,19 @@ export default function Index({ auth, settings = {} }) {
                             </div>
                         </div>
 
-                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-bold">Skala Nilai</h3>
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3 flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                                        Skala Nilai
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mt-1">Daftar skala penilaian dan predikat</p>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={addScale}
-                                    className="flex items-center gap-1 text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-md hover:bg-blue-100"
+                                    className="flex items-center gap-1 text-sm bg-accent-yellow text-gray-900 px-3 py-2 rounded-md hover:bg-yellow-500 font-bold"
                                 >
                                     <Plus size={16} /> Tambah Skala
                                 </button>
@@ -468,9 +437,15 @@ export default function Index({ auth, settings = {} }) {
 
                 {/* Tab Content: Learning Goals */}
                 {activeTab === 'goals' && (
-                    <div className="space-y-8">
-                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                            <h3 className="text-lg font-bold mb-4">Tujuan Pembelajaran</h3>
+                    <div className="space-y-6">
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                                    Tujuan Pembelajaran
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Daftar tujuan utama pembelajaran</p>
+                            </div>
                             <div className="grid gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Judul Seksi</label>
@@ -515,9 +490,15 @@ export default function Index({ auth, settings = {} }) {
 
                 {/* Tab Content: Metode Pembelajaran */}
                 {activeTab === 'metode' && (
-                    <div className="space-y-8">
-                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                            <h3 className="text-lg font-bold mb-4">Metode Pembelajaran</h3>
+                    <div className="space-y-6">
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                                    Metode Pembelajaran
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Metode yang diterapkan di sekolah</p>
+                            </div>
                             <div className="grid gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Judul Seksi</label>

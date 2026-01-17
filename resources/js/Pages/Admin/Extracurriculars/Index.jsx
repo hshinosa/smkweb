@@ -12,6 +12,7 @@ import { Plus, Edit2, Trash2, X, Star, Clock } from 'lucide-react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import Modal from '@/Components/Modal';
 import toast from 'react-hot-toast';
+import { getImageUrl } from '@/Utils/imageUtils';
 
 export default function Index({ extracurriculars }) {
     const { success } = usePage().props;
@@ -65,12 +66,6 @@ export default function Index({ extracurriculars }) {
         }
     };
 
-    const getImageUrl = (url) => {
-        if (!url) return '';
-        if (url.startsWith('http') || url.startsWith('/')) return url;
-        return `/storage/${url}`;
-    };
-
     const getCategoryColor = (cat) => {
         const colors = { 'Olahraga': 'bg-green-100 text-green-700', 'Seni & Budaya': 'bg-purple-100 text-purple-700', 'Akademik & Sains': 'bg-blue-100 text-blue-700', 'Keagamaan & Sosial': 'bg-yellow-100 text-yellow-700', 'Organisasi & Kepemimpinan': 'bg-red-100 text-red-700', 'Teknologi & Inovasi': 'bg-cyan-100 text-cyan-700' };
         return colors[cat] || 'bg-gray-100 text-gray-700';
@@ -84,9 +79,15 @@ export default function Index({ extracurriculars }) {
             activeTab={activeTab} 
             setActiveTab={setActiveTab} 
             noForm={true}
-            extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah Ekskul</PrimaryButton></div>}
         >
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                {/* Header with Add Button */}
+                <div className="p-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <h3 className="font-bold text-gray-900 text-lg">Daftar Ekstrakurikuler</h3>
+                    <PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm font-medium w-full sm:w-auto justify-center">
+                        <Plus size={18} />Tambah Ekskul
+                    </PrimaryButton>
+                </div>
                 {extracurriculars.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="w-full">

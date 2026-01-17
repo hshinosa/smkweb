@@ -4,6 +4,7 @@ import { usePage } from '@inertiajs/react';
 import { Layout, Info, User, BookOpen, Image, Megaphone } from 'lucide-react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import { useContentManagement } from '@/Hooks/useContentManagement';
+import { getImageUrl } from '@/Utils/imageUtils';
 
 // Import Section Components
 import HeroSection from '@/Components/Admin/LandingPageSections/HeroSection';
@@ -40,10 +41,10 @@ export default function LandingPageContentPage() {
     // Initialize preview URLs from current settings
     useState(() => {
         setPreviewUrls({
-            heroBackgroundImage: currentSettings.hero?.background_image_url || '',
-            heroStudentImage: currentSettings.hero?.student_image_url || '',
-            aboutImage: currentSettings.about_lp?.image_url || '',
-            kepsekImage: currentSettings.kepsek_welcome_lp?.kepsek_image_url || '',
+            heroBackgroundImage: getImageUrl(currentSettings.hero?.background_image_url || ''),
+            heroStudentImage: getImageUrl(currentSettings.hero?.student_image_url || ''),
+            aboutImage: getImageUrl(currentSettings.about_lp?.image_url || ''),
+            kepsekImage: getImageUrl(currentSettings.kepsek_welcome_lp?.kepsek_image_url || ''),
         });
     });
 

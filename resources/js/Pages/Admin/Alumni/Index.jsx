@@ -12,6 +12,7 @@ import { Plus, Edit2, Trash2, X, User, GraduationCap, Briefcase, Star, Video, Fi
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import Modal from '@/Components/Modal';
 import toast from 'react-hot-toast';
+import { getImageUrl } from '@/Utils/imageUtils';
 
 export default function Index({ alumnis }) {
     const { success } = usePage().props;
@@ -104,9 +105,15 @@ export default function Index({ alumnis }) {
             activeTab={activeTab} 
             setActiveTab={setActiveTab} 
             noForm={true}
-            extraHeader={<div className="flex justify-end"><PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm sm:text-base"><Plus size={18} />Tambah Alumni</PrimaryButton></div>}
         >
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                {/* Header with Add Button */}
+                <div className="p-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <h3 className="font-bold text-gray-900 text-lg">Daftar Alumni</h3>
+                    <PrimaryButton type="button" onClick={() => openModal()} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 flex items-center gap-2 px-4 py-2 text-sm font-medium w-full sm:w-auto justify-center">
+                        <Plus size={18} />Tambah Alumni
+                    </PrimaryButton>
+                </div>
                 {alumnis.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="w-full">
@@ -126,7 +133,7 @@ export default function Index({ alumnis }) {
                                                 <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border-2 border-gray-200">
                                                     {alumni.avatarsImage?.original_url || alumni.image_url ? (
                                                         <img
-                                                            src={alumni.avatarsImage?.original_url || (alumni.image_url?.startsWith('/') || alumni.image_url?.startsWith('http') ? alumni.image_url : `/storage/${alumni.image_url}`)}
+                                                            src={alumni.avatarsImage?.original_url || getImageUrl(alumni.image_url)}
                                                             alt={alumni.name}
                                                             className="w-full h-full object-cover"
                                                         />
@@ -161,11 +168,17 @@ export default function Index({ alumnis }) {
             <Modal show={isModalOpen} onClose={closeModal} maxWidth="2xl">
                 <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto">
                     <div className="p-4 sm:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10"><h3 className="text-lg sm:text-xl font-bold text-gray-900">{editMode ? 'Edit Alumni' : 'Tambah Alumni'}</h3><button onClick={closeModal} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"><X size={20} /></button></div>
-                    <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-                        {/* Content Type Selection */}
-                        <div>
-                            <InputLabel value="Tipe Konten" />
-                            <div className="mt-2 flex gap-4">
+                    <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
+                        {/* Section 1: Tipe Konten */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                                    Tipe Konten
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Pilih format testimoni alumni</p>
+                            </div>
+                            <div className="flex gap-4">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="radio"
@@ -191,42 +204,69 @@ export default function Index({ alumnis }) {
                                     <span className="text-sm text-gray-700">Video (Featured)</span>
                                 </label>
                             </div>
+                            <p className="text-sm text-gray-500">Video otomatis ditampilkan sebagai featured</p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <InputLabel htmlFor="name" value="Nama" />
-                                <TextInput id="name" type="text" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required placeholder="Nama..." />
-                                <InputError message={errors.name} className="mt-2" />
+                        {/* Section 2: Data Alumni */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                                    Data Alumni
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Informasi identitas alumni</p>
                             </div>
-                            <div>
-                                <InputLabel htmlFor="graduation_year" value="Tahun Lulus" />
-                                <TextInput id="graduation_year" type="number" className="mt-1 block w-full" value={data.graduation_year} onChange={(e) => setData('graduation_year', e.target.value)} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <InputLabel htmlFor="name" value="Nama" />
+                                    <TextInput id="name" type="text" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required placeholder="Nama..." />
+                                    <p className="text-sm text-gray-500 mt-1">Nama lengkap alumni</p>
+                                    <InputError message={errors.name} className="mt-2" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="graduation_year" value="Tahun Lulus" />
+                                    <TextInput id="graduation_year" type="number" className="mt-1 block w-full" value={data.graduation_year} onChange={(e) => setData('graduation_year', e.target.value)} />
+                                    <p className="text-sm text-gray-500 mt-1">Angkatan kelulusan</p>
+                                </div>
                             </div>
                         </div>
 
-                        {data.content_type === 'text' && (
-                            <div>
-                                <InputLabel htmlFor="testimonial" value="Testimoni" />
-                                <textarea id="testimonial" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" rows="3" value={data.testimonial} onChange={(e) => setData('testimonial', e.target.value)} required placeholder="Cerita alumni..."></textarea>
-                                <InputError message={errors.testimonial} className="mt-2" />
-                            </div>
-                        )}
-
-                        {/* Conditional Fields Based on Content Type */}
+                        {/* Section 3: Konten Testimoni */}
                         {data.content_type === 'text' ? (
-                            <div>
-                                <InputLabel htmlFor="image" value="Foto Profil" />
-                                <FileUploadField
-                                    id="image"
-                                    label="Upload Foto"
-                                    onChange={(file) => setData('image', file)}
-                                    previewUrl={data.image_url ? `/storage/${data.image_url}` : null}
-                                    error={errors.image}
-                                />
+                            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                                <div className="border-b pb-3">
+                                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                                        Testimoni
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mt-1">Cerita dan pengalaman alumni</p>
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="testimonial" value="Testimoni" />
+                                    <textarea id="testimonial" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" rows="3" value={data.testimonial} onChange={(e) => setData('testimonial', e.target.value)} required placeholder="Cerita alumni..."></textarea>
+                                    <p className="text-sm text-gray-500 mt-1">Cerita singkat dari alumni</p>
+                                    <InputError message={errors.testimonial} className="mt-2" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="image" value="Foto Profil" />
+                                    <FileUploadField
+                                        id="image"
+                                        label="Upload Foto"
+                                        onChange={(file) => setData('image', file)}
+                                        previewUrl={getImageUrl(data.image_url)}
+                                        error={errors.image}
+                                    />
+                                </div>
                             </div>
                         ) : (
-                            <div className="space-y-4 border-t border-gray-100 pt-4 mt-2">
+                            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                                <div className="border-b pb-3">
+                                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                                        Video Testimoni
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mt-1">Upload video atau masukkan link YouTube</p>
+                                </div>
                                 <div>
                                     <InputLabel value="Sumber Video" />
                                     <div className="mt-2 flex gap-4">
@@ -266,6 +306,7 @@ export default function Index({ alumnis }) {
                                             onChange={(e) => setData('video_url', e.target.value)}
                                             placeholder="https://youtube.com/watch?v=..."
                                         />
+                                        <p className="text-sm text-gray-500 mt-1">Salin link video dari YouTube</p>
                                         <InputError message={errors.video_url} className="mt-2" />
                                     </div>
                                 ) : (
@@ -277,7 +318,7 @@ export default function Index({ alumnis }) {
                                             accept="video/*"
                                             fileType="video"
                                             onChange={(file) => setData('video_file', file)}
-                                            previewUrl={data.video_url ? (data.video_url.startsWith('/') || data.video_url.startsWith('http') ? data.video_url : `/storage/${data.video_url}`) : null}
+                                            previewUrl={getImageUrl(data.video_url)}
                                             error={errors.video_file}
                                             description="Format: MP4, WebM. Maksimal 50MB."
                                         />
@@ -286,12 +327,22 @@ export default function Index({ alumnis }) {
                             </div>
                         )}
                         
-                        <div className="flex flex-wrap gap-4 sm:gap-6">
-                            {/* Featured is automated based on content type */}
-                            <label className="flex items-center gap-2">
-                                <input type="checkbox" id="is_published" checked={data.is_published} onChange={(e) => setData('is_published', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-accent-yellow focus:ring-accent-yellow" />
-                                <span className="text-sm text-gray-700">Publish</span>
-                            </label>
+                        {/* Section 4: Pengaturan */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                            <div className="border-b pb-3">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
+                                    Pengaturan
+                                </h3>
+                                <p className="text-sm text-gray-600 mt-1">Status publikasi</p>
+                            </div>
+                            <div className="flex flex-wrap gap-4 sm:gap-6">
+                                <label className="flex items-center gap-2">
+                                    <input type="checkbox" id="is_published" checked={data.is_published} onChange={(e) => setData('is_published', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-accent-yellow focus:ring-accent-yellow" />
+                                    <span className="text-sm text-gray-700">Publish</span>
+                                </label>
+                            </div>
+                            <p className="text-sm text-gray-500">Centang untuk menampilkan di website</p>
                         </div>
                         
                         <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">

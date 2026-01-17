@@ -1,30 +1,35 @@
 import React from 'react';
-import { ClipboardList, X, Plus, Info } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import MiniTextEditor from '@/Components/MiniTextEditor';
-import FormSection from '@/Components/Admin/FormSection';
 
 export default function ProcedureSection({ data, setData, addStep, removeStep, updateStep }) {
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6 animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-blue-900 flex items-center">
-                    <ClipboardList size={20} className="mr-2" /> Langkah Prosedur
-                </h3>
-                <button
-                    type="button"
-                    onClick={addStep}
-                    className="px-4 py-2 flex items-center gap-2 shadow-md hover:shadow-lg transition-all !bg-accent-yellow hover:!bg-[#EAB308] border-0 text-sm !text-gray-900 font-bold rounded-xl"
-                >
-                    <Plus size={16} />
-                    Tambah Langkah
-                </button>
-            </div>
+        <div className="space-y-6">
+            {/* Langkah Prosedur */}
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3 flex justify-between items-center">
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                            Langkah Prosedur
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">Urutan langkah-langkah pendaftaran</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={addStep}
+                        className="px-4 py-2 flex items-center gap-2 shadow-md hover:shadow-lg transition-all !bg-accent-yellow hover:!bg-[#EAB308] border-0 text-sm !text-gray-900 font-bold rounded-xl"
+                    >
+                        <Plus size={16} />
+                        Tambah Langkah
+                    </button>
+                </div>
 
-            <div className="space-y-4">
+                <div className="space-y-4">
                     {(data.prosedur.items || []).map((step, index) => (
-                        <div key={index} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                        <div key={index} className="bg-gray-50 border-2 border-gray-200 rounded-xl p-5">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center">
                                     <span className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold mr-3">
@@ -70,19 +75,26 @@ export default function ProcedureSection({ data, setData, addStep, removeStep, u
                         </div>
                     )}
                 </div>
+            </div>
 
-                <FormSection title="Informasi Kontak" icon={Info}>
-                <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <MiniTextEditor
-                        initialValue={data.prosedur.contact_info || ''}
-                        onChange={(value) => setData('prosedur', {
-                            ...data.prosedur,
-                            contact_info: value
-                        })}
-                        placeholder="Informasi kontak untuk bantuan pendaftaran..."
-                    />
+            {/* Informasi Kontak */}
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
+                <div className="border-b pb-3">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                        Informasi Kontak
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Kontak untuk bantuan pendaftaran</p>
                 </div>
-            </FormSection>
+                <MiniTextEditor
+                    initialValue={data.prosedur.contact_info || ''}
+                    onChange={(value) => setData('prosedur', {
+                        ...data.prosedur,
+                        contact_info: value
+                    })}
+                    placeholder="Informasi kontak untuk bantuan pendaftaran..."
+                />
+            </div>
         </div>
     );
 }

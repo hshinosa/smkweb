@@ -16,6 +16,7 @@ class ProgramStudiSetting extends Model implements HasMedia
         'program_name',
         'section_key',
         'content',
+        'thumbnail_card_url', // For landing page program cards
     ];
 
     protected $casts = [

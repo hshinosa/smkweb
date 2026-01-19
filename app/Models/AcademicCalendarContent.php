@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -66,7 +67,7 @@ class AcademicCalendarContent extends Model implements HasMedia
 
     public function scopeOrdered($query)
     {
-        $columns = \Schema::getColumnListing('academic_calendar_contents');
+        $columns = Schema::getColumnListing('academic_calendar_contents');
         if (in_array('academic_year_start', $columns)) {
             return $query->orderBy('academic_year_start', 'desc')
                 ->orderBy('semester', 'asc')

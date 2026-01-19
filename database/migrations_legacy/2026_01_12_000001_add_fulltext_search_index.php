@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Add full-text search support for PostgreSQL
-     * Creates a GIN index on posts table for efficient text search
+     * Run the migrations for full-text search support on PostgreSQL
+     * 
+     * This creates a GIN index on posts table for efficient text search
+     * using PostgreSQL's built-in full-text search with Indonesian language
      */
     public function up(): void
     {
@@ -31,12 +33,14 @@ return new class extends Migration
                 CREATE INDEX IF NOT EXISTS posts_search_vector_idx 
                 ON posts USING GIN (search_vector)
             ");
+
+            // Create a regular index on published_at for sorting
+            // Note: index(['status', 'published_at']) is already created in 2026_01_11_000001
+            // So we only add specific ones if needed, but performance_indexes covers most.
         }
 
-        // For other databases (MySQL/MariaDB), use FULLTEXT indexes
-        if (DB::connection()->getDriverName() === 'mysql') {
-            DB::statement('ALTER TABLE posts ADD FULLTEXT INDEX posts_fulltext_idx (title, excerpt, content)');
-        }
+        // For other databases, we'll use regular indexes as fallback
+        // Covered by 2026_01_11_000001_add_performance_indexes
     }
 
     /**
@@ -52,8 +56,6 @@ return new class extends Migration
             DB::statement("ALTER TABLE posts DROP COLUMN IF EXISTS search_vector");
         }
 
-        if (DB::connection()->getDriverName() === 'mysql') {
-            DB::statement('ALTER TABLE posts DROP INDEX posts_fulltext_idx');
-        }
+        // Indexes are managed by their respective creation migrations
     }
 };

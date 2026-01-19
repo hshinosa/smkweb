@@ -67,7 +67,7 @@ class PopulateAiSettingsSeeder extends Seeder
             ],
             [
                 'key' => 'ollama_embedding_model',
-                'value' => 'nomic-embed-text',
+                'value' => 'nomic-embed-text:v1.5',
                 'type' => 'string',
             ],
             [

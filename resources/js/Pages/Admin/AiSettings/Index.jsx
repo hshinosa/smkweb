@@ -210,7 +210,7 @@ export default function Index({ settings }) {
                                     className="mt-1 block w-full md:w-1/2"
                                     value={getSetting('ollama_embedding_model')}
                                     onChange={(e) => handleChange('ollama_embedding_model', e.target.value)}
-                                    placeholder="nomic-embed-text"
+                                    placeholder="nomic-embed-text:v1.5"
                                 />
                                 <p className="mt-1 text-xs text-yellow-600 bg-yellow-50 p-2 rounded">
                                     ⚠️ PENTING: Model ini HARUS installed di Ollama untuk RAG system

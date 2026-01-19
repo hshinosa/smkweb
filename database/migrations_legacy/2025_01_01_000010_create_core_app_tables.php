@@ -6,12 +6,9 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Create core application tables: admins, activity_logs, site_settings, contact_messages
-     */
     public function up(): void
     {
-        // Admins table for admin authentication
+        // Admins
         Schema::create('admins', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -22,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Activity logs for system audit trail
+        // Activity Logs
         Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
             $table->string('description');
@@ -32,14 +29,9 @@ return new class extends Migration
             $table->string('ip_address')->nullable();
             $table->string('user_agent')->nullable();
             $table->timestamps();
-
-            // Indexes
-            $table->index('causer_type');
-            $table->index('causer_id');
-            $table->index('created_at');
         });
 
-        // Site settings (General, Hero Teachers, Hero Program, Social Media, Footer)
+        // Site Settings (General, Hero Teachers, Hero Program, etc)
         Schema::create('site_settings', function (Blueprint $table) {
             $table->id();
             $table->string('section_key')->unique(); // 'general', 'hero_teachers', 'hero_program', 'social_media', 'footer'
@@ -47,7 +39,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Contact messages from website contact form
+        // Contact Messages
         Schema::create('contact_messages', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -57,16 +49,9 @@ return new class extends Migration
             $table->text('message');
             $table->boolean('is_read')->default(false);
             $table->timestamps();
-
-            // Indexes
-            $table->index('is_read');
-            $table->index('created_at');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('contact_messages');

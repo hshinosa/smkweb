@@ -24,21 +24,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Vector Database: Qdrant for RAG
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: sman1-baleendah-qdrant
-    restart: unless-stopped
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    networks:
-      - sman1-network
-    environment:
-      - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
-
   # Monitoring: Prometheus metrics exporter
   # prometheus-exporter:
   #   image: saint/haproxy-exporter:latest
@@ -132,7 +117,7 @@ services:
   #     - sman1-network
 
   db:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: sman1-baleendah-db
     restart: unless-stopped
     environment:
@@ -205,8 +190,6 @@ volumes:
   backups:
     driver: local
   redis_data:
-    driver: local
-  qdrant_data:
     driver: local
 
 networks:

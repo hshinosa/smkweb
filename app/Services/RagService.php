@@ -19,22 +19,39 @@ class RagService
 {
     protected OpenAIService $openAI;
     protected EmbeddingService $embeddingService;
-    protected QdrantService $qdrantService;
     protected int $chunkSize = 512; // tokens per chunk
     protected int $chunkOverlap = 50; // overlap tokens
+    protected bool $pgvectorAvailable;
 
     public function __construct(
         OpenAIService $openAI,
-        EmbeddingService $embeddingService,
-        QdrantService $qdrantService
+        EmbeddingService $embeddingService
     ) {
         $this->openAI = $openAI;
         $this->embeddingService = $embeddingService;
-        $this->qdrantService = $qdrantService;
+        $this->pgvectorAvailable = $this->checkPgvectorAvailability();
     }
 
     /**
-     * Retrieve relevant documents for a query (from RAG documents)
+     * Check if pgvector extension is available
+     */
+    protected function checkPgvectorAvailability(): bool
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return false;
+        }
+
+        try {
+            $result = DB::select("SELECT COUNT(*) as count FROM pg_extension WHERE extname = 'vector'");
+            return ($result[0]->count ?? 0) > 0;
+        } catch (\Exception $e) {
+            Log::warning('Could not check pgvector availability', ['error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    /**
+     * Retrieve relevant documents for a query (from RAG documents using pgvector)
      */
     public function retrieveRelevantChunks(string $query, int $topK = null): array
     {
@@ -57,36 +74,140 @@ class RagService
 
             $queryEmbedding = $queryEmbeddingResult['embedding'];
 
-            // 2. Search in Qdrant
-            $qdrantResults = $this->qdrantService->search($queryEmbedding, $topK);
-
-            $chunksWithSimilarity = [];
-            foreach ($qdrantResults as $result) {
-                $payload = $result['payload'] ?? [];
-                
-                // Skip if score is too low (optional threshold)
-                if (($result['score'] ?? 0) < 0.7) continue;
-
-                $chunksWithSimilarity[] = [
-                    'id' => $result['id'], // Point ID (UUID or integer)
-                    'content' => $payload['content'] ?? '',
-                    'document_id' => $payload['document_id'] ?? null,
-                    'document_title' => $payload['document_title'] ?? 'Unknown',
-                    'category' => $payload['category'] ?? 'Umum',
-                    'source' => 'rag_document',
-                    'similarity' => $result['score'] ?? 0,
-                    'token_count' => $payload['token_count'] ?? 0,
-                ];
+            // 2. Search based on pgvector availability
+            if ($this->pgvectorAvailable) {
+                return $this->searchWithPgvector($queryEmbedding, $topK);
+            } else {
+                return $this->searchWithFallback($queryEmbedding, $topK);
             }
-
-            return $chunksWithSimilarity;
         } catch (\Exception $e) {
-            Log::error('Failed to retrieve relevant chunks via Qdrant', [
+            Log::error('Failed to retrieve relevant chunks', [
                 'query' => $query,
                 'error' => $e->getMessage(),
             ]);
             return [];
         }
+    }
+
+    /**
+     * Search using pgvector extension
+     */
+    protected function searchWithPgvector(array $queryEmbedding, int $topK): array
+    {
+        $embeddingStr = '[' . implode(',', $queryEmbedding) . ']';
+
+        $results = DB::select(
+            "SELECT 
+                rdc.id,
+                rdc.content,
+                rdc.document_id,
+                rdc.token_count,
+                rd.title as document_title,
+                rd.category,
+                1 - (rdc.embedding <=> ?::vector) as similarity
+             FROM rag_document_chunks rdc
+             JOIN rag_documents rd ON rd.id = rdc.document_id
+             WHERE rd.is_active = true
+               AND (rdc.embedding <=> ?::vector) < 0.5
+             ORDER BY rdc.embedding <=> ?::vector
+             LIMIT ?",
+            [$embeddingStr, $embeddingStr, $embeddingStr, $topK]
+        );
+
+        $chunksWithSimilarity = [];
+        foreach ($results as $result) {
+            if ($result->similarity < 0.5) continue;
+
+            $chunksWithSimilarity[] = [
+                'id' => $result->id,
+                'content' => $result->content,
+                'document_id' => $result->document_id,
+                'document_title' => $result->document_title ?? 'Unknown',
+                'category' => $result->category ?? 'Umum',
+                'source' => 'rag_document',
+                'similarity' => $result->similarity,
+                'token_count' => $result->token_count ?? 0,
+            ];
+        }
+
+        return $chunksWithSimilarity;
+    }
+
+    /**
+     * Search using fallback method (manual cosine similarity calculation)
+     */
+    protected function searchWithFallback(array $queryEmbedding, int $topK): array
+    {
+        // Get all active chunks
+        $chunks = DB::table('rag_document_chunks')
+            ->join('rag_documents', 'rag_documents.id', '=', 'rag_document_chunks.document_id')
+            ->where('rag_documents.is_active', true)
+            ->select(
+                'rag_document_chunks.id',
+                'rag_document_chunks.content',
+                'rag_document_chunks.document_id',
+                'rag_document_chunks.token_count',
+                'rag_document_chunks.embedding',
+                'rag_documents.title as document_title',
+                'rag_documents.category'
+            )
+            ->get();
+
+        $results = [];
+        foreach ($chunks as $chunk) {
+            if (empty($chunk->embedding)) continue;
+
+            $chunkEmbedding = json_decode($chunk->embedding, true);
+            if (!$chunkEmbedding) continue;
+
+            $similarity = $this->cosineSimilarity($queryEmbedding, $chunkEmbedding);
+
+            if ($similarity >= 0.5) {
+                $results[] = [
+                    'id' => $chunk->id,
+                    'content' => $chunk->content,
+                    'document_id' => $chunk->document_id,
+                    'document_title' => $chunk->document_title ?? 'Unknown',
+                    'category' => $chunk->category ?? 'Umum',
+                    'source' => 'rag_document',
+                    'similarity' => $similarity,
+                    'token_count' => $chunk->token_count ?? 0,
+                ];
+            }
+        }
+
+        // Sort by similarity descending and limit
+        usort($results, fn($a, $b) => $b['similarity'] <=> $a['similarity']);
+        return array_slice($results, 0, $topK);
+    }
+
+    /**
+     * Calculate cosine similarity between two vectors
+     */
+    protected function cosineSimilarity(array $vec1, array $vec2): float
+    {
+        if (count($vec1) !== count($vec2)) {
+            return 0.0;
+        }
+
+        $dotProduct = 0;
+        $magnitude1 = 0;
+        $magnitude2 = 0;
+
+        for ($i = 0; $i < count($vec1); $i++) {
+            $dotProduct += $vec1[$i] * $vec2[$i];
+            $magnitude1 += $vec1[$i] * $vec1[$i];
+            $magnitude2 += $vec2[$i] * $vec2[$i];
+        }
+
+        $magnitude1 = sqrt($magnitude1);
+        $magnitude2 = sqrt($magnitude2);
+
+        if ($magnitude1 == 0 || $magnitude2 == 0) {
+            return 0.0;
+        }
+
+        return $dotProduct / ($magnitude1 * $magnitude2);
     }
 
     /**
@@ -318,21 +439,18 @@ class RagService
     }
 
     /**
-     * Process document: chunk and generate embeddings
+     * Process document: chunk and generate embeddings (using pgvector or fallback)
      */
     public function processDocument(RagDocument $document): bool
     {
         try {
-            // 1. Delete existing chunks from DB and Qdrant
+            // 1. Delete existing chunks from DB
             $document->chunks()->delete();
-            $this->qdrantService->deletePointsByDocumentId($document->id);
 
             // 2. Split content into chunks
             $chunks = $this->splitTextIntoChunks($document->content);
-            
-            $points = [];
 
-            // 3. Generate embeddings for each chunk
+            // 3. Generate embeddings and store in PostgreSQL
             foreach ($chunks as $index => $chunkText) {
                 $embeddingResult = $this->embeddingService->createEmbedding($chunkText);
 
@@ -344,42 +462,62 @@ class RagService
                     continue;
                 }
 
+                $embedding = $embeddingResult['embedding'];
                 $tokenCount = $this->estimateTokenCount($chunkText);
 
-                // Store in DB (optional, but good for backup/reference, without vector)
-                $chunkModel = RagDocumentChunk::create([
-                    'document_id' => $document->id,
-                    'content' => $chunkText,
-                    'chunk_index' => $index,
-                    'token_count' => $tokenCount,
-                    'embedding' => null, // Save DB space, rely on Qdrant
-                ]);
-
-                // Prepare Qdrant point
-                $points[] = [
-                    'id' => $chunkModel->id, // Use DB ID as Point ID (integer)
-                    'vector' => $embeddingResult['embedding'],
-                    'payload' => [
-                        'content' => $chunkText,
+                try {
+                    if ($this->pgvectorAvailable) {
+                        // Store with pgvector
+                        $embeddingStr = '[' . implode(',', $embedding) . ']';
+                        DB::statement(
+                            "INSERT INTO rag_document_chunks (document_id, content, chunk_index, token_count, embedding, created_at, updated_at)
+                             VALUES (?, ?, ?, ?, ?::vector, NOW(), NOW())",
+                            [$document->id, $chunkText, $index, $tokenCount, $embeddingStr]
+                        );
+                    } else {
+                        // Store as JSON text (fallback)
+                        DB::table('rag_document_chunks')->insert([
+                            'document_id' => $document->id,
+                            'content' => $chunkText,
+                            'chunk_index' => $index,
+                            'token_count' => $tokenCount,
+                            'embedding' => json_encode($embedding),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                    
+                    Log::info('Chunk stored successfully', [
                         'document_id' => $document->id,
-                        'document_title' => $document->title,
-                        'category' => $document->category ?? 'Umum',
                         'chunk_index' => $index,
                         'token_count' => $tokenCount,
-                    ]
-                ];
+                        'mode' => $this->pgvectorAvailable ? 'pgvector' : 'fallback',
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to store chunk', [
+                        'document_id' => $document->id,
+                        'chunk_index' => $index,
+                        'error' => $e->getMessage(),
+                    ]);
+                    throw $e;
+                }
             }
 
-            // 4. Batch upsert to Qdrant
-            if (!empty($points)) {
-                $this->qdrantService->upsertPoints($points);
-            }
+            // 4. Mark document as processed
+            $document->update(['is_processed' => true]);
+
+            Log::info('Document processing completed', [
+                'document_id' => $document->id,
+                'chunks_count' => count($chunks),
+                'mode' => $this->pgvectorAvailable ? 'pgvector' : 'fallback',
+            ]);
 
             return true;
         } catch (\Exception $e) {
             Log::error('Document processing failed', [
                 'document_id' => $document->id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
             return false;
         }
@@ -916,31 +1054,5 @@ PROMPT;
         }
 
         return false;
-    }
-
-    /**
-     * Calculate cosine similarity between two vectors
-     */
-    protected function cosineSimilarity(array $vec1, array $vec2): float
-    {
-        if (count($vec1) !== count($vec2)) {
-            return 0.0;
-        }
-
-        $dotProduct = 0.0;
-        $norm1 = 0.0;
-        $norm2 = 0.0;
-
-        foreach ($vec1 as $i => $val) {
-            $dotProduct += $val * $vec2[$i];
-            $norm1 += $val * $val;
-            $norm2 += $vec2[$i] * $vec2[$i];
-        }
-
-        if ($norm1 == 0 || $norm2 == 0) {
-            return 0.0;
-        }
-
-        return $dotProduct / (sqrt($norm1) * sqrt($norm2));
     }
 }

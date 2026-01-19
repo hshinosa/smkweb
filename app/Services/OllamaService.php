@@ -16,7 +16,7 @@ class OllamaService
     {
         $this->baseUrl = AiSetting::get('ollama_base_url', '');
         $this->model = AiSetting::get('ollama_model', 'llama3.2');
-        $this->embeddingModel = AiSetting::get('ollama_embedding_model', 'nomic-embed-text');
+        $this->embeddingModel = AiSetting::get('ollama_embedding_model', 'nomic-embed-text:v1.5');
     }
 
     /**

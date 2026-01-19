@@ -26,8 +26,8 @@ class EmbeddingService
         
         // Get Ollama base URL from AI settings (configured via Admin Panel)
         $this->baseUrl = AiSetting::get('ollama_base_url', 'http://localhost:32771');
-        $this->model = AiSetting::get('ollama_embedding_model', 'nomic-embed-text');
-        $this->dimensions = 768; // nomic-embed-text standard
+        $this->model = AiSetting::get('ollama_embedding_model', 'nomic-embed-text:v1.5');
+        $this->dimensions = 768; // nomic-embed-text:v1.5 standard
         
         Log::info('EmbeddingService initialized', [
             'provider' => $this->provider,

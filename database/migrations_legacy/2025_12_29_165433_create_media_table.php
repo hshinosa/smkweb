@@ -6,16 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Create media table for Spatie Media Library
-     * Handles image uploads, WebP conversions, and responsive images
-     */
     public function up(): void
     {
         Schema::create('media', function (Blueprint $table) {
             $table->id();
 
-            $table->morphs('model'); // polymorphic relationship
+            $table->morphs('model');
             $table->uuid()->nullable()->unique();
             $table->string('collection_name');
             $table->string('name');
@@ -32,13 +28,5 @@ return new class extends Migration
 
             $table->nullableTimestamps();
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('media');
     }
 };

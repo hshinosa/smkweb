@@ -70,8 +70,8 @@ export default function KurikulumPage({ programs = [], curriculumData }) {
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
             <SEOHead 
-                title={pageMetadata.kurikulum.title}
-                description={pageMetadata.kurikulum.description}
+                title={pageMetadata?.kurikulum?.title || 'Kurikulum'}
+                description={pageMetadata?.kurikulum?.description || ''}
                 keywords="kurikulum, kurikulum merdeka, mata pelajaran, sistem pembelajaran, SMAN 1 Baleendah"
                 image="/images/kurikulum-banner.jpg"
             />

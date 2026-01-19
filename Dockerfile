@@ -24,7 +24,7 @@ RUN install-php-extensions \
     redis \
     opcache \
     && apk add --no-cache \
-    git curl zip unzip postgresql-client su-exec
+    git curl zip unzip postgresql-client su-exec python3 py3-pip
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -37,10 +37,14 @@ COPY composer.json composer.lock ./
 # 2. Install dependencies dengan --no-scripts
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# 3. Copy seluruh source code aplikasi
+# 3. Copy scraper requirements and install them
+COPY instagram-scraper/requirements.txt ./instagram-scraper/
+RUN pip install --no-cache-dir -r instagram-scraper/requirements.txt --break-system-packages
+
+# 4. Copy seluruh source code aplikasi
 COPY . .
 
-# 4. Copy hasil build frontend dari stage node-builder
+# 5. Copy hasil build frontend dari stage node-builder
 COPY --from=node-builder /app/public/build ./public/build
 
 # Bersihkan cache bootstrap yang mungkin terbawa dari local environment
@@ -62,7 +66,7 @@ COPY docker/php-fpm/zz-custom.conf /usr/local/etc/php-fpm.d/zz-custom.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-EXPOSE 8080
+EXPOSE 9000
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/public"]
+CMD ["php-fpm"]

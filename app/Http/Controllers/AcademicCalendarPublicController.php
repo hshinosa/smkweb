@@ -3,10 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\AcademicCalendarContent;
+use App\Services\ImageService;
 use Inertia\Inertia;
 
 class AcademicCalendarPublicController extends Controller
 {
+    protected $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     /**
      * Display the academic calendar page for public viewing
      */
@@ -15,12 +23,14 @@ class AcademicCalendarPublicController extends Controller
         // Get all calendar contents for display
         $calendarContents = AcademicCalendarContent::ordered()
             ->where('is_active', true)
+            ->with('media')
             ->get()
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'title' => $item->title,
                     'calendar_image_url' => $item->calendar_image_url,
+                    'image' => $this->imageService->getFirstMediaData($item, 'calendar_images'),
                     'semester' => $item->semester,
                     'semester_name' => $item->semester_name,
                     'academic_year_start' => $item->academic_year_start,

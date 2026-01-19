@@ -10,6 +10,8 @@ class UpdateSchoolProfileContentSeeder extends Seeder
 {
     public function run()
     {
+        $fotoGuruPath = base_path('foto-guru');
+
         // 1. HERO HISTORY
         $hero = SchoolProfileSetting::updateOrCreate(
             ['section_key' => 'hero_history'],
@@ -20,10 +22,10 @@ class UpdateSchoolProfileContentSeeder extends Seeder
         );
         
         // Migrate Hero Image
-        $heroPath = public_path('images/hero-bg-sman1baleendah.jpeg');
-        if (File::exists($heroPath)) {
+        $heroBgPath = $fotoGuruPath . DIRECTORY_SEPARATOR . 'SMANSA.jpeg';
+        if (File::exists($heroBgPath)) {
             $hero->clearMediaCollection('hero_history_bg');
-            $hero->addMedia($heroPath)
+            $hero->addMedia($heroBgPath)
                 ->preservingOriginal()
                 ->toMediaCollection('hero_history_bg');
         }
@@ -63,8 +65,8 @@ class UpdateSchoolProfileContentSeeder extends Seeder
             ])]
         );
 
-        // 3. FACILITIES (Tetap pakai URL statis dulu untuk simplicity, atau migrate manual logic later)
-        SchoolProfileSetting::updateOrCreate(
+        // 3. FACILITIES
+        $facilities = SchoolProfileSetting::updateOrCreate(
             ['section_key' => 'facilities'],
             ['content' => json_encode([
                 'title' => 'Lingkungan Belajar Modern',
@@ -78,5 +80,13 @@ class UpdateSchoolProfileContentSeeder extends Seeder
                 ]
             ])]
         );
+
+        // User requested: profil & sejarah bagian lingkungan pakai SMANSA.jpeg
+        if (File::exists($heroBgPath)) {
+            $facilities->clearMediaCollection('facilities_images');
+            $facilities->addMedia($heroBgPath)
+                ->preservingOriginal()
+                ->toMediaCollection('facilities_images');
+        }
     }
 }

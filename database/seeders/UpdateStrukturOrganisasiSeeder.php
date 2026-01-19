@@ -10,6 +10,8 @@ class UpdateStrukturOrganisasiSeeder extends Seeder
 {
     public function run()
     {
+        $fotoGuruPath = base_path('foto-guru');
+
         // 1. HERO STRUKTUR ORGANISASI
         $hero = SchoolProfileSetting::updateOrCreate(
             ['section_key' => 'hero_organization'],
@@ -20,10 +22,10 @@ class UpdateStrukturOrganisasiSeeder extends Seeder
         );
         
         // Migrate Hero Image
-        $heroPath = public_path('images/hero-bg-sman1baleendah.jpeg');
-        if (File::exists($heroPath)) {
+        $heroBgPath = $fotoGuruPath . DIRECTORY_SEPARATOR . 'SMANSA.jpeg';
+        if (File::exists($heroBgPath)) {
             $hero->clearMediaCollection('hero_organization_bg');
-            $hero->addMedia($heroPath)
+            $hero->addMedia($heroBgPath)
                 ->preservingOriginal()
                 ->toMediaCollection('hero_organization_bg');
         }
@@ -39,10 +41,9 @@ class UpdateStrukturOrganisasiSeeder extends Seeder
         );
 
         // Migrate Chart Image
-        $chartPath = public_path('images/struktur-organisasi-sman1-baleendah.jpg');
-        if (File::exists($chartPath)) {
+        if (File::exists($heroBgPath)) {
             $org->clearMediaCollection('organization_chart');
-            $org->addMedia($chartPath)
+            $org->addMedia($heroBgPath)
                 ->preservingOriginal()
                 ->toMediaCollection('organization_chart');
         }

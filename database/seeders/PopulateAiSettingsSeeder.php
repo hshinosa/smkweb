@@ -10,6 +10,14 @@ class PopulateAiSettingsSeeder extends Seeder
     public function run()
     {
         $settings = [
+            // Primary Provider: Ollama (default for chat)
+            [
+                'key' => 'ai_primary_provider',
+                'value' => 'ollama',
+                'type' => 'string',
+            ],
+            
+            // OpenAI Configuration (for content creation & fallback)
             [
                 'key' => 'ai_model_base_url',
                 'value' => 'https://api-ai.hshinoshowcase.site/v1',
@@ -40,6 +48,8 @@ class PopulateAiSettingsSeeder extends Seeder
                 'value' => '0.7',
                 'type' => 'string',
             ],
+            
+            // RAG Configuration
             [
                 'key' => 'rag_enabled',
                 'value' => '1',
@@ -50,6 +60,8 @@ class PopulateAiSettingsSeeder extends Seeder
                 'value' => '5',
                 'type' => 'integer',
             ],
+            
+            // Ollama Configuration (Primary for chat, fallback for content)
             [
                 'key' => 'use_ollama_fallback',
                 'value' => '1',
@@ -62,7 +74,7 @@ class PopulateAiSettingsSeeder extends Seeder
             ],
             [
                 'key' => 'ollama_model',
-                'value' => 'llama3.2',
+                'value' => 'qwen2.5:1.5b',
                 'type' => 'string',
             ],
             [
@@ -70,6 +82,8 @@ class PopulateAiSettingsSeeder extends Seeder
                 'value' => 'nomic-embed-text:v1.5',
                 'type' => 'string',
             ],
+            
+            // System Prompt
             [
                 'key' => 'system_prompt',
                 'value' => "Anda adalah AI SMANSA, asisten virtual ramah untuk SMAN 1 Baleendah. Tugas Anda membantu memberikan informasi sekolah yang akurat.",

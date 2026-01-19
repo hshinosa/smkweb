@@ -11,8 +11,11 @@ class PopulateProgramsTableSeeder extends Seeder
 {
     public function run()
     {
+        $fotoGuruPath = base_path('foto-guru');
+        $smansaPath = $fotoGuruPath . DIRECTORY_SEPARATOR . 'SMANSA.jpeg';
+
         // 1. Update Hero Section Title
-        SiteSetting::updateOrCreate(
+        $hero = SiteSetting::updateOrCreate(
             ['section_key' => 'hero_program'],
             ['content' => [
                 'title' => 'Program Sekolah',
@@ -20,6 +23,11 @@ class PopulateProgramsTableSeeder extends Seeder
                 'image' => '/images/hero-bg-sman1baleendah.jpeg'
             ]]
         );
+
+        if (File::exists($smansaPath)) {
+            $hero->clearMediaCollection('hero_program_bg');
+            $hero->addMedia($smansaPath)->preservingOriginal()->toMediaCollection('hero_program_bg');
+        }
 
         // 2. Program Studi (Existing)
         $programs = [
@@ -35,7 +43,7 @@ class PopulateProgramsTableSeeder extends Seeder
             [
                 'title' => 'IPS',
                 'description' => 'Program Ilmu Pengetahuan Sosial yang mempelajari dinamika masyarakat, ekonomi, dan sejarah.',
-                'image_name' => 'hero-bg-sman1baleendah.jpeg', 
+                'image_name' => 'anak-sma-programstudi.png', 
                 'icon_name' => 'Globe',
                 'link' => '/akademik/program-studi/ips',
                 'category' => 'Program Studi',
@@ -44,7 +52,7 @@ class PopulateProgramsTableSeeder extends Seeder
             [
                 'title' => 'Bahasa',
                 'description' => 'Program Bahasa dan Budaya untuk penguasaan komunikasi global dan literasi.',
-                'image_name' => 'anak-sma.png',
+                'image_name' => 'anak-sma-programstudi.png',
                 'icon_name' => 'BookOpen',
                 'link' => '/akademik/program-studi/bahasa',
                 'category' => 'Program Studi',
@@ -54,7 +62,7 @@ class PopulateProgramsTableSeeder extends Seeder
             [
                 'title' => 'Sekolah Adiwiyata',
                 'description' => 'Program sekolah berbudaya lingkungan untuk menciptakan kesadaran pelestarian alam.',
-                'image_name' => 'panen-karya-sman1-baleendah.jpg',
+                'path' => $smansaPath,
                 'icon_name' => 'Leaf',
                 'link' => '#',
                 'category' => 'Program Unggulan',
@@ -63,7 +71,7 @@ class PopulateProgramsTableSeeder extends Seeder
             [
                 'title' => 'Sekolah Ramah Anak',
                 'description' => 'Menciptakan lingkungan belajar yang aman, nyaman, dan menyenangkan bagi seluruh siswa.',
-                'image_name' => 'keluarga-besar-sman1-baleendah.png',
+                'path' => $smansaPath,
                 'icon_name' => 'Heart',
                 'link' => '#',
                 'category' => 'Program Unggulan',
@@ -72,7 +80,7 @@ class PopulateProgramsTableSeeder extends Seeder
             [
                 'title' => 'Literasi Digital',
                 'description' => 'Penguatan kemampuan siswa dalam memanfaatkan teknologi digital secara bijak dan produktif.',
-                'image_name' => 'anak-sma.png',
+                'path' => $smansaPath,
                 'icon_name' => 'Cpu',
                 'link' => '#',
                 'category' => 'Program Unggulan',
@@ -94,20 +102,17 @@ class PopulateProgramsTableSeeder extends Seeder
             );
 
             // Media
-            $imageName = $data['image_name'];
-            $sourcePath = public_path("images/{$imageName}");
-            if (!File::exists($sourcePath)) {
-                $sourcePath = public_path("images/hero-bg-sman1baleendah.jpeg");
-            }
-
-            if (File::exists($sourcePath)) {
-                $program->clearMediaCollection('program_image');
-                $program->addMedia($sourcePath)
-                    ->preservingOriginal()
-                    ->toMediaCollection('program_image');
+            if (isset($data['path']) && File::exists($data['path'])) {
+                $program->clearMediaCollection('program_images');
+                $program->addMedia($data['path'])->preservingOriginal()->toMediaCollection('program_images');
+            } elseif (isset($data['image_name'])) {
+                $imageName = $data['image_name'];
+                $sourcePath = public_path("images/{$imageName}");
+                if (File::exists($sourcePath)) {
+                    $program->clearMediaCollection('program_images');
+                    $program->addMedia($sourcePath)->preservingOriginal()->toMediaCollection('program_images');
+                }
             }
         }
-        
-        $this->command->info('Programs table populated.');
     }
 }

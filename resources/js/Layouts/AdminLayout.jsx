@@ -180,6 +180,7 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
             sublinks: [
                 { title: "RAG Documents", href: route('admin.rag-documents.index'), routeName: 'admin.rag-documents.*' },
                 { title: "AI Settings", href: route('admin.ai-settings.index'), routeName: 'admin.ai-settings.*' },
+                { title: "Instagram Bots", href: route('admin.instagram-bots.index'), routeName: 'admin.instagram-bots.*' },
             ]
         },
         {

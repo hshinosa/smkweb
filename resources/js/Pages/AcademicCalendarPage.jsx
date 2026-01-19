@@ -7,6 +7,7 @@ import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
 import SEOHead from '@/Components/SEOHead';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
+import { normalizeUrl } from '@/Utils/imageUtils';
 import { Calendar, X, Download, FileText, ExternalLink, ChevronRight } from 'lucide-react';
 
 export default function AcademicCalendarPage({ 
@@ -15,7 +16,7 @@ export default function AcademicCalendarPage({
 }) {
     const { siteSettings } = usePage().props;
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
-    const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
+    const heroImage = normalizeUrl(siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg');
     const navigationData = getNavigationData(siteSettings);
     
     const [selectedCalendar, setSelectedCalendar] = useState(null);
@@ -49,9 +50,11 @@ export default function AcademicCalendarPage({
     const getImageSrc = (cal) => {
         if (!cal) return '';
         // If media object exists (Spatie), use original_url
-        if (cal.image && cal.image.original_url) return cal.image.original_url;
+        if (cal.image && cal.image.original_url) return normalizeUrl(cal.image.original_url);
         // Legacy/Direct URL
-        if (cal.image_url) return cal.image_url;
+        if (cal.image_url) return normalizeUrl(cal.image_url);
+        // New mapped URL from controller
+        if (cal.calendar_image_url) return normalizeUrl(cal.calendar_image_url);
         // Fallback
         return null;
     };

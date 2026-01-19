@@ -19,7 +19,7 @@ import SEOHead from '@/Components/SEOHead';
 import ResponsiveImage, { HeroImage, ThumbnailImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
-import { getPageMetadata } from '@/Utils/academicData';
+import { getPageMetadata, programStudyData } from '@/Utils/academicData';
 import { usePage } from '@inertiajs/react';
 
 export default function ProgramIpsPage({ content }) {
@@ -27,6 +27,7 @@ export default function ProgramIpsPage({ content }) {
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
     const navigationData = getNavigationData(siteSettings);
     const pageMetadata = getPageMetadata(siteName);
+    const programData = programStudyData.ips;
     const { hero, core_subjects, facilities, career_paths, alumni_spotlight } = content || {};
 
     // Helper to format image path correctly
@@ -55,8 +56,8 @@ export default function ProgramIpsPage({ content }) {
     return (
         <div className="bg-white font-sans text-gray-800">
             <SEOHead 
-                title={hero?.title || pageMetadata.ips.title}
-                description={hero?.description || pageMetadata.ips.description}
+                title={hero?.title || pageMetadata?.ips?.title}
+                description={hero?.description || pageMetadata?.ips?.description}
                 keywords="peminatan IPS, jurusan IPS, ekonomi, sosiologi, geografi, sejarah, SMAN 1 Baleendah"
                 image={getHeroImageSrc()}
             />
@@ -80,7 +81,7 @@ export default function ProgramIpsPage({ content }) {
 
                 <div className="relative z-10 container mx-auto px-4 text-center text-white">
                     <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
-                        {renderHighlightedTitle("Ilmu Pengetahuan Sosial")}
+                        {renderHighlightedTitle(programData.subtitle)}
                     </h1>
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
                         {hero?.description || "Membentuk pemikir kritis dan analis sosial yang peka terhadap dinamika masyarakat global serta siap menjadi pemimpin masa depan."}

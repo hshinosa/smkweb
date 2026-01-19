@@ -224,7 +224,7 @@ export default function InformasiSpmbPage({ spmbData }) {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            <main id="main-content" className="pt-20" tabIndex="-1">
+            <main id="main-content" className="pt-24" tabIndex="-1">
                 {/* 1. HERO SECTION (High Energy) */}
                 <section className="relative min-h-screen flex items-center justify-center overflow-hidden pb-32">
                     {/* Background Image with Overlay */}

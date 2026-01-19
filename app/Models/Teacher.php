@@ -32,6 +32,32 @@ class Teacher extends Model implements HasMedia
     ];
 
     /**
+     * Get the teacher's profile photo URL.
+     * Fallback to image_url column, then media library, then default image.
+     */
+    public function getImageUrlAttribute($value)
+    {
+        // 1. If absolute URL or manually set path in DB exists, use it
+        if ($value && (str_starts_with($value, 'http') || str_starts_with($value, '/'))) {
+            return $value;
+        }
+
+        // 2. Try to get from Spatie Media Library
+        $media = $this->getFirstMediaUrl('photos', 'webp');
+        if ($media) {
+            return $media;
+        }
+
+        // 3. Last fallback to image_url value if it was a relative path
+        if ($value) {
+            return "/storage/{$value}";
+        }
+
+        // 4. Default placeholder
+        return '/images/keluarga-besar-sman1-baleendah.png';
+    }
+
+    /**
      * Register media conversions for teacher profile photos
      */
     public function registerMediaConversions(?Media $media = null): void

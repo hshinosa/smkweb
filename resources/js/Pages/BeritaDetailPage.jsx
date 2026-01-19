@@ -1,10 +1,11 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import React, { useState } from 'react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { 
     Calendar, 
     User, 
     Share2, 
     Clock, 
+    ChevronLeft,
     ChevronRight, 
     Facebook, 
     Twitter, 
@@ -19,7 +20,6 @@ import SEOHead from '@/Components/SEOHead';
 import { ContentImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
-import { usePage } from '@inertiajs/react';
 
 // Mock Data for Single Article
 const articleData = {
@@ -88,8 +88,22 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
     const { siteSettings } = usePage().props;
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
     const navigationData = getNavigationData(siteSettings);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     
     if (!post) return null;
+    
+    // Check if post has gallery images (multiple images from Instagram)
+    const hasGallery = post.galleryImages && post.galleryImages.length > 0;
+    const galleryImages = hasGallery ? post.galleryImages : [];
+    
+    // Navigate carousel
+    const nextImage = () => {
+        setCurrentImageIndex((prev) => (prev + 1) % galleryImages.length);
+    };
+    
+    const prevImage = () => {
+        setCurrentImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+    };
     
     // Extract excerpt from content (first 160 characters)
     const getExcerpt = (content) => {
@@ -141,11 +155,11 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
                             {/* Author Block */}
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-8 mb-8 gap-4">
                                 <div className="flex items-center">
-                                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 mr-4">
-                                        <User className="w-6 h-6" />
+                                    <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mr-4 border border-gray-100 overflow-hidden">
+                                        <img src="/images/logo-sman1-baleendah.png" alt="Admin Smansa" className="w-full h-full object-cover" />
                                     </div>
                                     <div>
-                                        <p className="font-bold text-gray-900 text-sm">{post.author?.name || 'Admin'}</p>
+                                        <p className="font-bold text-gray-900 text-sm">Admin Smansa</p>
                                         <div className="flex items-center text-xs text-gray-500 mt-1">
                                             <span className="flex items-center mr-3">
                                                 <Calendar className="w-3 h-3 mr-1" /> {new Date(post.published_at || post.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -175,32 +189,95 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
                                 </div>
                             </div>
 
-                            {/* Featured Image */}
-                            <div className="rounded-2xl overflow-hidden shadow-lg mb-4">
-                                {post.featuredImage ? (
-                                    // NEW: Use ResponsiveImage component with Media Library data
-                                    <ContentImage 
-                                        media={post.featuredImage}
-                                        alt={post.title}
-                                    />
-                                ) : (
-                                    // Fallback for old system
-                                    <img 
-                                        src={post.featured_image} 
-                                        alt={post.title} 
-                                        className="w-full h-auto object-cover"
-                                        loading="eager"
-                                        fetchpriority="high"
-                                        width="1200"
-                                        height="675"
-                                    />
-                                )}
-                                {post.caption && (
-                                    <p className="text-center text-sm text-gray-500 italic mb-0 mt-2 px-4">
-                                        {post.caption}
-                                    </p>
-                                )}
-                            </div>
+                            {/* Featured Image or Gallery Carousel */}
+                            {hasGallery ? (
+                                /* Instagram Gallery Carousel */
+                                <div className="rounded-2xl overflow-hidden shadow-lg mb-4 relative bg-gray-900">
+                                    {/* Main Image - Auto height to show full image */}
+                                    <div className="relative flex items-center justify-center min-h-[300px] max-h-[600px]">
+                                        <ContentImage 
+                                            media={galleryImages[currentImageIndex]}
+                                            alt={`${post.title} - Image ${currentImageIndex + 1}`}
+                                            className="w-full h-auto max-h-[600px] object-contain"
+                                        />
+                                        
+                                        {/* Navigation Arrows */}
+                                        {galleryImages.length > 1 && (
+                                            <>
+                                                <button
+                                                    onClick={prevImage}
+                                                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg transition-all hover:scale-110"
+                                                    aria-label="Previous image"
+                                                >
+                                                    <ChevronLeft className="w-6 h-6 text-gray-800" />
+                                                </button>
+                                                <button
+                                                    onClick={nextImage}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg transition-all hover:scale-110"
+                                                    aria-label="Next image"
+                                                >
+                                                    <ChevronRight className="w-6 h-6 text-gray-800" />
+                                                </button>
+                                            </>
+                                        )}
+                                        
+                                        {/* Image Counter */}
+                                        {galleryImages.length > 1 && (
+                                            <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm font-medium">
+                                                {currentImageIndex + 1} / {galleryImages.length}
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Thumbnail Navigation */}
+                                    {galleryImages.length > 1 && (
+                                        <div className="flex gap-2 p-4 bg-gray-900 overflow-x-auto">
+                                            {galleryImages.map((img, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setCurrentImageIndex(idx)}
+                                                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                                                        idx === currentImageIndex 
+                                                            ? 'border-white scale-105' 
+                                                            : 'border-transparent opacity-60 hover:opacity-100'
+                                                    }`}
+                                                >
+                                                    <ContentImage 
+                                                        media={img}
+                                                        alt={`Thumbnail ${idx + 1}`}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                /* Single Featured Image */
+                                <div className="rounded-2xl overflow-hidden shadow-lg mb-4">
+                                    {post.featuredImage ? (
+                                        <ContentImage 
+                                            media={post.featuredImage}
+                                            alt={post.title}
+                                        />
+                                    ) : post.featured_image ? (
+                                        <img 
+                                            src={post.featured_image} 
+                                            alt={post.title} 
+                                            className="w-full h-auto object-cover"
+                                            loading="eager"
+                                            fetchpriority="high"
+                                            width="1200"
+                                            height="675"
+                                        />
+                                    ) : null}
+                                    {post.caption && (
+                                        <p className="text-center text-sm text-gray-500 italic mb-0 mt-2 px-4">
+                                            {post.caption}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Article Body */}
                             <article className="prose prose-lg prose-blue max-w-none font-serif text-gray-700 leading-relaxed mb-12">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { normalizeUrl } from '@/Utils/imageUtils';
 
 /**
@@ -17,8 +17,15 @@ export default function ResponsiveImage({
     width,
     height,
     sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 1280px',
+    fallback = null,
     ...props
 }) {
+    const [imageError, setImageError] = useState(false);
+    
+    // Handle image load error
+    const handleError = () => {
+        setImageError(true);
+    };
     // Helper to check if URL is a Spatie Media Library path
     const isSpatieMediaPath = (url) => {
         if (!url) return false;
@@ -46,6 +53,11 @@ export default function ResponsiveImage({
         return `/storage/${id}/conversions/${baseFilename}-${conversionName}.webp`;
     };
 
+    // If image failed to load and fallback is provided, render fallback
+    if (imageError && fallback) {
+        return fallback;
+    }
+    
     // If Spatie media object is provided, use media library conversions
     if (media) {
         const originalUrl = normalizeUrl(media.original_url);
@@ -84,6 +96,7 @@ export default function ResponsiveImage({
                     fetchpriority={fetchpriority}
                     width={width}
                     height={height}
+                    onError={handleError}
                     {...props}
                 />
             </picture>
@@ -93,9 +106,9 @@ export default function ResponsiveImage({
     // Normalize the source URL
     const normalizedSrc = normalizeUrl(src);
     
-    // If no valid source, render nothing
+    // If no valid source, render fallback or nothing
     if (!normalizedSrc) {
-        return null;
+        return fallback || null;
     }
 
     // Check if this is a Spatie Media Library URL
@@ -145,6 +158,7 @@ export default function ResponsiveImage({
                     fetchpriority={fetchpriority}
                     width={width}
                     height={height}
+                    onError={handleError}
                     {...props}
                 />
             </picture>
@@ -161,6 +175,7 @@ export default function ResponsiveImage({
             fetchpriority={fetchpriority}
             width={width}
             height={height}
+            onError={handleError}
             {...props}
         />
     );

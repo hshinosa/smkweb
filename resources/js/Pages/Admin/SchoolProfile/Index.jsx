@@ -474,7 +474,7 @@ export default function SchoolProfileIndex({ auth, sections, activeSection: init
         };
 
         const addFacility = () => {
-            updateFacilities([...facilities, { title: '', description: '', icon: 'Building2' }]);
+            updateFacilities([...facilities, { title: '', description: '', image_url: '' }]);
         };
 
         const removeFacility = (index) => {
@@ -598,16 +598,14 @@ export default function SchoolProfileIndex({ auth, sections, activeSection: init
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-1">
-                                                    <span>🎨</span> Icon (Lucide)
+                                                    <span>🖼️</span> Foto Fasilitas
                                                 </label>
-                                                <input
-                                                    type="text"
-                                                    value={facility.icon}
-                                                    onChange={(e) => updateFacility(index, 'icon', e.target.value)}
-                                                    className="w-full rounded-lg border-gray-300 focus:ring-primary focus:border-primary font-mono text-sm"
-                                                    placeholder="Monitor, Laptop, BookOpen, Flask"
+                                                <FileUploadField
+                                                    label=""
+                                                    previewUrl={getImageUrl(facility.image_url)}
+                                                    onChange={(file) => updateFacility(index, 'image_file', file)}
                                                 />
-                                                <p className="text-xs text-gray-500 mt-1">Lihat daftar icon di <a href="https://lucide.dev/icons" target="_blank" className="text-primary hover:underline">lucide.dev</a></p>
+                                                <p className="text-xs text-gray-500 mt-1">Upload foto fasilitas untuk ditampilkan di galeri profil sekolah.</p>
                                             </div>
                                         </div>
                                     </div>

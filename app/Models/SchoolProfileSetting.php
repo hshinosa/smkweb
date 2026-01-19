@@ -117,7 +117,7 @@ class SchoolProfileSetting extends Model implements HasMedia
             'facilities' => [
                 'title' => 'Fasilitas Sekolah',
                 'description' => 'Deskripsi singkat fasilitas',
-                'items' => 'Daftar Fasilitas (JSON array of {title, description, icon})',
+                'items' => 'Daftar Fasilitas (JSON array of {title, description, image_url})',
             ],
             'organization' => [
                 'title' => 'Struktur Organisasi',

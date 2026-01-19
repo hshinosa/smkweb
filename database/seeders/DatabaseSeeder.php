@@ -27,7 +27,6 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class, // Admin Account
             
             // Content Population Seeders
-            PopulateTeachersSeeder::class, // Guru & Staff
             PopulateAcademicAndCurriculumSeeder::class, // Kurikulum & Kalender
             PopulateExtracurricularsSeeder::class, // Ekskul (Rich JSON achievements)
             PopulateProgramsTableSeeder::class, // Programs List (Landing Page)
@@ -45,6 +44,9 @@ class DatabaseSeeder extends Seeder
             FixContactHeroSeeder::class, // Contact Hero Fix
             PopulateGalleriesSeeder::class, // Gallery Images
             PopulateAiSettingsSeeder::class, // AI Settings
+
+            // Final Content Import
+            ImportTeachersFromFolderSeeder::class, // Guru & Staff (Moved to last as requested)
         ]);
     }
 }

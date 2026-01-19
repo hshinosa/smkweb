@@ -23,33 +23,54 @@ class OpenAIService
         $this->embeddingModel = AiSetting::get('ai_embedding_model', 'text-embedding-3-small');
         $this->useOllamaFallback = AiSetting::get('use_ollama_fallback', true);
         $this->ollamaService = $ollamaService;
-        
-        // Validate required settings
-        $this->validateConfiguration();
     }
     
     /**
-     * Validate that required AI settings are configured
-     *
-     * @throws \InvalidArgumentException
-     */
-    protected function validateConfiguration(): void
-    {
-        if (empty($this->baseUrl)) {
-            Log::error('[OpenAIService] AI model base URL not configured');
-            throw new \InvalidArgumentException('AI model base URL must be configured in AI settings');
-        }
-        
-        if (empty($this->apiKey)) {
-            Log::error('[OpenAIService] AI model API key not configured');
-            throw new \InvalidArgumentException('AI model API key must be configured in AI settings');
-        }
-    }
-
-    /**
-     * Create chat completion with OpenAI-compatible API (with Ollama fallback)
+     * Create chat completion with priority to Ollama, fallback to OpenAI
+     * 
+     * @param array $messages Chat messages in OpenAI format
+     * @param array $options Additional options (max_tokens, temperature, force_provider)
+     * @return array Response with success, message, and provider
      */
     public function chatCompletion(array $messages, array $options = []): array
+    {
+        // Check if specific provider is forced (for content creation tasks)
+        $forceProvider = $options['force_provider'] ?? null;
+        
+        // Priority 1: Try Ollama first (default for chat)
+        if ($forceProvider !== 'openai') {
+            $ollamaResult = $this->tryOllama('chat', $messages, $options);
+            if ($ollamaResult['success']) {
+                return $ollamaResult;
+            }
+            
+            Log::info('[OpenAIService] Ollama unavailable, trying OpenAI fallback');
+        }
+        
+        // Priority 2: Fallback to OpenAI (or forced for content creation)
+        if (!empty($this->baseUrl) && !empty($this->apiKey)) {
+            $openAiResult = $this->tryOpenAI($messages, $options);
+            if ($openAiResult['success']) {
+                return $openAiResult;
+            }
+        }
+        
+        // Priority 3: Try Ollama again if OpenAI failed
+        if ($forceProvider === 'openai') {
+            $ollamaResult = $this->tryOllama('chat', $messages, $options);
+            if ($ollamaResult['success']) {
+                return $ollamaResult;
+            }
+        }
+        
+        // Priority 4: Hardcoded fallback
+        return $this->getHardcodedFallback('chat', $messages);
+    }
+    
+    /**
+     * Try OpenAI API
+     */
+    protected function tryOpenAI(array $messages, array $options = []): array
     {
         $maxTokens = $options['max_tokens'] ?? AiSetting::get('ai_max_tokens', 2000);
         $temperature = $options['temperature'] ?? (float) AiSetting::get('ai_temperature', 0.7);
@@ -71,22 +92,15 @@ class OpenAIService
                 
                 // Validate response structure
                 if (!isset($data['choices']) || empty($data['choices'])) {
-                    Log::warning('[OpenAIService] API returned empty choices', [
-                        'response_keys' => array_keys($data),
-                    ]);
-                    
-                    // Try fallback to Ollama
-                    return $this->fallbackToOllama('chat', $messages, $options);
+                    Log::warning('[OpenAIService] API returned empty choices');
+                    return ['success' => false];
                 }
                 
                 $message = $data['choices'][0]['message']['content'] ?? '';
                 
-                // Validate message is not empty
                 if (empty($message)) {
                     Log::warning('[OpenAIService] API returned empty message');
-                    
-                    // Try fallback to Ollama
-                    return $this->fallbackToOllama('chat', $messages, $options);
+                    return ['success' => false];
                 }
 
                 return [
@@ -97,27 +111,86 @@ class OpenAIService
                 ];
             }
 
-            Log::warning('[OpenAIService] API Error, attempting Ollama fallback', [
+            Log::warning('[OpenAIService] API request failed', [
                 'status' => $response->status(),
             ]);
-
-            // Fallback to Ollama
-            return $this->fallbackToOllama('chat', $messages, $options);
+            return ['success' => false];
 
         } catch (\Exception $e) {
             Log::error('[OpenAIService] Exception', [
                 'message' => $e->getMessage(),
             ]);
-
-            // Fallback to Ollama on exception
-            return $this->fallbackToOllama('chat', $messages, $options);
+            return ['success' => false];
         }
+    }
+    
+    /**
+     * Try Ollama local AI
+     */
+    protected function tryOllama(string $type, $data, array $options = []): array
+    {
+        if (!$this->useOllamaFallback) {
+            return ['success' => false];
+        }
+
+        if (!$this->ollamaService) {
+            $this->ollamaService = app(OllamaService::class);
+        }
+
+        if (!$this->ollamaService->isAvailable()) {
+            return ['success' => false];
+        }
+
+        Log::info('[OpenAIService] Using Ollama as primary AI provider');
+
+        if ($type === 'chat') {
+            $result = $this->ollamaService->chatCompletion($data, $options);
+            
+            if (!$result['success'] || empty($result['message'])) {
+                return ['success' => false];
+            }
+            
+            $result['provider'] = 'ollama';
+            return $result;
+        } elseif ($type === 'embedding') {
+            $result = $this->ollamaService->createEmbedding($data);
+            if (!$result['success']) {
+                return ['success' => false];
+            }
+            $result['provider'] = 'ollama';
+            return $result;
+        }
+
+        return ['success' => false];
     }
 
     /**
-     * Generate embeddings for text (with Ollama fallback)
+     * Generate embeddings for text (Ollama first, OpenAI fallback)
      */
     public function createEmbedding(string $text): array
+    {
+        // Priority 1: Try Ollama first
+        $ollamaResult = $this->tryOllama('embedding', $text);
+        if ($ollamaResult['success']) {
+            return $ollamaResult;
+        }
+        
+        // Priority 2: Fallback to OpenAI
+        if (!empty($this->baseUrl) && !empty($this->apiKey)) {
+            return $this->tryOpenAIEmbedding($text);
+        }
+        
+        return [
+            'success' => false,
+            'error' => 'No embedding service available',
+            'embedding' => [],
+        ];
+    }
+    
+    /**
+     * Try OpenAI embedding API
+     */
+    protected function tryOpenAIEmbedding(string $text): array
     {
         try {
             $response = Http::withHeaders([
@@ -137,63 +210,26 @@ class OpenAIService
                 ];
             }
 
-            Log::warning('Embedding API Error, attempting Ollama fallback', [
+            Log::warning('[OpenAIService] Embedding API failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
             ]);
-
-            // Fallback to Ollama
-            return $this->fallbackToOllama('embedding', $text);
+            return ['success' => false, 'embedding' => []];
 
         } catch (\Exception $e) {
-            Log::error('Embedding Service Exception', [
+            Log::error('[OpenAIService] Embedding exception', [
                 'message' => $e->getMessage(),
             ]);
-
-            // Fallback to Ollama
-            return $this->fallbackToOllama('embedding', $text);
+            return ['success' => false, 'embedding' => []];
         }
     }
 
     /**
-     * Fallback to Ollama local AI
+     * Fallback to Ollama local AI (deprecated - use tryOllama instead)
+     * @deprecated Use tryOllama() instead
      */
     protected function fallbackToOllama(string $type, $data, array $options = []): array
     {
-        if (!$this->useOllamaFallback) {
-            Log::warning('[OpenAIService] Ollama fallback disabled, using hardcoded response');
-            return $this->getHardcodedFallback($type, $data);
-        }
-
-        if (!$this->ollamaService) {
-            $this->ollamaService = app(OllamaService::class);
-        }
-
-        if (!$this->ollamaService->isAvailable()) {
-            Log::warning('[OpenAIService] Ollama unavailable, using hardcoded response');
-            return $this->getHardcodedFallback($type, $data);
-        }
-
-        Log::info('Using Ollama as fallback AI provider');
-
-        if ($type === 'chat') {
-            $result = $this->ollamaService->chatCompletion($data, $options);
-            
-            // If Ollama also fails, use hardcoded fallback
-            if (!$result['success'] || empty($result['message'])) {
-                Log::warning('[OpenAIService] Ollama fallback failed, using hardcoded response');
-                return $this->getHardcodedFallback($type, $data);
-            }
-            
-            $result['provider'] = 'ollama';
-            return $result;
-        } elseif ($type === 'embedding') {
-            $result = $this->ollamaService->createEmbedding($data);
-            $result['provider'] = 'ollama';
-            return $result;
-        }
-
-        return $this->getHardcodedFallback($type, $data);
+        return $this->tryOllama($type, $data, $options);
     }
 
     /**

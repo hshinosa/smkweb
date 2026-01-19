@@ -25,26 +25,30 @@ const categories = ["Semua", "Berita", "Pengumuman", "Prestasi", "Akademik", "Ke
 
 // --- COMPONENTS ---
 
-const NewsItem = ({ news }) => (
-    <div className="flex flex-col sm:flex-row gap-6 group border-b border-gray-100 last:border-0 pb-6 last:pb-0">
-        {/* Image / Placeholder - Fixed Width 30% */}
-        <div className="w-full sm:w-[30%] h-48 sm:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
-            <ResponsiveImage 
-                media={typeof news.image === 'object' ? news.image : null}
-                src={typeof news.image === 'string' ? news.image : (news.featured_image || null)}
-                alt={news.title}
-                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                fallback={<div className="w-full h-full bg-gray-100 flex items-center justify-center p-4 text-center"><Newspaper className="w-12 h-12 text-gray-300" /></div>}
-            />
-            {!news.image && !news.featured_image && (
-                 <div className="w-full h-full bg-gray-100 flex items-center justify-center p-4 text-center absolute inset-0">
-                    <Newspaper className="w-12 h-12 text-gray-300" />
+const NewsItem = ({ news }) => {
+    // Simplify image data handling
+    const imageMedia = typeof news.image === 'object' ? news.image : null;
+    const imageSrc = news.featured_image || (typeof news.image === 'string' ? news.image : null);
+    
+    return (
+        <div className="flex flex-col sm:flex-row gap-6 group border-b border-gray-100 last:border-0 pb-6 last:pb-0">
+            {/* Image / Placeholder - Fixed Width 30% */}
+            <div className="w-full sm:w-[30%] h-48 sm:h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
+                <ResponsiveImage 
+                    media={imageMedia}
+                    src={imageSrc}
+                    alt={news.title}
+                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                    fallback={
+                        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                            <Newspaper className="w-12 h-12 text-gray-300" />
+                        </div>
+                    }
+                />
+                <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold text-primary shadow-sm">
+                    {news.category}
                 </div>
-            )}
-            <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold text-primary shadow-sm">
-                {news.category}
             </div>
-        </div>
 
         {/* Content - Width 70% */}
         <div className="flex-1 flex flex-col justify-center">
@@ -65,13 +69,15 @@ const NewsItem = ({ news }) => (
             </Link>
         </div>
     </div>
-);
+);};
 
 export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) {
     const { siteSettings } = usePage().props;
     const navigationData = getNavigationData(siteSettings);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('Semua');
+    const [visibleCount, setVisibleCount] = useState(5); // Initially show 5 items
+    const ITEMS_PER_LOAD = 5; // Load 5 more each time
 
     const heroSettings = siteSettings?.hero_posts || {};
     const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
@@ -93,9 +99,21 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
         });
     }, [posts, searchQuery, activeCategory]);
 
-    const heroNews = filteredPosts.slice(0, 3);
-    const latestNews = filteredPosts.slice(3);
+    const heroNews = filteredPosts.slice(0, 6);
+    const allLatestNews = filteredPosts.slice(6);
+    const latestNews = allLatestNews.slice(0, visibleCount);
+    const hasMoreNews = visibleCount < allLatestNews.length;
     const popularNews = popularPosts.length > 0 ? popularPosts : posts.slice(0, 5);
+    
+    // Load more handler
+    const handleLoadMore = () => {
+        setVisibleCount(prev => prev + ITEMS_PER_LOAD);
+    };
+    
+    // Reset visible count when filter changes
+    React.useEffect(() => {
+        setVisibleCount(5);
+    }, [searchQuery, activeCategory]);
     
     // Dynamic announcements from DB
     const announcements = posts
@@ -160,64 +178,97 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
                 </div>
             </section>
 
-            {/* PART 1: HERO SECTION (Strict Grid) */}
+            {/* FEATURED NEWS - Bento Grid Layout */}
             <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-12 py-12">
                 {heroNews.length > 0 ? (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Main Headline (Left - 2 Cols) */}
-                            <div className="lg:col-span-2 relative rounded-2xl overflow-hidden group shadow-lg h-[500px]">
-                                <ResponsiveImage 
-                                    media={typeof heroNews[0]?.image === 'object' ? heroNews[0].image : null}
-                                    src={typeof heroNews[0]?.image === 'string' ? heroNews[0].image : heroNews[0]?.featured_image} 
-                                    alt={heroNews[0].title} 
-                                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-                                />
-                                {/* Overlay Fix */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
-                                
-                                {/* Positioning Fix: Flexbox */}
-                                <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
-                                    <span className="inline-block self-start px-3 py-1 bg-accent-yellow text-gray-900 text-xs font-bold rounded-full mb-4">
-                                        {heroNews[0].category}
-                                    </span>
-                                    <Link href={`/berita/${heroNews[0].slug}`}>
-                                        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white font-serif leading-tight mb-3 hover:underline decoration-accent-yellow decoration-2 underline-offset-4">
-                                            {heroNews[0].title}
-                                        </h2>
-                                    </Link>
-                                    <div className="flex items-center text-gray-300 text-sm">
-                                        <Calendar className="w-4 h-4 mr-2" />
-                                        {new Date(heroNews[0].created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 auto-rows-[200px]">
+                        {/* Main Featured - Large Card (spans 2 rows) */}
+                        <div className="md:col-span-2 lg:col-span-7 lg:row-span-2 relative rounded-2xl overflow-hidden group shadow-lg">
+                            <ResponsiveImage 
+                                media={typeof heroNews[0]?.image === 'object' ? heroNews[0].image : null}
+                                src={heroNews[0]?.featured_image || (typeof heroNews[0]?.image === 'string' ? heroNews[0].image : null)} 
+                                alt={heroNews[0].title} 
+                                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                fallback={
+                                    <div className="w-full h-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
+                                        <Newspaper className="w-20 h-20 text-white/30" />
                                     </div>
+                                }
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                            <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+                                <span className="inline-block self-start px-3 py-1 bg-accent-yellow text-gray-900 text-xs font-bold rounded-full mb-3">
+                                    {heroNews[0].category}
+                                </span>
+                                <Link href={`/berita/${heroNews[0].slug}`}>
+                                    <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white font-serif leading-tight mb-3 hover:underline decoration-accent-yellow decoration-2 underline-offset-4">
+                                        {heroNews[0].title}
+                                    </h2>
+                                </Link>
+                                <div className="flex items-center text-gray-300 text-sm">
+                                    <Calendar className="w-4 h-4 mr-2" />
+                                    {new Date(heroNews[0].created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                 </div>
                             </div>
-
-                            {/* Sub-Headlines (Right - 1 Col) */}
-                            <div className="flex flex-col gap-6">
-                                {heroNews.slice(1).map((news) => (
-                                    <div key={news.id} className="relative flex-1 rounded-2xl overflow-hidden group shadow-md h-[238px]">
-                                        <ResponsiveImage 
-                                            media={typeof news.image === 'object' ? news.image : null}
-                                            src={typeof news.image === 'string' ? news.image : news.featured_image} 
-                                            alt={news.title} 
-                                            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
-                                        <div className="absolute inset-0 flex flex-col justify-end p-6">
-                                            <span className="inline-block self-start px-2 py-0.5 bg-white/20 backdrop-blur-md text-white text-xs font-bold rounded mb-2 border border-white/30">
-                                                {news.category}
-                                            </span>
-                                            <Link href={`/berita/${news.slug}`}>
-                                                <h3 className="text-lg font-bold text-white font-serif leading-snug hover:text-accent-yellow transition-colors">
-                                                    {news.title}
-                                                </h3>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
                         </div>
-                    ) : (
+
+                        {/* Secondary Cards - Right Column */}
+                        {heroNews.slice(1, 3).map((news, idx) => (
+                            <div key={news.id} className="lg:col-span-5 relative rounded-2xl overflow-hidden group shadow-md">
+                                <ResponsiveImage 
+                                    media={typeof news.image === 'object' ? news.image : null}
+                                    src={news.featured_image || (typeof news.image === 'string' ? news.image : null)} 
+                                    alt={news.title} 
+                                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                    fallback={
+                                        <div className="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
+                                            <Newspaper className="w-10 h-10 text-white/30" />
+                                        </div>
+                                    }
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                                <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-5">
+                                    <span className="inline-block self-start px-2 py-0.5 bg-white/20 backdrop-blur-md text-white text-xs font-bold rounded mb-2 border border-white/30">
+                                        {news.category}
+                                    </span>
+                                    <Link href={`/berita/${news.slug}`}>
+                                        <h3 className="text-base md:text-lg font-bold text-white font-serif leading-snug hover:text-accent-yellow transition-colors line-clamp-2">
+                                            {news.title}
+                                        </h3>
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Additional Featured Cards - Bottom Row */}
+                        {heroNews.slice(3, 6).map((news) => (
+                            <div key={news.id} className="lg:col-span-4 relative rounded-2xl overflow-hidden group shadow-md">
+                                <ResponsiveImage 
+                                    media={typeof news.image === 'object' ? news.image : null}
+                                    src={news.featured_image || (typeof news.image === 'string' ? news.image : null)} 
+                                    alt={news.title} 
+                                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                    fallback={
+                                        <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center">
+                                            <Newspaper className="w-8 h-8 text-white/30" />
+                                        </div>
+                                    }
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+                                <div className="absolute inset-0 flex flex-col justify-end p-4">
+                                    <span className="inline-block self-start px-2 py-0.5 bg-white/20 backdrop-blur-md text-white text-[10px] font-bold rounded mb-1 border border-white/30">
+                                        {news.category}
+                                    </span>
+                                    <Link href={`/berita/${news.slug}`}>
+                                        <h3 className="text-sm font-bold text-white font-serif leading-snug hover:text-accent-yellow transition-colors line-clamp-2">
+                                            {news.title}
+                                        </h3>
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
                         <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
                             <Newspaper className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                             <h3 className="text-xl font-bold text-gray-900">Belum ada berita</h3>
@@ -227,7 +278,7 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
                 </section>
 
                 {/* PART 2: MAIN CONTENT AREA (Strict Grid) */}
-                <section className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <section className="container mx-auto px-4 sm:px-6 lg:px-8 pb-20">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                         
                         {/* Left Column: Latest News (8 Cols) */}
@@ -249,18 +300,31 @@ export default function BeritaPengumumanPage({ posts = [], popularPosts = [] }) 
 
                             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                 <div className="space-y-6">
-                                    {latestNews.map((news) => (
-                                        <NewsItem key={news.id} news={news} />
-                                    ))}
+                                    {latestNews.length > 0 ? (
+                                        latestNews.map((news) => (
+                                            <NewsItem key={news.id} news={news} />
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <Newspaper className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                            <p>Tidak ada berita lainnya untuk ditampilkan.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Pagination */}
-                            <div className="mt-12 flex justify-center">
-                                <button className="px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-full hover:bg-gray-50 hover:shadow-md transition-all duration-300 flex items-center gap-2">
-                                    Muat Lebih Banyak <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
+                            {/* Load More Button */}
+                            {hasMoreNews && (
+                                <div className="mt-8 flex justify-center">
+                                    <button 
+                                        onClick={handleLoadMore}
+                                        className="px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-full hover:bg-primary hover:text-white hover:border-primary hover:shadow-md transition-all duration-300 flex items-center gap-2"
+                                    >
+                                        Muat Lebih Banyak
+                                        <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Right Column: Sidebar (4 Cols) */}

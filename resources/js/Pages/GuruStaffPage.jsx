@@ -35,33 +35,38 @@ const getTeacherPhoto = (teacher) => {
 
 // --- CONSTANTS & CONFIGURATION ---
 const MGMP_GROUPS = [
-    { id: 'pimpinan', title: 'Pimpinan & Manajemen', departments: ['Manajemen', 'Kepala Sekolah', 'Wakil Kepala Sekolah'] },
-    { id: 'mipa', title: 'MIPA', departments: ['MIPA', 'Matematika', 'Fisika', 'Kimia', 'Biologi'] },
-    { id: 'ips', title: 'IPS', departments: ['IPS', 'Sejarah', 'Geografi', 'Ekonomi', 'Sosiologi'] },
-    { id: 'bahasa', title: 'Bahasa & Budaya', departments: ['Bahasa', 'Bahasa Indonesia', 'Bahasa Inggris', 'Bahasa Sunda', 'Bahasa Asing'] },
-    { id: 'vokasi', title: 'Vokasi & Teknologi', departments: ['Teknologi Informasi', 'TIK', 'Prakarya', 'Informatika'] },
-    { id: 'penjas', title: 'Penjasorkes & Seni', departments: ['Olahraga', 'Seni', 'Seni Budaya', 'Penjasorkes'] },
-    { id: 'agama', title: 'Pendidikan Agama & PKN', departments: ['Agama', 'Pendidikan Agama', 'PKN', 'PPKn'] },
-    { id: 'staff', title: 'Tata Usaha & Staff', departments: ['Administrasi', 'Tata Usaha', 'Bimbingan Konseling', 'BK'] },
+    { id: 'pimpinan', title: 'Pimpinan & Manajemen', departments: ['Wakasek', 'Manajemen', 'Kepala Sekolah'] },
+    { id: 'mipa', title: 'MIPA (Matematika & IPA)', departments: ['Biologi', 'Fisika', 'Kimia', 'Matematika'] },
+    { id: 'ips', title: 'IPS (Ilmu Pengetahuan Sosial)', departments: ['Ekonomi', 'Geografi', 'Sejarah', 'Sosiologi'] },
+    { id: 'bahasa', title: 'Bahasa & Sastra', departments: ['Bahasa Indonesia', 'Bahasa Inggris', 'Bahasa Sunda', 'Bahasa Jepang'] },
+    { id: 'dasar', title: 'Pendidikan Agama, Pancasila & BK', departments: ['Pendidikan Agama Islam', 'Pendidikan Pancasila', 'Bimbingan Konseling'] },
+    { id: 'vokasi', title: 'Olahraga, Seni & PKWU', departments: ['PJOK', 'PKWU', 'Seni Budaya'] },
+    { id: 'staff', title: 'Staff, TU & Perpustakaan', departments: ['Staff TU', 'Perpustakaan', 'Administrasi', 'Tata Usaha'] },
 ];
 
 // Helper to determine group for a teacher
 const getTeacherGroup = (teacher) => {
+    if (!teacher.department) return 'staff';
+
+    const deptNormal = teacher.department.toUpperCase();
+
     // Check if teacher has a specific department that matches our groups
     for (const group of MGMP_GROUPS) {
-        if (group.departments.includes(teacher.department)) {
+        if (group.departments.some(d => d.toUpperCase() === deptNormal)) {
             return group.id;
         }
-        // Also check position if department is generic or missing
-        if (teacher.position) {
-             const pos = teacher.position.toLowerCase();
-             if (group.departments.some(d => pos.includes(d.toLowerCase()))) {
+    }
+    
+    // Fallback search in position
+    if (teacher.position) {
+         const pos = teacher.position.toUpperCase();
+         for (const group of MGMP_GROUPS) {
+             if (group.departments.some(d => pos.includes(d.toUpperCase()))) {
                  return group.id;
              }
-        }
+         }
     }
-    // Default to Staff if type is staff, otherwise 'Lainnya' or put in Staff
-    if (teacher.type === 'staff') return 'staff';
+
     return 'staff'; // Fallback
 };
 

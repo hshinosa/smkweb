@@ -21,7 +21,7 @@ export default function Index({ posts }) {
     const [currentId, setCurrentId] = useState(null);
     const [activeTab, setActiveTab] = useState('list');
 
-    const { data, setData, post, delete: destroy, processing, errors, reset } = useForm({
+    const { data, setData, post, put, delete: destroy, processing, errors, reset } = useForm({
         title: '', category: 'Berita', content: '', excerpt: '', featured_image: null, featured_image_url: '', status: 'published',
     });
 
@@ -37,14 +37,15 @@ export default function Index({ posts }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const needsFormData = data.featured_image instanceof File;
         if (editMode) {
-            post(route('admin.posts.update', currentId), {
-                forceFormData: true,
+            put(route('admin.posts.update', currentId), {
+                forceFormData: needsFormData,
+                preserveState: true,
                 onSuccess: () => {
                     closeModal();
                     toast.success('Berita berhasil diperbarui');
                 },
-                _method: 'PUT'
             });
         } else {
             post(route('admin.posts.store'), {

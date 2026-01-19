@@ -40,30 +40,26 @@ class PopulateProgramStudiSeeder extends Seeder
 
     private function attachMedia($setting, $sectionKey)
     {
-        $imageName = null;
+        $imagePath = null;
         $collection = null;
 
-        // Use different images for variety if possible, or fallback
         if ($sectionKey === 'hero') {
-            $imageName = 'hero-bg-sman1baleendah.jpeg';
+            $imagePath = public_path('images/anak-sma-programstudi.png');
             $collection = 'hero_bg';
         } elseif ($sectionKey === 'facilities') {
-            $imageName = 'panen-karya-sman1-baleendah.jpg'; // Lab/Facility image
+            // Use same image for facilities as requested or fallback
+            $imagePath = public_path('images/anak-sma-programstudi.png');
             $collection = 'facilities_main_image';
         } elseif ($sectionKey === 'alumni_spotlight') {
-            $imageName = 'keluarga-besar-sman1-baleendah.png'; // Alumni photo
+            $imagePath = public_path('images/keluarga-besar-sman1-baleendah.png');
             $collection = 'alumni_image';
         }
 
-        if ($imageName) {
-            $sourcePath = public_path("images/{$imageName}");
-            if (File::exists($sourcePath)) {
-                // Clear old media to avoid duplicates
-                $setting->clearMediaCollection($collection);
-                $setting->addMedia($sourcePath)
-                    ->preservingOriginal()
-                    ->toMediaCollection($collection);
-            }
+        if ($imagePath && $collection && File::exists($imagePath)) {
+            $setting->clearMediaCollection($collection);
+            $setting->addMedia($imagePath)
+                ->preservingOriginal()
+                ->toMediaCollection($collection);
         }
     }
 

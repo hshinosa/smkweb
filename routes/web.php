@@ -686,11 +686,23 @@ Route::get('/berita-pengumuman', function () {
     $transformPosts = function ($posts) use ($imageService) {
         return $posts->map(function ($post) use ($imageService) {
             $data = $post->toArray();
+            
+            // Try to get media from 'featured' collection first
             $media = $imageService->getFirstMediaData($post, 'featured');
+            
+            // Fallback to 'gallery' collection if 'featured' is empty
+            if (!$media) {
+                $media = $imageService->getFirstMediaData($post, 'gallery');
+            }
+            
             if ($media) {
                 $data['image'] = $media;
                 $data['featured_image'] = $media['original_url'];
+            } else {
+                // Final fallback to database field
+                $data['featured_image'] = $post->featured_image;
             }
+            
             return $data;
         });
     };
@@ -723,10 +735,25 @@ Route::get('/berita/{slug}', function ($slug) {
     
     // Transform single post to include media
     $postData = $post->toArray();
+    
+    // Try featured collection first, fallback to gallery
     $media = $imageService->getFirstMediaData($post, 'featured');
+    if (!$media) {
+        $media = $imageService->getFirstMediaData($post, 'gallery');
+    }
+    
     if ($media) {
         $postData['featuredImage'] = $media;
         $postData['featured_image'] = $media['original_url'];
+    } else {
+        // Final fallback to database field
+        $postData['featured_image'] = $post->featured_image;
+    }
+    
+    // Get gallery images if exists (for carousel)
+    $galleryMedia = $imageService->getAllMediaData($post, 'gallery');
+    if (!empty($galleryMedia)) {
+        $postData['galleryImages'] = $galleryMedia;
     }
     
     $relatedPosts = \App\Models\Post::where('id', '!=', $post->id)
@@ -738,11 +765,20 @@ Route::get('/berita/{slug}', function ($slug) {
         ->get()
         ->map(function ($p) use ($imageService) {
             $d = $p->toArray();
+            
+            // Try featured collection first, fallback to gallery
             $m = $imageService->getFirstMediaData($p, 'featured');
+            if (!$m) {
+                $m = $imageService->getFirstMediaData($p, 'gallery');
+            }
+            
             if ($m) {
                 $d['featuredImage'] = $m;
                 $d['featured_image'] = $m['original_url'];
+            } else {
+                $d['featured_image'] = $p->featured_image;
             }
+            
             return $d;
         });
 
@@ -897,6 +933,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // AI Settings Management
         Route::get('/ai-settings', [\App\Http\Controllers\Admin\AiSettingController::class, 'index'])->name('ai-settings.index');
         Route::post('/ai-settings', [\App\Http\Controllers\Admin\AiSettingController::class, 'update'])->name('ai-settings.update');
+
+        // Instagram Bot Management
+        Route::get('/instagram-bots', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'index'])->name('instagram-bots.index');
+        Route::post('/instagram-bots', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'store'])->name('instagram-bots.store');
+        Route::put('/instagram-bots/{instagramBotAccount}', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'update'])->name('instagram-bots.update');
+        Route::delete('/instagram-bots/{instagramBotAccount}', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'destroy'])->name('instagram-bots.destroy');
+        Route::post('/instagram-bots/{instagramBotAccount}/test', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'testConnection'])->name('instagram-bots.test');
     });
 });
 // --- AKHIR RUTE ADMIN ---

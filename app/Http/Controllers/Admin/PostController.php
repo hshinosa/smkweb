@@ -86,6 +86,14 @@ class PostController extends Controller
             $validated['slug'] = Str::slug($request->title) . '-' . uniqid();
         }
 
+        if ($validated['status'] === 'published' && empty($validated['published_at'])) {
+            $validated['published_at'] = $post->published_at ?? now();
+        }
+
+        if ($validated['status'] === 'draft') {
+            $validated['published_at'] = null;
+        }
+
         // Remove featured_image from validated array
         unset($validated['featured_image']);
 

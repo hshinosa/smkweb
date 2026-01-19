@@ -15,20 +15,21 @@ const sanitizeHtml = (htmlString) => {
     return doc.body.innerHTML;
 };
 
-const MiniTextEditor = ({ initialValue = "", onChange, label, error }) => {
+const MiniTextEditor = ({ value, initialValue = "", onChange, label, error }) => {
     const editorRef = useRef(null);
     const isInternalUpdate = useRef(false);
 
-    // Sync initialValue to editor only when it changes from outside
+    // Sync value to editor only when it changes from outside
     useEffect(() => {
-        if (editorRef.current && editorRef.current.innerHTML !== initialValue) {
+        const incomingValue = value ?? initialValue;
+        if (editorRef.current && editorRef.current.innerHTML !== incomingValue) {
             // Jika update datang dari luar (bukan dari pengetikan user), update innerHTML
             if (!isInternalUpdate.current) {
-                editorRef.current.innerHTML = initialValue || '';
+                editorRef.current.innerHTML = incomingValue || '';
             }
         }
         isInternalUpdate.current = false;
-    }, [initialValue]);
+    }, [value, initialValue]);
 
     const handleContentChange = () => {
         if (editorRef.current) {

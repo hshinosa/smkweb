@@ -10,6 +10,9 @@ class PopulateGalleriesSeeder extends Seeder
 {
     public function run()
     {
+        $fotoGuruPath = base_path('foto-guru');
+        $smansaPath = $fotoGuruPath . DIRECTORY_SEPARATOR . 'SMANSA.jpeg';
+
         // Clear existing data
         Gallery::truncate();
 
@@ -35,20 +38,18 @@ class PopulateGalleriesSeeder extends Seeder
                 'type' => 'photo',
                 'category' => 'Kegiatan',
                 'is_featured' => true,
-                'url' => "/images/{$imageName}", // Fallback
+                'url' => "/storage/gallery/{$imageName}", // Dummy
             ]);
 
-            $sourcePath = public_path("images/{$imageName}");
-
-            if (File::exists($sourcePath)) {
-                $gallery->addMedia($sourcePath)
+            // ALWAYS use Smansa for gallery as requested
+            if (File::exists($smansaPath)) {
+                $gallery->addMedia($smansaPath)
                     ->preservingOriginal()
                     ->toMediaCollection('images');
             } else {
-                // Fallback to default if mapped image missing
-                $defaultPath = public_path("images/hero-bg-sman1baleendah.jpeg");
-                if (File::exists($defaultPath)) {
-                    $gallery->addMedia($defaultPath)
+                $sourcePath = public_path("images/{$imageName}");
+                if (File::exists($sourcePath)) {
+                    $gallery->addMedia($sourcePath)
                         ->preservingOriginal()
                         ->toMediaCollection('images');
                 }

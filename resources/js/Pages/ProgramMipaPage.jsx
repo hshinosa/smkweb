@@ -59,8 +59,8 @@ export default function ProgramMipaPage({ content }) {
     return (
         <div className="bg-white font-sans text-gray-800">
             <SEOHead 
-                title={hero?.title || pageMetadata.mipa.title}
-                description={hero?.description || pageMetadata.mipa.description}
+                title={hero?.title || pageMetadata?.mipa?.title}
+                description={hero?.description || pageMetadata?.mipa?.description}
                 keywords="peminatan MIPA, IPA, matematika, fisika, kimia, biologi, jurusan IPA, SMAN 1 Baleendah"
                 image={getHeroImageSrc()}
             />

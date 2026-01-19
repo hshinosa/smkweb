@@ -19,7 +19,7 @@ import SEOHead from '@/Components/SEOHead';
 import ResponsiveImage, { HeroImage, ThumbnailImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
-import { getPageMetadata } from '@/Utils/academicData';
+import { getPageMetadata, programStudyData } from '@/Utils/academicData';
 import { usePage } from '@inertiajs/react';
 
 export default function ProgramBahasaPage({ content }) {
@@ -27,6 +27,7 @@ export default function ProgramBahasaPage({ content }) {
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
     const navigationData = getNavigationData(siteSettings);
     const pageMetadata = getPageMetadata(siteName);
+    const programData = programStudyData.bahasa;
     const { hero, core_subjects, facilities, career_paths, alumni_spotlight } = content || {};
 
     // Helper to format image path correctly
@@ -55,8 +56,8 @@ export default function ProgramBahasaPage({ content }) {
     return (
         <div className="bg-white font-sans text-gray-800">
             <SEOHead 
-                title={hero?.title || pageMetadata.bahasa.title}
-                description={hero?.description || pageMetadata.bahasa.description}
+                title={hero?.title || pageMetadata?.bahasa?.title}
+                description={hero?.description || pageMetadata?.bahasa?.description}
                 keywords="peminatan Bahasa, jurusan bahasa, bahasa Indonesia, bahasa Inggris, sastra, SMAN 1 Baleendah"
                 image={getHeroImageSrc()}
             />
@@ -82,7 +83,7 @@ export default function ProgramBahasaPage({ content }) {
 
                 <div className="relative z-10 container mx-auto px-4 text-center text-white">
                     <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
-                        {renderHighlightedTitle("Bahasa & Ilmu Budaya")}
+                        {renderHighlightedTitle(programData.subtitle)}
                     </h1>
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
                         {hero?.description || "Membuka jendela dunia melalui penguasaan bahasa asing, literasi sastra, dan pemahaman lintas budaya yang mendalam."}

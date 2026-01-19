@@ -321,8 +321,8 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
             <SEOHead 
-                title={pageMetadata.ekstrakurikuler.title}
-                description={pageMetadata.ekstrakurikuler.description}
+                title={pageMetadata?.ekstrakurikuler?.title || 'Ekstrakurikuler'}
+                description={pageMetadata?.ekstrakurikuler?.description || ''}
                 keywords={`ekstrakurikuler, ekskul, kegiatan sekolah, OSIS, pramuka, basket, futsal, musik, sains, robotika, ${siteName}`}
                 image="/images/ekskul-banner.jpg"
             />

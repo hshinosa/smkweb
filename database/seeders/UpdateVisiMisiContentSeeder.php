@@ -20,12 +20,20 @@ class UpdateVisiMisiContentSeeder extends Seeder
         );
         
         // Migrate Hero Image
-        $heroPath = public_path('images/hero-bg-sman1baleendah.jpeg');
+        $heroPath = base_path('foto-guru' . DIRECTORY_SEPARATOR . 'SMANSA.jpeg');
         if (File::exists($heroPath)) {
             $hero->clearMediaCollection('hero_vision_mission_bg');
             $hero->addMedia($heroPath)
                 ->preservingOriginal()
                 ->toMediaCollection('hero_vision_mission_bg');
+        } else {
+            $fallbackPath = public_path('images/hero-bg-sman1baleendah.jpeg');
+            if (File::exists($fallbackPath)) {
+                $hero->clearMediaCollection('hero_vision_mission_bg');
+                $hero->addMedia($fallbackPath)
+                    ->preservingOriginal()
+                    ->toMediaCollection('hero_vision_mission_bg');
+            }
         }
 
         // 2. VISION MISSION CONTENT

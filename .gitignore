@@ -33,6 +33,7 @@ storage/framework/sessions/*
 storage/framework/views/*
 storage/logs/*
 storage/app/*.php
+storage/media-library/*
 
 # Docker
 docker-compose.override.yml
@@ -82,3 +83,4 @@ deploy.log
 deploy-*.log
 
 docs
+foto-guru

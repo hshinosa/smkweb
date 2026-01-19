@@ -17,6 +17,9 @@ class PopulateAcademicAndCurriculumSeeder extends Seeder
 
     private function seedAcademicCalendar()
     {
+        $fotoGuruPath = base_path('foto-guru');
+        $smansaPath = $fotoGuruPath . DIRECTORY_SEPARATOR . 'SMANSA.jpeg';
+
         AcademicCalendarContent::truncate();
 
         // Semester Ganjil 2024/2025
@@ -37,14 +40,13 @@ class PopulateAcademicAndCurriculumSeeder extends Seeder
             'sort_order' => 2,
         ]);
 
-        // Attach Dummy Images
-        $localImage = public_path('images/hero-bg-sman1baleendah.jpeg'); // Fallback
-        if (File::exists($localImage)) {
+        // Attach Smansa Image
+        if (File::exists($smansaPath)) {
             $cal1->clearMediaCollection('calendar_images');
-            $cal1->addMedia($localImage)->preservingOriginal()->toMediaCollection('calendar_images');
+            $cal1->addMedia($smansaPath)->preservingOriginal()->toMediaCollection('calendar_images');
             
             $cal2->clearMediaCollection('calendar_images');
-            $cal2->addMedia($localImage)->preservingOriginal()->toMediaCollection('calendar_images');
+            $cal2->addMedia($smansaPath)->preservingOriginal()->toMediaCollection('calendar_images');
         }
 
         $this->command->info('Academic Calendar populated.');
@@ -52,6 +54,9 @@ class PopulateAcademicAndCurriculumSeeder extends Seeder
 
     private function seedCurriculum()
     {
+        $fotoGuruPath = base_path('foto-guru');
+        $upacaraPath = $fotoGuruPath . DIRECTORY_SEPARATOR . 'UPACARA.jpeg';
+
         // Jangan truncate jika ingin mempertahankan data lama, tapi untuk populate awal, truncate lebih bersih.
         // Tapi CurriculumSetting pakai key, jadi updateOrCreate lebih aman.
         
@@ -76,26 +81,23 @@ class PopulateAcademicAndCurriculumSeeder extends Seeder
             );
 
             // Attach media for specific sections
-            $imageName = null;
+            $path = null;
             $collection = null;
 
             if ($key === 'hero') {
-                $imageName = 'hero-bg-sman1baleendah.jpeg';
+                $path = $upacaraPath;
                 $collection = 'hero_bg';
             } elseif ($key === 'fase_e') {
-                $imageName = 'anak-sma-programstudi.png';
+                $path = $upacaraPath;
                 $collection = 'fase_e_image';
             } elseif ($key === 'fase_f') {
-                $imageName = 'panen-karya-sman1-baleendah.jpg';
+                $path = $upacaraPath;
                 $collection = 'fase_f_image';
             }
 
-            if ($imageName && $collection) {
-                $path = public_path("images/{$imageName}");
-                if (File::exists($path)) {
-                    $setting->clearMediaCollection($collection);
-                    $setting->addMedia($path)->preservingOriginal()->toMediaCollection($collection);
-                }
+            if ($path && $collection && File::exists($path)) {
+                $setting->clearMediaCollection($collection);
+                $setting->addMedia($path)->preservingOriginal()->toMediaCollection($collection);
             }
         }
         

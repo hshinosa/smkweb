@@ -37,7 +37,8 @@ const GalleryThumbnail = ({ item }) => {
              // Check YouTube
              const youtubeMatch = rawUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
              if (youtubeMatch) {
-                 source = `https://img.youtube.com/vi/${youtubeMatch[1]}/hqdefault.jpg`;
+                 // Use maxresdefault for better quality, fallback to hqdefault
+                 source = `https://img.youtube.com/vi/${youtubeMatch[1]}/maxresdefault.jpg`;
              } else {
                  source = rawUrl; // for video tag or fallback img
              }
@@ -48,6 +49,15 @@ const GalleryThumbnail = ({ item }) => {
     const handleError = (e) => {
         if (!hasError) {
             console.warn("Image load failed for:", item.title, "Source:", imgSrc);
+            
+            // For YouTube thumbnails, try hqdefault as fallback
+            if (imgSrc && imgSrc.includes('maxresdefault.jpg')) {
+                const hqdefaultSrc = imgSrc.replace('maxresdefault.jpg', 'hqdefault.jpg');
+                setImgSrc(hqdefaultSrc);
+                setHasError(true);
+                return;
+            }
+            
             // Fallback to a guaranteed local image
             setImgSrc('/images/panen-karya-sman1-baleendah.jpg');
             setHasError(true);
@@ -65,6 +75,7 @@ const GalleryThumbnail = ({ item }) => {
                 className="w-full h-full object-cover block"
                 loading="lazy"
                 onError={handleError}
+                style={{ objectPosition: 'center' }}
             />
         );
     }
@@ -83,6 +94,7 @@ const GalleryThumbnail = ({ item }) => {
                     className="w-full h-full object-cover block"
                     loading="lazy"
                     onError={handleError}
+                    style={{ objectPosition: 'center' }}
                 />
             );
         }
@@ -96,6 +108,7 @@ const GalleryThumbnail = ({ item }) => {
                 preload="auto"
                 onLoadedMetadata={(e) => { e.target.currentTime = 0.1; }}
                 onError={handleError}
+                style={{ objectPosition: 'center' }}
             />
         );
     }
@@ -106,6 +119,7 @@ const GalleryThumbnail = ({ item }) => {
             src="/images/panen-karya-sman1-baleendah.jpg"
             alt="Fallback"
             className="w-full h-full object-cover block opacity-50"
+            style={{ objectPosition: 'center' }}
         />
     );
 };
@@ -399,30 +413,44 @@ export default function GaleriPage({ galleries = [] }) {
                         </button>
 
                         {/* Content */}
-                        <div className="flex-grow flex items-center justify-center overflow-hidden rounded-lg bg-black">
+                        <div className="flex-grow flex items-center justify-center bg-black rounded-lg overflow-hidden relative min-h-[400px] md:min-h-[500px]">
                             {(() => {
                                 const url = normalizeUrl(currentItem.url) || '';
                                 if (currentItem.type === 'photo') {
-                                    if (currentItem.image && currentItem.image.original_url) {
-                                         return <img src={normalizeUrl(currentItem.image.original_url)} alt={currentItem.title} className="max-w-full max-h-[70vh] object-contain" />;
-                                    }
-                                    return <img src={url} alt={currentItem.title} className="max-w-full max-h-[70vh] object-contain" />;
+                                    const imgSrc = (currentItem.image && currentItem.image.original_url) 
+                                        ? normalizeUrl(currentItem.image.original_url) 
+                                        : url;
+                                    return (
+                                        <img 
+                                            src={imgSrc} 
+                                            alt={currentItem.title} 
+                                            className="max-w-full max-h-[85vh] object-contain" 
+                                        />
+                                    );
                                 }
                                 const youtubeMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
                                 if (youtubeMatch) {
                                     return (
-                                        <div className="w-[90vw] max-w-5xl aspect-video">
-                                            <iframe 
-                                                src={`https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=1`}
-                                                className="w-full h-full"
-                                                allowFullScreen
-                                                allow="autoplay"
-                                            />
+                                        <div className="w-full h-full flex items-center justify-center p-4">
+                                            <div className="w-full max-w-5xl" style={{ aspectRatio: '16/9' }}>
+                                                <iframe 
+                                                    src={`https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=1&modestbranding=1&rel=0`}
+                                                    className="w-full h-full border-0 rounded-lg shadow-2xl"
+                                                    allowFullScreen
+                                                    allow="autoplay; encrypted-media; picture-in-picture"
+                                                />
+                                            </div>
                                         </div>
                                     );
                                 }
                                 return (
-                                    <video src={url} controls className="max-w-full max-h-[70vh]" autoPlay playsInline>
+                                    <video 
+                                        src={url} 
+                                        controls 
+                                        className="max-w-full max-h-[85vh] aspect-video" 
+                                        autoPlay 
+                                        playsInline
+                                    >
                                         Your browser does not support the video tag.
                                     </video>
                                 );

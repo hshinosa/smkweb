@@ -67,7 +67,7 @@ class UpdateLandingPageContentSeeder extends Seeder
             ])]
         );
 
-        $kepsekImgPath = $fotoGuruPath . DIRECTORY_SEPARATOR . 'H. Dudi Rohdiana, S.Pd., M.M.JPG';
+        $kepsekImgPath = $fotoGuruPath . DIRECTORY_SEPARATOR . 'KEPALA SEKOLAH ( H. Dudi Rohdiana, S.Pd., M.M ).JPG';
         if (file_exists($kepsekImgPath)) {
             $kepsek->clearMediaCollection('kepsek_photo');
             $kepsek->addMedia($kepsekImgPath)

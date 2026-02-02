@@ -89,7 +89,7 @@ export default function Index({ alumnis }) {
     };
 
     const handleDelete = (id) => {
-        if (confirm('Hapus data ini?')) {
+        if (confirm('Apakah Anda yakin ingin menghapus data alumni ini? Tindakan ini tidak dapat dibatalkan.')) {
             destroy(route('admin.alumni.destroy', id), {
                 preserveScroll: true,
                 onSuccess: () => toast.success('Data alumni berhasil dihapus')

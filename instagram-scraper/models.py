@@ -1,8 +1,9 @@
 """
 Instagram Scraper Database Models
-SMAN 1 Baleendah - News Feed Automation
+SMAN 1 Baleendah - News Feed Automation (Apify-based)
 
 Tables use 'sc_' prefix to avoid conflicts with main Laravel application tables.
+Note: Bot accounts no longer needed - using Apify API instead
 """
 
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, JSON, create_engine
@@ -16,26 +17,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 Base = declarative_base()
-
-
-class BotAccount(Base):
-    """
-    Bot Instagram accounts for scraping with session management.
-    Table: sc_bot_accounts
-    """
-    __tablename__ = 'sc_bot_accounts'
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    username = Column(String(100), unique=True, nullable=False, index=True)
-    password = Column(String(255), nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False, index=True)
-    last_used_at = Column(DateTime, nullable=True)
-    notes = Column(Text, nullable=True, comment='Optional notes about this account')
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-
-    def __repr__(self):
-        return f"<BotAccount(username='{self.username}', active={self.is_active})>"
 
 
 class RawNewsFeed(Base):

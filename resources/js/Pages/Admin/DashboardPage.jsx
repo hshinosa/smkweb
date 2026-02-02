@@ -247,7 +247,17 @@ export default function DashboardPage() {
             } else {
                 setDashboardActivityLogs(response.data.data.slice(0, 5));
             }
-        } catch (error) { console.error("Error:", error); }
+        } catch (error) { 
+            console.error("Activity logs error:", error);
+            toast.error('Gagal memuat log aktivitas. Coba refresh halaman.');
+            // Set empty data on error
+            if (forModal) {
+                setAllActivityLogs([]);
+                setFilteredActivityLogsInModal([]);
+            } else {
+                setDashboardActivityLogs([]);
+            }
+        }
         finally {
             if (forModal) setLoadingLogsModal(false);
             else setLoadingDashboardLogs(false);

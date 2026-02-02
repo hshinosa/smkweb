@@ -183,8 +183,15 @@ class ScrapeInstagram extends Command
      */
     protected function scrapeWithApify(string $username, int $maxPosts, ?string $apiToken): array
     {
+        // Get API token from database if not provided
         if (!$apiToken) {
-            throw new \Exception('Apify API token not found. Set APIFY_API_TOKEN in .env or use --apify-token flag');
+            $apiToken = DB::table('settings')
+                ->where('key', 'apify_api_token')
+                ->value('value');
+        }
+
+        if (!$apiToken) {
+            throw new \Exception('Apify API token not found. Please set it in Admin Panel → Instagram Settings');
         }
 
         $this->info("   🌐 Using Apify API...");
@@ -200,20 +207,26 @@ class ScrapeInstagram extends Command
                 $runId = $savedRunId;
                 $status = 'SUCCEEDED'; // Assume completed
             } else {
-                // Start new Apify actor run
-                $actorId = env('APIFY_ACTOR_ID', 'shu8hvrXbJbY3Eb9W');
+                // Start new Apify actor run (apify~instagram-scraper)
+                $actorId = 'apify~instagram-scraper';
                 
                 $this->info("   🚀 Starting actor run for @{$username}...");
                 
+                // apify~instagram-scraper input format
+                $profileUrl = "https://www.instagram.com/{$username}/";
+                
                 $response = $client->post("https://api.apify.com/v2/acts/{$actorId}/runs", [
+                    'query' => ['token' => $apiToken],
                     'headers' => [
                         'Content-Type' => 'application/json',
-                        'Authorization' => "Bearer {$apiToken}",
                     ],
                     'json' => [
-                        'directUrls' => ["https://www.instagram.com/{$username}/"],
+                        'addParentData' => false,
+                        'directUrls' => [$profileUrl],
                         'resultsLimit' => $maxPosts,
                         'resultsType' => 'posts',
+                        'searchLimit' => 1,
+                        'searchType' => 'hashtag',
                     ],
                 ]);
 
@@ -263,12 +276,20 @@ class ScrapeInstagram extends Command
 
             $posts = json_decode($resultsResponse->getBody()->getContents(), true);
 
-            if (empty($posts)) {
+            // Debug: show response structure
+            // Filter out error entries
+            $validPosts = array_filter($posts, function($post) {
+                return isset($post['shortCode']) && !isset($post['error']);
+            });
+
+            if (empty($validPosts)) {
                 return [
                     'success' => false,
-                    'message' => 'No posts found',
+                    'message' => 'No valid posts found',
                 ];
             }
+            
+            $posts = $validPosts;
 
             $this->info("   📦 Found " . count($posts) . " posts");
 
@@ -293,15 +314,16 @@ class ScrapeInstagram extends Command
     }
 
     /**
-     * Save Apify post to database
+     * Save a post from Apify API response
      */
     protected function saveApifyPost(array $post, string $username): bool
     {
         try {
-            // Updated mappings based on Apify response
-            $shortcode = $post['shortCode'] ?? $post['shortcode'] ?? $post['content_id'] ?? null;
-            $caption = $post['caption'] ?? $post['description'] ?? '';
-            $timestamp = $post['timestamp'] ?? $post['date_posted'] ?? now();
+            // Updated mappings based on Apify response (apify~instagram-scraper)
+            // Fields: shortCode, caption, displayUrl, images (array), timestamp, likesCount, commentsCount
+            $shortcode = $post['shortCode'] ?? $post['id'] ?? null;
+            $caption = $post['caption'] ?? '';
+            $timestamp = $post['timestamp'] ?? now();
 
             if (!$shortcode) {
                 $this->warn("   ⚠️ Skipping post without shortcode");
@@ -322,30 +344,24 @@ class ScrapeInstagram extends Command
             // Extract image URLs from Apify response
             $imageUrls = [];
             
-            // Try different possible image fields
-            if (isset($post['photos']) && is_array($post['photos'])) {
-                $imageUrls = $post['photos'];
+            // Primary: images array from Apify
+            if (isset($post['images']) && is_array($post['images'])) {
+                $imageUrls = array_filter($post['images'], 'is_string');
             }
             
-            // Check images array if photos is empty
-            if (empty($imageUrls) && isset($post['images']) && is_array($post['images'])) {
-                foreach ($post['images'] as $image) {
-                    if (is_string($image)) {
-                        $imageUrls[] = $image;
-                    } elseif (isset($image['url'])) {
-                        $imageUrls[] = $image['url'];
-                    }
-                }
-            }
-            
-            // Fallback to displayUrl if still empty
+            // Fallback 1: displayUrl if no images array
             if (empty($imageUrls) && isset($post['displayUrl'])) {
                 $imageUrls[] = $post['displayUrl'];
+            }
+            
+            // Fallback 2: photos array
+            if (empty($imageUrls) && isset($post['photos']) && is_array($post['photos'])) {
+                $imageUrls = $post['photos'];
             }
 
             if (empty($imageUrls)) {
                 $this->warn("   ⚠️ No images found for {$shortcode}");
-                Log::warning('[ScrapeInstagram] No images in post', ['post' => $post]);
+                Log::warning('[ScrapeInstagram] No images in post', ['shortcode' => $shortcode]);
             }
 
             // Download images to local storage
@@ -361,8 +377,8 @@ class ScrapeInstagram extends Command
                 'source_username' => $username,
                 'caption' => $caption,
                 'image_paths' => json_encode($savedImages),
-                'likes_count' => $post['likes'] ?? $post['likesCount'] ?? 0,
-                'comments_count' => $post['num_comments'] ?? $post['commentsCount'] ?? 0,
+                'likes_count' => $post['likesCount'] ?? 0,
+                'comments_count' => $post['commentsCount'] ?? 0,
                 'scraped_at' => $timestamp,
                 'is_processed' => false,
             ]);
@@ -387,38 +403,87 @@ class ScrapeInstagram extends Command
     {
         $savedPaths = [];
         $downloadDir = base_path("instagram-scraper/downloads/{$username}");
+        $tempDir = storage_path("app/temp/instagram/{$shortcode}");
 
-        // Create directory if not exists
+        // Create directories if they don't exist
         if (!file_exists($downloadDir)) {
             mkdir($downloadDir, 0755, true);
         }
-
-        $client = new \GuzzleHttp\Client(['verify' => false]);
-
-        foreach ($imageUrls as $index => $url) {
-            try {
-                $extension = 'jpg';
-                $filename = "{$shortcode}_" . ($index + 1) . ".{$extension}";
-                $filePath = "{$downloadDir}/{$filename}";
-
-                // Download image
-                $response = $client->get($url, ['timeout' => 30]);
-                file_put_contents($filePath, $response->getBody()->getContents());
-
-                // Store relative path
-                $relativePath = "/downloads/{$username}/{$filename}";
-                $savedPaths[] = $relativePath;
-
-            } catch (\Exception $e) {
-                $this->warn("   ⚠️ Failed to download image: {$e->getMessage()}");
-                Log::warning('[ScrapeInstagram] Image download failed', [
-                    'url' => $url,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
         }
 
-        return $savedPaths;
+        $client = new \GuzzleHttp\Client([
+            'verify' => false,
+            'timeout' => 30,
+            'connect_timeout' => 10,
+        ]);
+
+        try {
+            foreach ($imageUrls as $index => $url) {
+                $extension = 'jpg';
+                $filename = "{$shortcode}_" . ($index + 1) . ".{$extension}";
+                $tempPath = "{$tempDir}/{$filename}";
+                $finalPath = "{$downloadDir}/{$filename}";
+
+                // Retry logic for each image download (up to 3 times)
+                $success = retry(3, function () use ($client, $url, $tempPath) {
+                    $response = $client->get($url);
+                    if ($response->getStatusCode() !== 200) {
+                        throw new \Exception("HTTP status " . $response->getStatusCode());
+                    }
+                    file_put_contents($tempPath, $response->getBody()->getContents());
+                }, 2000); // 2 seconds sleep between retries
+
+                if ($success !== false) {
+                    // Move from temp to final destination
+                    rename($tempPath, $finalPath);
+                    $relativePath = "/downloads/{$username}/{$filename}";
+                    $savedPaths[] = $relativePath;
+                }
+            }
+
+            // Cleanup temp directory
+            $this->cleanupDir($tempDir);
+
+            // If we didn't get ALL images, and we want strict atomicity,
+            // we could fail here, but usually partial success in scraping is okay
+            // as long as we have the files we tracked.
+            
+            return $savedPaths;
+
+        } catch (\Exception $e) {
+            $this->error("   ❌ Fatal error during image processing for {$shortcode}: {$e->getMessage()}");
+            Log::error('[ScrapeInstagram] Atomic image download failed', [
+                'shortcode' => $shortcode,
+                'error' => $e->getMessage(),
+            ]);
+            
+            // Cleanup: remove any partial files for this shortcode if atomicity is required
+            foreach ($savedPaths as $relPath) {
+                $absPath = base_path("instagram-scraper" . $relPath);
+                if (file_exists($absPath)) {
+                    unlink($absPath);
+                }
+            }
+            $this->cleanupDir($tempDir);
+            
+            return []; // Return empty to indicate failure for this post
+        }
+    }
+
+    /**
+     * Helper to cleanup directory
+     */
+    protected function cleanupDir(string $dir): void
+    {
+        if (!file_exists($dir)) return;
+        
+        $files = glob($dir . '/*');
+        foreach ($files as $file) {
+            if (is_file($file)) unlink($file);
+        }
+        rmdir($dir);
     }
 
     /**

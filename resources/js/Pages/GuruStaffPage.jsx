@@ -33,14 +33,94 @@ const getTeacherPhoto = (teacher) => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(teacher.name)}&background=0d47a1&color=fff&size=300`;
 };
 
+// Helper function to format subject names properly
+const formatSubjectName = (name) => {
+    if (!name) return name;
+    
+    const subjectMap = {
+        'PJOK': 'Penjasorkes',
+        'PKWU': 'Prakarya dan Kewirausahaan',
+        'Penjasorkes': 'Penjasorkes',
+        'Prakarya': 'Prakarya dan Kewirausahaan',
+        'Pendidikan Agama Islam': 'PAI',
+        'Pendidikan Pancasila': 'PPKN'
+    };
+    
+    return subjectMap[name] || name;
+};
+
+// Helper to get display role (handles structural positions like Wakasek)
+const getDisplayRole = (teacher) => {
+    const { position, department } = teacher;
+    
+    // Kepala Sekolah
+    if (position === 'Kepala Sekolah') {
+        return { primary: 'Kepala Sekolah', secondary: department || 'Pimpinan' };
+    }
+    
+    // Wakasek with bidang
+    if (position === 'Wakasek') {
+        const bidang = department || 'Umum';
+        return { primary: `Wakasek ${bidang}`, secondary: bidang };
+    }
+    
+    // Regular teachers - Guru with subject
+    if (position === 'Guru') {
+        const subject = department || 'Umum';
+        return { 
+            primary: `Guru ${formatSubjectName(subject)}`, 
+            secondary: formatSubjectName(subject)
+        };
+    }
+    
+    // Staff with department
+    if (position === 'Staff') {
+        const unit = department || 'Umum';
+        return { primary: `Staff ${unit}`, secondary: unit };
+    }
+    
+    // Fallback - use position as is
+    if (position) {
+        return { primary: position, secondary: department || '-' };
+    }
+    
+    return { primary: teacher.type === 'guru' ? 'Guru' : 'Staff', secondary: department || '-' };
+};
+
 // --- CONSTANTS & CONFIGURATION ---
 const MGMP_GROUPS = [
-    { id: 'pimpinan', title: 'Pimpinan & Manajemen', departments: ['Wakasek', 'Manajemen', 'Kepala Sekolah'] },
-    { id: 'mipa', title: 'MIPA (Matematika & IPA)', departments: ['Biologi', 'Fisika', 'Kimia', 'Matematika'] },
-    { id: 'ips', title: 'IPS (Ilmu Pengetahuan Sosial)', departments: ['Ekonomi', 'Geografi', 'Sejarah', 'Sosiologi'] },
-    { id: 'bahasa', title: 'Bahasa & Sastra', departments: ['Bahasa Indonesia', 'Bahasa Inggris', 'Bahasa Sunda', 'Bahasa Jepang'] },
-    { id: 'dasar', title: 'Pendidikan Agama, Pancasila & BK', departments: ['Pendidikan Agama Islam', 'Pendidikan Pancasila', 'Bimbingan Konseling'] },
-    { id: 'vokasi', title: 'Olahraga, Seni & PKWU', departments: ['PJOK', 'PKWU', 'Seni Budaya'] },
+    // Pimpinan & Manajemen
+    { id: 'pimpinan', title: 'Pimpinan & Manajemen', departments: ['Pimpinan', 'Manajemen', 'Umum', 'Kesiswaan', 'Kurikulum', 'Humas', 'Sarana Prasarana'] },
+    
+    // MIPA - Individual subjects
+    { id: 'matematika', title: 'Matematika', departments: ['Matematika'] },
+    { id: 'fisika', title: 'Fisika', departments: ['Fisika'] },
+    { id: 'kimia', title: 'Kimia', departments: ['Kimia'] },
+    { id: 'biologi', title: 'Biologi', departments: ['Biologi'] },
+    
+    // IPS - Individual subjects
+    { id: 'ekonomi', title: 'Ekonomi', departments: ['Ekonomi'] },
+    { id: 'geografi', title: 'Geografi', departments: ['Geografi'] },
+    { id: 'sejarah', title: 'Sejarah', departments: ['Sejarah'] },
+    { id: 'sosiologi', title: 'Sosiologi', departments: ['Sosiologi'] },
+    
+    // Bahasa - Individual subjects
+    { id: 'bahasa-indonesia', title: 'Bahasa Indonesia', departments: ['Bahasa Indonesia'] },
+    { id: 'bahasa-inggris', title: 'Bahasa Inggris', departments: ['Bahasa Inggris'] },
+    { id: 'bahasa-sunda', title: 'Bahasa Sunda', departments: ['Bahasa Sunda'] },
+    { id: 'bahasa-jepang', title: 'Bahasa Jepang', departments: ['Bahasa Jepang'] },
+    
+    // Agama & Kewarganegaraan
+    { id: 'pai', title: 'Pendidikan Agama Islam', departments: ['Pendidikan Agama Islam', 'PAI'] },
+    { id: 'ppkn', title: 'Pendidikan Pancasila', departments: ['Pendidikan Pancasila', 'PPKN'] },
+    { id: 'bk', title: 'Bimbingan Konseling', departments: ['Bimbingan Konseling'] },
+    
+    // Vokasi & Seni
+    { id: 'penjasorkes', title: 'Penjasorkes', departments: ['PJOK', 'Penjasorkes', 'Pendidikan Jasmani'] },
+    { id: 'pkwu', title: 'PKWU', departments: ['PKWU', 'Prakarya dan Kewirausahaan', 'Prakarya'] },
+    { id: 'seni-budaya', title: 'Seni Budaya', departments: ['Seni Budaya', 'Seni'] },
+    
+    // Staff
     { id: 'staff', title: 'Staff, TU & Perpustakaan', departments: ['Staff TU', 'Perpustakaan', 'Administrasi', 'Tata Usaha'] },
 ];
 
@@ -189,22 +269,24 @@ export default function GuruStaffPage({ teachers = [] }) {
         <div className="hidden lg:block w-1/4 pr-8">
             <div className="sticky top-32 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 <h3 className="font-bold text-gray-900 mb-4 px-4 text-lg font-serif">Kategori</h3>
-                <ul className="space-y-1">
-                    {MGMP_GROUPS.map((group) => (
-                        <li key={group.id}>
-                            <button
-                                onClick={() => scrollToSection(group.id)}
-                                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border-l-4 ${
-                                    activeGroup === group.id
-                                    ? "border-accent-yellow bg-blue-50 text-primary font-bold"
-                                    : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                                }`}
-                            >
-                                {group.title}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
+                <div className="max-h-[60vh] overflow-y-auto pr-2 -mr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                    <ul className="space-y-1">
+                        {MGMP_GROUPS.map((group) => (
+                            <li key={group.id}>
+                                <button
+                                    onClick={() => scrollToSection(group.id)}
+                                    className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border-l-4 ${
+                                        activeGroup === group.id
+                                        ? "border-accent-yellow bg-blue-50 text-primary font-bold"
+                                        : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                    }`}
+                                >
+                                    {group.title}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             </div>
         </div>
     );
@@ -227,7 +309,10 @@ export default function GuruStaffPage({ teachers = [] }) {
         </div>
     );
 
-    const TeacherCard = ({ teacher }) => (
+    const TeacherCard = ({ teacher }) => {
+        const displayRole = getDisplayRole(teacher);
+        
+        return (
         <div
             className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer border border-gray-100 flex flex-col h-full"
             onClick={() => openModal(teacher)}
@@ -247,14 +332,14 @@ export default function GuruStaffPage({ teachers = [] }) {
                 <h3 className={`font-bold text-gray-900 text-sm mb-0.5 group-hover:text-primary transition-colors line-clamp-2`}>
                     {teacher.name}
                 </h3>
-                <p className="text-xs text-primary font-medium mb-2 line-clamp-1">
-                    {teacher.position}
+                <p className="text-xs text-primary font-medium mb-1 line-clamp-1">
+                    {displayRole.primary}
                 </p>
                 
                 <div className="mt-auto space-y-1 pt-2 border-t border-gray-100">
                     <div className="flex items-center text-gray-500 text-[11px]">
                         <MapPin className="w-3 h-3 mr-1.5 text-gray-400 flex-shrink-0" />
-                        <span className="line-clamp-1">{teacher.department || (teacher.type === 'guru' ? 'Guru' : 'Staff')}</span>
+                        <span className="line-clamp-1">{displayRole.secondary}</span>
                     </div>
                     {teacher.nip && (
                         <div className="flex items-center text-gray-500 text-[11px]">
@@ -265,10 +350,11 @@ export default function GuruStaffPage({ teachers = [] }) {
                 </div>
             </div>
         </div>
-    );
+    );};
 
     const TeacherDetailModal = () => {
         if (!modalOpen || !selectedTeacher) return null;
+        const displayRole = getDisplayRole(selectedTeacher);
 
         return (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
@@ -295,14 +381,19 @@ export default function GuruStaffPage({ teachers = [] }) {
                     <div className="pt-20 px-8 pb-8 overflow-y-auto">
                         <div className="mb-6">
                             <h2 className="text-2xl font-bold text-gray-900 font-serif mb-1">{selectedTeacher.name}</h2>
-                            <p className="text-primary font-medium text-lg">{selectedTeacher.position}</p>
+                            <p className="text-primary font-medium text-lg mb-1">{displayRole.primary}</p>
+                            {displayRole.primary !== displayRole.secondary && (
+                                <p className="text-gray-600 text-sm">{displayRole.secondary}</p>
+                            )}
                             <div className="flex gap-2 mt-3">
                                 <span className="px-3 py-1 bg-blue-50 text-primary text-xs font-bold rounded-full">
-                                    {selectedTeacher.type === 'guru' ? 'Guru' : 'Staff'}
+                                    {selectedTeacher.type === 'guru' ? 'Tenaga Pendidik' : 'Tenaga Kependidikan'}
                                 </span>
-                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">
-                                    {selectedTeacher.department || '-'}
-                                </span>
+                                {selectedTeacher.department && (
+                                    <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">
+                                        {formatSubjectName(selectedTeacher.department)}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -310,14 +401,22 @@ export default function GuruStaffPage({ teachers = [] }) {
                             <div className="space-y-4">
                                 <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2">Informasi Akademik</h3>
                                 <div className="space-y-3">
-                                    <div>
-                                        <p className="text-xs text-gray-500 uppercase tracking-wider">NIP</p>
-                                        <p className="text-gray-800 font-medium">{selectedTeacher.nip || '-'}</p>
-                                    </div>
+                                    {selectedTeacher.nip && (
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider">NIP</p>
+                                            <p className="text-gray-800 font-medium">{selectedTeacher.nip}</p>
+                                        </div>
+                                    )}
                                     <div>
                                         <p className="text-xs text-gray-500 uppercase tracking-wider">Jabatan</p>
-                                        <p className="text-gray-800 font-medium">{selectedTeacher.position || '-'}</p>
+                                        <p className="text-gray-800 font-medium">{displayRole.primary}</p>
                                     </div>
+                                    {displayRole.primary !== displayRole.secondary && (
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider">Unit/Bidang</p>
+                                            <p className="text-gray-800 font-medium">{displayRole.secondary}</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

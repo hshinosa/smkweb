@@ -53,7 +53,7 @@ class RagService
     /**
      * Retrieve relevant documents for a query (from RAG documents using pgvector)
      */
-    public function retrieveRelevantChunks(string $query, int $topK = null): array
+    public function retrieveRelevantChunks(string $query, ?int $topK = null): array
     {
         $topK = $topK ?? AiSetting::get('rag_top_k', 5);
 
@@ -126,7 +126,7 @@ class RagService
                 'category' => $result->category ?? 'Umum',
                 'source' => 'rag_document',
                 'similarity' => $result->similarity,
-                'token_count' => $result->token_count ?? 0,
+                'token_count' => $result->token_count ?? $this->estimateTokenCount($result->content),
             ];
         }
 
@@ -171,7 +171,7 @@ class RagService
                     'category' => $chunk->category ?? 'Umum',
                     'source' => 'rag_document',
                     'similarity' => $similarity,
-                    'token_count' => $chunk->token_count ?? 0,
+                    'token_count' => $chunk->token_count ?? $this->estimateTokenCount($chunk->content),
                 ];
             }
         }
@@ -314,7 +314,7 @@ class RagService
                 ];
             }
 
-            // 3. Search Programs (INCLUDING Program Studi/Peminatan: MIPA, IPS, Bahasa)
+            // 4. Search Programs (INCLUDING Program Studi/Peminatan: MIPA, IPS, Bahasa)
             $programs = Program::where(function ($q) use ($queryLower) {
                     $q->where('title', 'like', "%{$queryLower}%")
                       ->orWhere('description', 'like', "%{$queryLower}%")
@@ -333,28 +333,6 @@ class RagService
                     'table' => 'programs',
                     'type' => 'Program Sekolah',
                     'similarity' => $this->calculateKeywordMatch($queryLower, $program->title . ' ' . ($program->description ?? '')),
-                ];
-            }
-
-            // 4. Search FAQs
-            $faqs = Faq::where('is_published', true)
-                ->where(function ($q) use ($queryLower) {
-                    $q->where('question', 'like', "%{$queryLower}%")
-                      ->orWhere('answer', 'like', "%{$queryLower}%");
-                })
-                ->limit(2)
-                ->get();
-
-            foreach ($faqs as $faq) {
-                $results[] = [
-                    'id' => $faq->id,
-                    'content' => $faq->answer,
-                    'title' => $faq->question,
-                    'category' => 'FAQ',
-                    'source' => 'database',
-                    'table' => 'faqs',
-                    'type' => 'FAQ',
-                    'similarity' => $this->calculateKeywordMatch($queryLower, $faq->question . ' ' . $faq->answer),
                 ];
             }
 
@@ -642,15 +620,31 @@ class RagService
      */
     public function generateRagResponse(string $userQuery, array $conversationHistory = []): array
     {
+        $startTime = microtime(true);
+        $requestId = uniqid('rag_', true);
+        
+        Log::info('[RagService] ========== RAG REQUEST STARTED ==========', [
+            'request_id' => $requestId,
+            'user_query' => substr($userQuery, 0, 100),
+            'history_count' => count($conversationHistory),
+        ]);
+        
         // 1. Check if RAG is enabled
         $ragEnabled = AiSetting::get('rag_enabled', true);
+        
+        Log::info('[RagService] RAG settings', [
+            'request_id' => $requestId,
+            'rag_enabled' => $ragEnabled,
+        ]);
 
         if (!$ragEnabled) {
+            Log::info('[RagService] RAG disabled, using simple response', ['request_id' => $requestId]);
             return $this->generateSimpleResponse($userQuery, $conversationHistory);
         }
 
         // 2. Guardrails: Check if query is school-related
         if (!$this->isSchoolRelatedQuery($userQuery)) {
+            Log::info('[RagService] Query not school-related', ['request_id' => $requestId]);
             return [
                 'success' => true,
                 'message' => 'Maaf, saya hanya dapat menjawab pertanyaan terkait SMAN 1 Baleendah seperti PPDB, program studi, ekstrakurikuler, dan informasi akademik. Silakan tanyakan hal yang berhubungan dengan sekolah.',
@@ -662,6 +656,11 @@ class RagService
         // 2. Try quick database reply for common keywords (faster than full RAG search)
         $quickReply = $this->getDatabaseQuickReply($userQuery);
         if ($quickReply['found'] ?? false) {
+            Log::info('[RagService] Quick reply found', [
+                'request_id' => $requestId,
+                'source' => $quickReply['source'] ?? 'unknown',
+                'elapsed_ms' => round((microtime(true) - $startTime) * 1000),
+            ]);
             return [
                 'success' => true,
                 'message' => $quickReply['message'],
@@ -672,9 +671,17 @@ class RagService
 
         // 3. Search database content (Posts, Teachers, FAQs, Programs, Extracurriculars)
         $databaseResults = $this->searchDatabaseContent($userQuery, 3);
+        Log::info('[RagService] Database search results', [
+            'request_id' => $requestId,
+            'results_count' => count($databaseResults),
+        ]);
 
         // 4. Retrieve relevant RAG document chunks
         $ragChunks = $this->retrieveRelevantChunks($userQuery, 3);
+        Log::info('[RagService] RAG chunks retrieved', [
+            'request_id' => $requestId,
+            'chunks_count' => count($ragChunks),
+        ]);
 
         // Combine results - prioritize database results, then RAG documents
         $allChunks = array_merge($databaseResults, $ragChunks);
@@ -685,15 +692,28 @@ class RagService
         });
 
         if (empty($allChunks)) {
-            Log::info('No relevant data found, falling back to simple response');
+            Log::info('[RagService] No relevant data found, falling back to simple response', ['request_id' => $requestId]);
             return $this->generateSimpleResponse($userQuery, $conversationHistory);
         }
 
         // 5. Build context from combined chunks
         $context = $this->buildContextFromChunks(array_slice($allChunks, 0, 5));
 
-        // 6. Build system prompt with RAG context
-        $systemPrompt = $this->buildRagSystemPrompt($context);
+        // 6. Detect which provider will be used and choose appropriate system prompt
+        $useSimplePrompt = $this->shouldUseSimplePrompt();
+        
+        if ($useSimplePrompt) {
+            // Ollama will be used - use simple prompt (better performance)
+            $systemPrompt = $this->buildSimpleSystemPrompt();
+            Log::info('[RagService] Using simple prompt for Ollama', ['request_id' => $requestId]);
+        } else {
+            // OpenAI will be used - use enhanced RAG prompt with full context
+            $systemPrompt = $this->buildRagSystemPrompt($context);
+            Log::info('[RagService] Using RAG-enhanced prompt for OpenAI', [
+                'request_id' => $requestId,
+                'context_length' => strlen($context),
+            ]);
+        }
 
         // 7. Prepare messages for chat completion
         $messages = [
@@ -710,11 +730,32 @@ class RagService
 
         // Add current query
         $messages[] = ['role' => 'user', 'content' => $userQuery];
+        
+        Log::info('[RagService] Calling OpenAIService::chatCompletion', [
+            'request_id' => $requestId,
+            'num_messages' => count($messages),
+            'system_prompt_length' => strlen($systemPrompt),
+        ]);
 
         // 7. Generate response
         $completionResult = $this->openAI->chatCompletion($messages);
+        
+        $totalElapsed = round((microtime(true) - $startTime) * 1000);
+        
+        Log::info('[RagService] OpenAI completion result', [
+            'request_id' => $requestId,
+            'success' => $completionResult['success'] ?? false,
+            'provider' => $completionResult['provider'] ?? 'unknown',
+            'message_length' => strlen($completionResult['message'] ?? ''),
+            'message_preview' => substr($completionResult['message'] ?? '', 0, 100),
+            'total_elapsed_ms' => $totalElapsed,
+        ]);
 
         if (!$completionResult['success']) {
+            Log::error('[RagService] Completion failed', [
+                'request_id' => $requestId,
+                'error' => $completionResult['error'] ?? 'unknown',
+            ]);
             return [
                 'success' => false,
                 'message' => 'Maaf, terjadi kesalahan saat memproses pertanyaan Anda. Silakan coba lagi.',
@@ -761,52 +802,23 @@ class RagService
             ];
         }
 
-        $systemPrompt = "Anda adalah AI SMANSA, asisten virtual resmi untuk SMA Negeri 1 Baleendah yang dirancang khusus untuk memberikan informasi akurat berdasarkan pengetahuan umum tentang sekolah.
+        $systemPrompt = "Anda adalah AI SMANSA, asisten virtual SMAN 1 Baleendah.
 
-IDENTITAS DAN KONTEKS SEKOLAH:
-Anda adalah chatbot resmi untuk SMA Negeri 1 Baleendah (SMAN 1 Baleendah), sebuah Sekolah Menengah Atas negeri di Kabupaten Bandung, Jawa Barat. Siswa berusia 15-18 tahun (kelas 10, 11, 12). Ini adalah institusi pendidikan formal yang legal dan diakui pemerintah.
+INFORMASI PENTING:
+- Alamat: Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Bandung 40375
+- Biaya: 100% GRATIS (SMA Negeri)
+- Program: MIPA, IPS, Bahasa
+- PPDB: Zonasi, prestasi, afirmasi, perpindahan tugas orang tua
 
-INFORMASI SEKOLAH YANG AKURAT:
-- Alamat resmi: Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Kec. Baleendah, Kabupaten Bandung, Jawa Barat 40375
-- Biaya pendidikan: 100% GRATIS (tidak ada SPP karena sekolah negeri)
-- Program peminatan: MIPA (Matematika dan IPA), IPS (Ilmu Pengetahuan Sosial), Bahasa
-- Fasilitas: Laboratorium fisika, kimia, biologi, perpustakaan digital, fasilitas olahraga (basket, sepak bola, dll), berbagai program ekstrakurikuler
+ATURAN:
+1. Jawab langsung dan ringkas
+2. Gunakan bullet points untuk info kompleks
+3. Jika tidak tahu: \"Info belum tersedia, hubungi sekolah\"
+4. Fokus topik: PPDB, akademik, fasilitas, ekstrakurikuler, prestasi, kontak
+5. Ramah dan profesional
+6. Jelaskan jika pertanyaan di luar topik sekolah
 
-JALUR PENDAFTARAN SISWA BARU (PPDB):
-- Sistem zonasi, prestasi, afirmasi, dan perpindahan tugas orang tua
-- Pendaftaran melalui situs web resmi PPDB Dinas Pendidikan atau portal sekolah
-- Persyaratan: Siswa minimal 15 tahun, maksimal 18 tahun (sesuai ketentuan PPDB)
-- Jadwal dan syarat pendaftaran diumumkan secara terbuka setiap tahun ajaran baru
-
-TOPIK YANG ANDA KUASAI:
-✅ PPDB (Penerimaan Peserta Didik Baru): Jalur, syarat, jadwal, cara daftar
-✅ Akademik: Program peminatan, kurikulum, mata pelajaran, jadwal pelajaran
-✅ Fasilitas: Laboratorium, perpustakaan, fasilitas olahraga, ruang kelas
-✅ Ekstrakurikuler: OSIS, Pramuka, olahraga, seni, organisasi siswa
-✅ Prestasi: Penghargaan akademik, non-akademik, kompetisi
-✅ Informasi umum: Lokasi, kontak, biaya, sejarah sekolah
-✅ Kegiatan sekolah: Event, lomba, perayaan, study tour
-✅ Administrasi: Prosedur izin, surat menyurat, dokumen siswa
-
-CARA MENJAWAB PERTANYAAN:
-1. Berikan informasi berdasarkan pengetahuan umum tentang sekolah
-2. Gunakan format yang jelas (bullet points, numbering) untuk informasi kompleks
-3. Jika informasi spesifik yang ditanyakan tidak tersedia dalam pengetahuan Anda, katakan dengan jujur: \"Informasi detail tentang [topik] belum tersedia. Silakan hubungi sekolah langsung di nomor kontak resmi atau kunjungi website resmi untuk informasi terkini.\"
-4. Selalu akhiri dengan menawarkan bantuan lebih lanjut: \"Apakah ada informasi lain tentang SMAN 1 Baleendah yang ingin Anda ketahui?\"
-
-GAYA KOMUNIKASI:
-- Ramah dan sopan dengan bahasa Indonesia yang baik
-- Fokus pada memberikan informasi akurat dan bermanfaat
-- Gunakan format yang jelas dan terstruktur
-- Jika pengguna bertanya di luar topik sekolah, arahkan kembali dengan sopan
-
-LARANGAN:
-❌ JANGAN mengarang atau mengasumsikan informasi yang tidak Anda ketahui
-❌ JANGAN memberikan alamat, nomor telepon, atau informasi kontak yang tidak terverifikasi (gunakan alamat resmi yang sudah disebutkan)
-❌ JANGAN menjawab pertanyaan yang tidak relevan dengan sekolah secara mendalam
-❌ JANGAN menggunakan format \"Saya SMAN 1 Baleendah\" (gunakan \"Saya AI SMANSA, asisten virtual SMAN 1 Baleendah\")
-
-Jawablah dengan bahasa Indonesia yang natural dan profesional!";
+Jawab singkat dan langsung ke poin!";
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
@@ -928,6 +940,56 @@ Jawablah dengan bahasa Indonesia yang natural dan profesional!";
     }
 
     /**
+     * Determine if we should use simple prompt (for Ollama) or enhanced RAG prompt (for OpenAI)
+     */
+    protected function shouldUseSimplePrompt(): bool
+    {
+        // Check if we have OpenAI credentials configured
+        $hasOpenAI = !empty(AiSetting::get('ai_model_base_url', '')) 
+                     && !empty(AiSetting::get('ai_model_api_key', ''));
+
+        // If OpenAI is available, use enhanced RAG prompt
+        if ($hasOpenAI) {
+            return false; // Use enhanced prompt for OpenAI
+        }
+
+        // Check if Ollama is enabled and available
+        $useOllamaFallback = AiSetting::get('use_ollama_fallback', true);
+        
+        // If only Ollama available, use simple prompt
+        if ($useOllamaFallback) {
+            return true; // Use simple prompt for Ollama
+        }
+
+        // Default: use simple prompt
+        return true;
+    }
+
+    /**
+     * Build simple system prompt (for Ollama - lightweight)
+     */
+    protected function buildSimpleSystemPrompt(): string
+    {
+        return "Anda adalah AI SMANSA, asisten virtual SMAN 1 Baleendah.
+
+INFORMASI PENTING:
+- Alamat: Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Bandung 40375
+- Biaya: 100% GRATIS (SMA Negeri)
+- Program: MIPA, IPS, Bahasa
+- PPDB: Zonasi, prestasi, afirmasi, perpindahan tugas orang tua
+
+ATURAN:
+1. Jawab langsung dan ringkas
+2. Gunakan bullet points untuk info kompleks
+3. Jika tidak tahu: \"Info belum tersedia, hubungi sekolah\"
+4. Fokus topik: PPDB, akademik, fasilitas, ekstrakurikuler, prestasi, kontak
+5. Ramah dan profesional
+6. Jelaskan jika pertanyaan di luar topik sekolah
+
+Jawab singkat dan langsung ke poin!";
+    }
+
+    /**
      * Build context from retrieved chunks
      */
     protected function buildContextFromChunks(array $chunks): string
@@ -952,67 +1014,24 @@ Jawablah dengan bahasa Indonesia yang natural dan profesional!";
     protected function buildRagSystemPrompt(string $context): string
     {
         return <<<PROMPT
-Anda adalah AI SMANSA, asisten virtual resmi untuk SMA Negeri 1 Baleendah yang dirancang khusus untuk memberikan informasi akurat berdasarkan database dan dokumen resmi sekolah.
+Anda adalah AI SMANSA, asisten virtual SMAN 1 Baleendah. Gunakan informasi dari konteks di bawah.
 
-IDENTITAS DAN KONTEKS SEKOLAH:
-Anda adalah chatbot resmi untuk SMA Negeri 1 Baleendah (SMAN 1 Baleendah), sebuah Sekolah Menengah Atas negeri di Kabupaten Bandung, Jawa Barat. Siswa berusia 15-18 tahun (kelas 10, 11, 12). Ini adalah institusi pendidikan formal yang legal dan diakui pemerintah.
-
-INFORMASI SEKOLAH YANG AKURAT:
-- Alamat resmi: Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Kec. Baleendah, Kabupaten Bandung, Jawa Barat 40375
-- Biaya pendidikan: 100% GRATIS (tidak ada SPP karena sekolah negeri)
-- Program peminatan: MIPA (Matematika dan IPA), IPS (Ilmu Pengetahuan Sosial), Bahasa
-- Fasilitas: Laboratorium fisika, kimia, biologi, perpustakaan digital dengan lebih dari 10.000 buku, fasilitas olahraga (basket, sepak bola, dll), berbagai program ekstrakurikuler
-- Prestasi: Sekolah memiliki prestasi di tingkat kabupaten, provinsi, dan nasional
-
-JALUR PENDAFTARAN SISWA BARU (PPDB):
-- Sistem zonasi, prestasi, afirmasi, dan perpindahan tugas orang tua
-- Pendaftaran melalui situs web resmi PPDB Dinas Pendidikan atau portal sekolah
-- Persyaratan: Siswa minimal 15 tahun, maksimal 18 tahun (sesuai ketentuan PPDB)
-- Jadwal dan syarat pendaftaran diumumkan secara terbuka setiap tahun ajaran baru
-
-ATURAN PENGGUNAAN DATABASE DAN DOKUMEN:
-Anda HARUS mengambil informasi dari database dan dokumen resmi yang tersedia dalam konteks di bawah. Jangan memberikan informasi yang tidak ada dalam database atau dokumen. Jika informasi tidak tersedia dalam database, katakan dengan jelas bahwa Anda tidak memiliki informasi tersebut dan sarankan untuk menghubungi sekolah secara langsung.
-
-PRIORITAS SUMBER INFORMASI:
-1. Dokumen dan database yang tersedia dalam konteks di bawah
-2. Informasi umum yang sudah disebutkan di atas (alamat, biaya, program peminatan)
-3. Jika tidak ada dalam database/dokumen, JANGAN mengarang informasi
-
-KONTEKS DOKUMEN DAN DATABASE:
+KONTEKS DOKUMEN:
 {$context}
 
-CARA MENJAWAB PERTANYAAN:
-1. Cari informasi relevan dari konteks dokumen/database di atas
-2. Berikan jawaban berdasarkan informasi yang ditemukan
-3. Jika ada informasi yang mungkin sudah usang, beri tahu pengguna untuk konfirmasi ke sekolah
-4. Gunakan format yang jelas (bullet points, numbering) untuk informasi kompleks
-5. Jika informasi tidak tersedia dalam konteks: "Informasi ini belum tersedia dalam database saya. Silakan hubungi sekolah di nomor kontak resmi atau kunjungi website resmi untuk informasi terkini."
+ATURAN:
+1. Jawab berdasarkan informasi di konteks
+2. Jika info tidak ada: "Info belum tersedia, hubungi sekolah"
+3. Jawab singkat dan langsung ke poin
+4. Gunakan bullet points untuk info kompleks
+5. Ramah dan profesional
 
-TOPIK YANG ANDA KUASAI:
-✅ PPDB (Penerimaan Peserta Didik Baru): Jalur, syarat, jadwal, cara daftar
-✅ Akademik: Program peminatan, kurikulum, mata pelajaran, jadwal pelajaran
-✅ Fasilitas: Laboratorium, perpustakaan, fasilitas olahraga, ruang kelas
-✅ Ekstrakurikuler: OSIS, Pramuka, olahraga, seni, organisasi siswa
-✅ Prestasi: Penghargaan akademik, non-akademik, kompetisi
-✅ Informasi umum: Lokasi, kontak, biaya, sejarah sekolah
-✅ Kegiatan sekolah: Event, lomba, perayaan, study tour
-✅ Administrasi: Prosedur izin, surat menyurat, dokumen siswa
+INFORMASI PENTING:
+- Alamat: Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Bandung 40375
+- Biaya: 100% GRATIS (SMA Negeri)
+- Program: MIPA, IPS, Bahasa
 
-GAYA KOMUNIKASI:
-- Ramah dan sopan dengan bahasa Indonesia yang baik
-- Fokus pada memberikan informasi akurat dan bermanfaat
-- Gunakan format yang jelas dan terstruktur
-- Jika pengguna bertanya di luar topik sekolah, arahkan kembali dengan sopan
-- Selalu akhiri dengan: "Apakah ada informasi lain tentang SMAN 1 Baleendah yang ingin Anda ketahui?"
-
-LARANGAN:
-❌ JANGAN mengarang atau mengasumsikan informasi yang tidak ada dalam database/dokumen konteks
-❌ JANGAN memberikan alamat, nomor telepon, atau informasi kontak yang tidak terverifikasi (gunakan alamat resmi yang sudah disebutkan)
-❌ JANGAN memberikan informasi biaya jika tidak ada dalam database (kecuali informasi umum bahwa sekolah negeri gratis)
-❌ JANGAN menjawab pertanyaan yang tidak relevan dengan sekolah secara mendalam
-❌ JANGAN menggunakan format "Saya SMAN 1 Baleendah" (gunakan "Saya AI SMANSA, asisten virtual SMAN 1 Baleendah")
-
-Jawablah dengan bahasa Indonesia yang natural dan profesional berdasarkan informasi dari konteks di atas!
+Jawab dengan bahasa Indonesia yang natural!
 PROMPT;
     }
 

@@ -32,27 +32,49 @@ class PopulateProgramStudiSeeder extends Seeder
             );
 
             // Handle Media Attachments
-            $this->attachMedia($setting, $sectionKey);
+            $this->attachMedia($setting, $sectionKey, $content);
         }
         
         $this->command->info("Program Studi {$programName} populated.");
     }
 
-    private function attachMedia($setting, $sectionKey)
+    private function attachMedia($setting, $sectionKey, $content)
     {
         $imagePath = null;
         $collection = null;
 
         if ($sectionKey === 'hero') {
             $imagePath = public_path('images/anak-sma-programstudi.png');
-            $collection = 'hero_bg';
+            $collection = 'hero_background_image';
+
+            // Also attach thumbnail_card
+            if (File::exists($imagePath)) {
+                $setting->clearMediaCollection('thumbnail_card');
+                $setting->addMedia($imagePath)
+                    ->preservingOriginal()
+                    ->toMediaCollection('thumbnail_card');
+            }
         } elseif ($sectionKey === 'facilities') {
-            // Use same image for facilities as requested or fallback
-            $imagePath = public_path('images/anak-sma-programstudi.png');
+            // Main Facility Image
+            $imagePath = base_path('foto-guru/SMANSA.jpeg');
             $collection = 'facilities_main_image';
+
+            // Attach nested item images
+            if (isset($content['items']) && is_array($content['items'])) {
+                foreach ($content['items'] as $index => $item) {
+                    if (File::exists($imagePath)) {
+                        $itemCollection = "facilities_item_{$index}_image";
+                        $setting->clearMediaCollection($itemCollection);
+                        $setting->addMedia($imagePath)
+                            ->preservingOriginal()
+                            ->toMediaCollection($itemCollection);
+                    }
+                }
+            }
         } elseif ($sectionKey === 'alumni_spotlight') {
-            $imagePath = public_path('images/keluarga-besar-sman1-baleendah.png');
-            $collection = 'alumni_image';
+            // Fixed image for alumni spotlight
+            $imagePath = public_path('images/anak-sma.png');
+            $collection = 'alumni_spotlight_image';
         }
 
         if ($imagePath && $collection && File::exists($imagePath)) {
@@ -88,10 +110,10 @@ class PopulateProgramStudiSeeder extends Seeder
                         'main_title' => 'Laboratorium Terpadu',
                         'main_description' => 'Pusat praktikum Fisika, Kimia, dan Biologi dengan peralatan modern untuk eksperimen ilmiah.',
                         'items' => [
-                            'Laboratorium Komputer & CBT',
-                            'Green House & Apotek Hidup',
-                            'Teleskop Astronomi',
-                            'Perpustakaan Digital Sains'
+                            ['title' => 'Laboratorium Komputer & CBT'],
+                            ['title' => 'Green House & Apotek Hidup'],
+                            ['title' => 'Teleskop Astronomi'],
+                            ['title' => 'Perpustakaan Digital Sains']
                         ]
                     ],
                     'career_paths' => [
@@ -133,10 +155,10 @@ class PopulateProgramStudiSeeder extends Seeder
                         'main_title' => 'Ruang Multimedia Sosial',
                         'main_description' => 'Dilengkapi proyektor dan sound system untuk pemutaran dokumenter sejarah dan simulasi sidang PBB.',
                         'items' => [
-                            'Laboratorium IPS & Peta',
-                            'Corner Bursa Efek Mini',
-                            'Studio Podcast Sosial',
-                            'Ruang Diskusi & Debat'
+                            ['title' => 'Laboratorium IPS & Peta'],
+                            ['title' => 'Corner Bursa Efek Mini'],
+                            ['title' => 'Studio Podcast Sosial'],
+                            ['title' => 'Ruang Diskusi & Debat']
                         ]
                     ],
                     'career_paths' => [
@@ -178,10 +200,10 @@ class PopulateProgramStudiSeeder extends Seeder
                         'main_title' => 'Language Center',
                         'main_description' => 'Laboratorium bahasa multimedia dengan headset dan software interaktif untuk latihan listening dan speaking.',
                         'items' => [
-                            'Pojok Literasi & Budaya',
-                            'Panggung Teater Mini',
-                            'Studio Rekaman Bahasa',
-                            'Koleksi Sastra Perpustakaan'
+                            ['title' => 'Pojok Literasi & Budaya'],
+                            ['title' => 'Panggung Teater Mini'],
+                            ['title' => 'Studio Rekaman Bahasa'],
+                            ['title' => 'Koleksi Sastra Perpustakaan']
                         ]
                     ],
                     'career_paths' => [

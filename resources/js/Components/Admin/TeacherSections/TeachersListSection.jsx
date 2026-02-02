@@ -2,23 +2,74 @@ import React from 'react';
 import { Edit2, Trash2, Plus, User, MapPin, GraduationCap } from 'lucide-react';
 import PrimaryButton from '@/Components/PrimaryButton';
 
-export default function TeachersListSection({ teachers, onEdit, onDelete, onAdd, type = 'guru' }) {
-    const filteredTeachers = teachers.filter(t => t.type === type);
-    const title = type === 'guru' ? 'Daftar Guru' : 'Daftar Staff';
+// Helper function to format subject names
+const formatSubjectName = (name) => {
+    if (!name) return name;
+    const subjectMap = {
+        'PJOK': 'Penjasorkes',
+        'PKWU': 'Prakarya dan Kewirausahaan',
+        'Penjasorkes': 'Penjasorkes',
+        'Prakarya': 'Prakarya dan Kewirausahaan',
+        'Pendidikan Agama Islam': 'PAI',
+        'Pendidikan Pancasila': 'PPKN'
+    };
+    return subjectMap[name] || name;
+};
+
+// Helper to get display role for admin list
+const getDisplayRole = (teacher) => {
+    const { position, department } = teacher;
+    
+    // Kepala Sekolah
+    if (position === 'Kepala Sekolah') {
+        return { primary: 'Kepala Sekolah', secondary: department || 'Pimpinan' };
+    }
+    
+    // Wakasek with bidang
+    if (position === 'Wakasek') {
+        const bidang = department || 'Umum';
+        return { primary: `Wakasek ${bidang}`, secondary: bidang };
+    }
+    
+    // Regular teachers - Guru with subject
+    if (position === 'Guru') {
+        const subject = department || 'Umum';
+        return { 
+            primary: `Guru ${formatSubjectName(subject)}`, 
+            secondary: formatSubjectName(subject)
+        };
+    }
+    
+    // Staff with department
+    if (position === 'Staff') {
+        const unit = department || 'Umum';
+        return { primary: `Staff ${unit}`, secondary: unit };
+    }
+    
+    // Fallback
+    if (position) {
+        return { primary: position, secondary: department || '-' };
+    }
+    
+    return { primary: teacher.type === 'guru' ? 'Guru' : 'Staff', secondary: department || '-' };
+};
+
+export default function TeachersListSection({ teachers, title, onEdit, onDelete, onAdd }) {
+    const displayTitle = title || 'Daftar Guru/Staff';
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-                    <p className="text-sm text-gray-500">Kelola data {type} yang akan ditampilkan di website.</p>
+                    <h3 className="text-lg font-bold text-gray-900">{displayTitle}</h3>
+                    <p className="text-sm text-gray-500">Kelola data yang akan ditampilkan di website.</p>
                 </div>
                 <PrimaryButton 
                     onClick={onAdd}
                     className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 shadow-sm flex items-center gap-2 border-0"
                 >
                     <Plus className="w-4 h-4" />
-                    Tambah {type === 'guru' ? 'Guru' : 'Staff'}
+                    Tambah Data
                 </PrimaryButton>
             </div>
 
@@ -33,7 +84,7 @@ export default function TeachersListSection({ teachers, onEdit, onDelete, onAdd,
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
-                        {filteredTeachers.map((teacher) => (
+                        {teachers.map((teacher) => (
                             <tr key={teacher.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
@@ -56,10 +107,10 @@ export default function TeachersListSection({ teachers, onEdit, onDelete, onAdd,
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-gray-900 font-medium">{teacher.position}</div>
+                                    <div className="text-sm text-gray-900 font-medium">{getDisplayRole(teacher).primary}</div>
                                     <div className="text-xs text-gray-500 flex items-center mt-1">
                                         <MapPin className="w-3 h-3 mr-1" />
-                                        {teacher.department || '-'}
+                                        {formatSubjectName(getDisplayRole(teacher).secondary)}
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">

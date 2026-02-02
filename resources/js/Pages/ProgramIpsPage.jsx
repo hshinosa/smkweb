@@ -10,7 +10,25 @@ import {
     Newspaper, 
     Quote,
     Globe,
-    Landmark
+    Landmark,
+    Calculator,
+    Microscope,
+    FlaskConical,
+    Atom,
+    Dna,
+    Languages,
+    Palette,
+    Music,
+    Activity,
+    Code,
+    Brain,
+    Stethoscope,
+    GraduationCap,
+    Building,
+    Cpu,
+    HardHat,
+    Plane,
+    Ship
 } from 'lucide-react';
 
 import Navbar from '@/Components/Navbar';
@@ -28,6 +46,14 @@ export default function ProgramIpsPage({ content }) {
     const navigationData = getNavigationData(siteSettings);
     const pageMetadata = getPageMetadata(siteName);
     const programData = programStudyData.ips;
+    
+    // Icon mapping for core subjects
+    const iconMap = {
+        BookOpen, Calculator, Microscope, FlaskConical, Atom, Dna, Globe,
+        Languages, Palette, Music, Activity, Code, Brain, TrendingUp,
+        Scale, Users, Landmark, Briefcase, Stethoscope, GraduationCap,
+        Building, Cpu, Newspaper, HardHat, Plane, Ship
+    };
     const { hero, core_subjects, facilities, career_paths, alumni_spotlight } = content || {};
 
     // Helper to format image path correctly
@@ -108,21 +134,20 @@ export default function ProgramIpsPage({ content }) {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {core_subjects?.items && core_subjects.items.length > 0 ? (
-                            core_subjects.items.map((item, idx) => (
-                                <div key={idx} className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 transition-all duration-300">
-                                    <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 overflow-hidden">
-                                        {item.icon ? (
-                                            <ThumbnailImage src={item.icon} alt={item.title} />
-                                        ) : (
-                                            <Users className="w-8 h-8 text-orange-600 transition-colors" />
-                                        )}
+                            core_subjects.items.map((item, idx) => {
+                                const IconComponent = iconMap[item.icon_name] || Users;
+                                return (
+                                    <div key={idx} className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 transition-all duration-300">
+                                        <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300">
+                                            <IconComponent className="w-8 h-8 text-orange-600 transition-colors" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900 mb-3 font-serif">{item.title}</h3>
+                                        <p className="text-gray-600 text-sm leading-relaxed">
+                                            {item.description}
+                                        </p>
                                     </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-3 font-serif">{item.title}</h3>
-                                    <p className="text-gray-600 text-sm leading-relaxed">
-                                        {item.description}
-                                    </p>
-                                </div>
-                            ))
+                                );
+                            })
                         ) : (
                             <>
                                 {/* Sosiologi */}
@@ -194,15 +219,12 @@ export default function ProgramIpsPage({ content }) {
                             <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
                                 {facilities?.title || "Fasilitas Penunjang"}
                             </h2>
-                            <p className={TYPOGRAPHY.bodyText}>
-                                {facilities?.description || "Sarana modern untuk mendukung riset sosial, diskusi, dan pembelajaran interaktif."}
-                            </p>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[500px]">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[500px]">
                         {/* Left Column: Main Static Item */}
-                        <div className="lg:col-span-2 relative rounded-3xl overflow-hidden group shadow-lg h-full">
+                        <div className="lg:col-span-2 relative rounded-3xl overflow-hidden group shadow-lg h-[300px] sm:h-[400px] lg:h-full">
                             <ResponsiveImage 
                                 media={typeof facilities?.main_image === 'object' ? facilities.main_image : null}
                                 src={typeof facilities?.main_image === 'string' ? formatImagePath(facilities.main_image) : null} 
@@ -211,16 +233,47 @@ export default function ProgramIpsPage({ content }) {
                                 loading="lazy"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90"></div>
-                            <div className="absolute bottom-0 left-0 p-8">
+                            <div className="absolute bottom-0 left-0 p-6 sm:p-8">
                                 <span className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full mb-3 inline-block">Utama</span>
-                                <h3 className="text-2xl font-bold text-white font-serif">{facilities?.main_title || "Perpustakaan & Ruang Diskusi"}</h3>
-                                <p className="text-gray-300 mt-2 max-w-md">{facilities?.main_description || "Koleksi literatur sosial lengkap dengan ruang diskusi yang nyaman untuk debat dan kajian."}</p>
+                                <h3 className="text-xl sm:text-2xl font-bold text-white font-serif">{facilities?.main_title || "Perpustakaan & Ruang Diskusi"}</h3>
+
                             </div>
                         </div>
 
-                        {/* Right Column: Vertical Marquee */}
-                        <div className="lg:col-span-1 relative rounded-3xl overflow-hidden bg-gray-100 h-full pause-hover">
-                            <div className="absolute inset-0 overflow-hidden">
+                        {/* Right Column: Scrollable Grid on Mobile, Vertical Marquee on Desktop */}
+                        <div className="lg:col-span-1 relative rounded-3xl overflow-hidden bg-gray-100 lg:h-full pause-hover">
+                            {/* Mobile/Tablet: Horizontal scroll */}
+                            <div className="lg:hidden flex gap-4 p-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                                {facilities?.items && facilities.items.length > 0 ? (
+                                    facilities.items.map((item, idx) => (
+                                        <div key={idx} className="relative rounded-2xl overflow-hidden shadow-md h-48 w-64 flex-shrink-0 snap-center group/item">
+                                            <img 
+                                                src={item.image} 
+                                                alt={item.title} 
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/20 group-hover/item:bg-black/0 transition-colors"></div>
+                                            <div className="absolute bottom-0 left-0 p-4 bg-gradient-to-t from-black/60 to-transparent w-full">
+                                                <p className="text-white font-bold text-sm">{item.title}</p>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    [1, 2, 3].map((item, idx) => (
+                                        <div key={idx} className="relative rounded-2xl overflow-hidden shadow-md h-48 w-64 flex-shrink-0 snap-center group/item">
+                                            <div className="w-full h-full bg-gray-200"></div>
+                                            <div className="absolute bottom-0 left-0 p-4 bg-gradient-to-t from-black/60 to-transparent w-full">
+                                                <p className="text-white font-bold text-sm">
+                                                    {idx % 2 === 0 ? "Lab Komputer IPS" : "Ruang Multimedia"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                            
+                            {/* Desktop: Vertical Marquee */}
+                            <div className="hidden lg:block absolute inset-0 overflow-hidden">
                                 <div className="animate-scroll-vertical flex flex-col gap-4 p-4">
                                     {/* Duplicated items for seamless loop */}
                                     {facilities?.items && facilities.items.length > 0 ? (
@@ -240,12 +293,7 @@ export default function ProgramIpsPage({ content }) {
                                     ) : (
                                         [1, 2, 3, 4, 1, 2, 3, 4].map((item, idx) => (
                                             <div key={idx} className="relative rounded-2xl overflow-hidden shadow-md h-48 flex-shrink-0 group/item">
-                                                <img 
-                                                    src={item.image || null} 
-                                                    alt={`Facility ${item}`} 
-                                                    className="w-full h-full object-cover"
-                                                />
-                                                <div className="absolute inset-0 bg-black/20 group-hover/item:bg-black/0 transition-colors"></div>
+                                                <div className="w-full h-full bg-gray-200"></div>
                                                 <div className="absolute bottom-0 left-0 p-4 bg-gradient-to-t from-black/60 to-transparent w-full">
                                                     <p className="text-white font-bold text-sm">
                                                         {idx % 2 === 0 ? "Lab Komputer IPS" : "Ruang Multimedia"}
@@ -256,9 +304,9 @@ export default function ProgramIpsPage({ content }) {
                                     )}
                                 </div>
                             </div>
-                            {/* Gradient overlays to mask edges */}
-                            <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-white/20 to-transparent z-10 pointer-events-none"></div>
-                            <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-white/20 to-transparent z-10 pointer-events-none"></div>
+                            {/* Gradient overlays - Desktop only */}
+                            <div className="hidden lg:block absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-white/20 to-transparent z-10 pointer-events-none"></div>
+                            <div className="hidden lg:block absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-white/20 to-transparent z-10 pointer-events-none"></div>
                         </div>
                     </div>
                 </div>
@@ -280,21 +328,20 @@ export default function ProgramIpsPage({ content }) {
 
                             <div className="space-y-6">
                                 {career_paths?.items && career_paths.items.length > 0 ? (
-                                    career_paths.items.map((item, idx) => (
-                                        <div key={idx} className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm transition-all duration-300">
-                                            <div className="p-3 bg-blue-50 text-blue-600 rounded-lg overflow-hidden w-12 h-12 flex items-center justify-center">
-                                                {item.icon ? (
-                                                    <ThumbnailImage src={item.icon} alt={item.title} />
-                                                ) : (
-                                                    <Briefcase className="w-6 h-6" />
-                                                )}
+                                    career_paths.items.map((item, idx) => {
+                                        const IconComponent = iconMap[item.icon_name] || Briefcase;
+                                        return (
+                                            <div key={idx} className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm transition-all duration-300">
+                                                <div className="p-3 bg-blue-50 text-blue-600 rounded-lg w-12 h-12 flex items-center justify-center">
+                                                    <IconComponent className="w-6 h-6" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-gray-900 text-lg">{item.title}</h4>
+                                                    <p className="text-sm text-gray-600">{item.description}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h4 className="font-bold text-gray-900 text-lg">{item.title}</h4>
-                                                <p className="text-sm text-gray-600">{item.description}</p>
-                                            </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 ) : (
                                     <>
                                         <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm transition-all duration-300">
@@ -317,12 +364,13 @@ export default function ProgramIpsPage({ content }) {
                             <div className="group relative flex flex-col h-full max-w-md mx-auto">
                                 {/* Image Area - Floating above */}
                                 <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
-                                    <ResponsiveImage 
-                                        media={typeof alumni_spotlight?.image === 'object' ? alumni_spotlight.image : null}
-                                        src={typeof alumni_spotlight?.image === 'string' ? formatImagePath(alumni_spotlight.image) : null} 
-                                        alt={alumni_spotlight?.name || "Alumni Sukses"}
-                                        className="h-full w-auto object-contain drop-shadow-xl transition-transform duration-500" 
-                                    />
+                                    {alumni_spotlight?.image && (
+                                        <img 
+                                            src={typeof alumni_spotlight.image === 'object' ? alumni_spotlight.image.original_url : alumni_spotlight.image}
+                                            alt={alumni_spotlight?.name || "Alumni Sukses"}
+                                            className="h-full w-auto object-contain drop-shadow-xl transition-transform duration-500" 
+                                        />
+                                    )}
                                 </div>
                                 
                                 {/* Content Section */}

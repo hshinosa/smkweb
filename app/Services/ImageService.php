@@ -81,8 +81,12 @@ class ImageService
         $data = $model->toArray();
 
         foreach ($mediaCollections as $collection) {
-            $key = $collection === 'default' ? 'media' : $collection . 'Image';
-            $data[$key] = $this->getFirstMediaData($model, $collection);
+            if ($collection === 'gallery') {
+                $data['gallery'] = $this->getAllMediaData($model, 'gallery');
+            } else {
+                $key = $collection === 'default' ? 'media' : $collection . 'Image';
+                $data[$key] = $this->getFirstMediaData($model, $collection);
+            }
         }
 
         return $data;

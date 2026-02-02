@@ -47,17 +47,6 @@ export default function FacilitiesSection({ data, setData, errors }) {
                         />
                         <p className="text-sm text-gray-500 mt-1">Judul untuk section fasilitas</p>
                     </div>
-                    <div>
-                        <InputLabel htmlFor="fac_desc" value="Deskripsi Section" />
-                        <textarea
-                            id="fac_desc"
-                            className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                            rows="2"
-                            value={data.description || ''}
-                            onChange={(e) => setData('description', e.target.value)}
-                        />
-                        <p className="text-sm text-gray-500 mt-1">Deskripsi singkat untuk section fasilitas</p>
-                    </div>
                 </div>
             </div>
 
@@ -78,15 +67,6 @@ export default function FacilitiesSection({ data, setData, errors }) {
                             className="mt-1 block w-full"
                             value={data.main_title || ''}
                             onChange={(e) => setData('main_title', e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <InputLabel value="Deskripsi Fasilitas Utama" />
-                        <textarea
-                            className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                            rows="3"
-                            value={data.main_description || ''}
-                            onChange={(e) => setData('main_description', e.target.value)}
                         />
                     </div>
                     <div>

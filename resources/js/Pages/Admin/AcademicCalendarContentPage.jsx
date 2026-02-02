@@ -9,6 +9,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import FileUploadField from '@/Components/Admin/FileUploadField';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
+import toast from 'react-hot-toast';
 
 export default function AcademicCalendarContentPage({ contents, filters }) {
     const [showModal, setShowModal] = useState(false);
@@ -61,6 +62,22 @@ export default function AcademicCalendarContentPage({ contents, filters }) {
     const handleSubmit = (e) => {
         if (e) e.preventDefault();
         
+        // BUG-3 Fix: Validate file before submit
+        if (selectedFile instanceof File) {
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            
+            if (selectedFile.size > maxSize) {
+                toast.error('Ukuran gambar kalender maksimal 10MB');
+                return;
+            }
+            
+            if (!allowedTypes.includes(selectedFile.type)) {
+                toast.error('Format gambar harus JPG, PNG, GIF, atau WebP');
+                return;
+            }
+        }
+        
         const submitData = {
             title: data.title,
             semester: data.semester,
@@ -73,25 +90,33 @@ export default function AcademicCalendarContentPage({ contents, filters }) {
             submitData.calendar_image = selectedFile;
         }
         
-        // Inertia will automatically convert to FormData if there's a File object
+        // Use router.post with forceFormData for both create and update
         if (editingContent) {
             submitData._method = 'PUT';
-            post(route('admin.academic-calendar.update', editingContent.id), submitData, {
+            router.post(route('admin.academic-calendar.update', editingContent.id), submitData, {
+                forceFormData: true,
                 onSuccess: () => {
                     closeModal();
                 },
+                onError: (errors) => {
+                    console.error('Update errors:', errors);
+                }
             });
         } else {
-            post(route('admin.academic-calendar.store'), submitData, {
+            router.post(route('admin.academic-calendar.store'), submitData, {
+                forceFormData: true,
                 onSuccess: () => {
                     closeModal();
                 },
+                onError: (errors) => {
+                    console.error('Store errors:', errors);
+                }
             });
         }
     };
 
     const handleDelete = (content) => {
-        if (confirm(`Yakin ingin menghapus "${content.title}"?`)) {
+        if (confirm(`Apakah Anda yakin ingin menghapus kalender "${content.title}"? Tindakan ini tidak dapat dibatalkan.`)) {
             router.delete(route('admin.academic-calendar.destroy', content.id));
         }
     };

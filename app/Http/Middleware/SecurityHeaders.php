@@ -17,13 +17,21 @@ class SecurityHeaders
         $isDevHost = in_array($host, ['localhost', '127.0.0.1', '[::1]']);
         $isLocal = app()->environment('local') || app()->environment('testing') || $isDevHost;
 
+        // SECURITY FIX: Remove/obfuscate Server header to prevent technology stack disclosure
+        // This prevents attackers from easily identifying server infrastructure
+        $response->headers->remove('Server');
+        $response->headers->remove('X-Powered-By');
+        
+        // Option: Obfuscate instead of removing (uncomment to use)
+        // $response->headers->set('Server', 'WebServer');
+
         // Dev/test/local host: jangan set CSP supaya Vite/inline script tidak diblokir saat pengembangan.
         if ($isLocal) {
             return $response;
         }
 
         $csp = [
-            "default-src 'self'",
+            "default-src 'self' http: https: data: blob: 'unsafe-inline'",
             "img-src 'self' data: blob: https: http:",
             "font-src 'self' https://fonts.gstatic.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",

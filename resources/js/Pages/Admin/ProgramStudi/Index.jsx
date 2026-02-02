@@ -175,7 +175,7 @@ export default function Index({ currentSettings, activeProgram, thumbnailCardUrl
                             >
                                 <option value="mipa">MIPA (Matematika & Ilmu Pengetahuan Alam)</option>
                                 <option value="ips">IPS (Ilmu Pengetahuan Sosial)</option>
-                                <option value="bahasa">Bahasa & Budaya</option>
+                                <option value="bahasa">Bahasa</option>
                             </select>
                         </div>
                     </div>

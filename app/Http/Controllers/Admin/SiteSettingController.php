@@ -143,6 +143,7 @@ class SiteSettingController extends Controller
 
         ActivityLogger::log("Update Pengaturan Situs", "Memperbarui bagian: " . $section, $request);
 
-        return back()->with('success', 'Pengaturan situs berhasil diperbarui.');
+        return redirect()->route('admin.site-settings.index', ['section' => $section])
+            ->with('success', 'Pengaturan situs berhasil diperbarui.');
     }
 }

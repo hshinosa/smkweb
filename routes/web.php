@@ -332,6 +332,18 @@ Route::get('/profil-sekolah', function () {
     $history = \App\Models\SchoolProfileSetting::getContent('history', $getSettingContent('history'));
     $facilities = \App\Models\SchoolProfileSetting::getContent('facilities', $getSettingContent('facilities'));
     
+    // Inject Media for facilities items
+    $facilitiesRow = $settings->get('facilities');
+    if ($facilitiesRow && isset($facilities['items']) && is_array($facilities['items'])) {
+        foreach ($facilities['items'] as $index => &$item) {
+            $media = $imageService->getFirstMediaData($facilitiesRow, "facilities_item_{$index}");
+            if ($media) {
+                $item['image'] = $media;
+                $item['image_url'] = $media['original_url'];
+            }
+        }
+    }
+    
     return Inertia::render('ProfilSekolahPage', [
         'hero' => $hero,
         'history' => $history,
@@ -394,7 +406,7 @@ Route::get('/struktur-organisasi', function () {
     // Inject Media Chart
     $orgRow = $settings->get('organization');
     if ($orgRow) {
-        $chartMedia = $imageService->getFirstMediaData($orgRow, 'organization_chart');
+        $chartMedia = $imageService->getFirstMediaData($orgRow, 'organization');
         if ($chartMedia) $organization['chartImage'] = $chartMedia;
     }
     
@@ -584,26 +596,20 @@ Route::get('/akademik/kurikulum', function () {
     ]);
 })->name('akademik.kurikulum');
 
-Route::get('/akademik/ekstrakurikuler', function () {
-    $imageService = new \App\Services\ImageService();
+Route::get('/akademik/organisasi-ekstrakurikuler', function () {
     $extracurriculars = \App\Models\Extracurricular::where('is_active', true)
         ->orderBy('sort_order')
         ->with('media')
         ->get()
-        ->map(function ($ekskul) use ($imageService) {
-            $data = $ekskul->toArray();
-            $media = $imageService->getFirstMediaData($ekskul, 'images');
-            if ($media) {
-                $data['image_url'] = $media['original_url']; // Use media URL
-                // We could also inject 'media' object if frontend supports it
-            }
-            return $data;
+        ->map(function ($ekskul) {
+            // toArray() already includes accessors (image_url, bg_image_url, profile_image_url)
+            return $ekskul->toArray();
         });
 
     return Inertia::render('EkstrakurikulerPage', [
         'extracurriculars' => $extracurriculars
     ]);
-})->name('akademik.ekstrakurikuler');
+})->name('akademik.organisasi_ekstrakurikuler');
 
 Route::get('/akademik/kalender-akademik', function () {
     $imageService = new \App\Services\ImageService();
@@ -648,9 +654,19 @@ $getProgramData = function ($programName) {
             if ($key === 'facilities') {
                 $media = $imageService->getFirstMediaData($dbRow, 'facilities_main_image');
                 if ($media) $content['main_image'] = $media;
+
+                // Inject images for facility items list
+                if (isset($content['items']) && is_array($content['items'])) {
+                    foreach ($content['items'] as $index => &$item) {
+                        $itemMedia = $imageService->getFirstMediaData($dbRow, "facilities_item_{$index}_image");
+                        if ($itemMedia) {
+                            $item['image'] = $itemMedia['original_url'];
+                        }
+                    }
+                }
             }
             if ($key === 'alumni_spotlight') {
-                $media = $imageService->getFirstMediaData($dbRow, 'alumni_image');
+                $media = $imageService->getFirstMediaData($dbRow, 'alumni_spotlight_image');
                 if ($media) $content['image'] = $media;
             }
         }
@@ -924,7 +940,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'show'])->name('contact-messages.show');
         Route::delete('/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
 
-        Route::resource('extracurriculars', \App\Http\Controllers\Admin\ExtracurricularController::class);
+        Route::get('/extracurriculars', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'index'])->name('extracurriculars.index');
+Route::post('/extracurriculars', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'store'])->name('extracurriculars.store');
+Route::post('/extracurriculars/{extracurricular}', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'update'])->name('extracurriculars.update');
+Route::delete('/extracurriculars/{extracurricular}', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'destroy'])->name('extracurriculars.destroy');
 
         // RAG Documents Management
         Route::resource('rag-documents', \App\Http\Controllers\Admin\RagDocumentController::class);
@@ -933,13 +952,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // AI Settings Management
         Route::get('/ai-settings', [\App\Http\Controllers\Admin\AiSettingController::class, 'index'])->name('ai-settings.index');
         Route::post('/ai-settings', [\App\Http\Controllers\Admin\AiSettingController::class, 'update'])->name('ai-settings.update');
+        Route::get('/ai-settings/models', [\App\Http\Controllers\Admin\AiSettingController::class, 'models'])->name('ai-settings.models');
 
         // Instagram Bot Management
         Route::get('/instagram-bots', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'index'])->name('instagram-bots.index');
-        Route::post('/instagram-bots', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'store'])->name('instagram-bots.store');
-        Route::put('/instagram-bots/{instagramBotAccount}', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'update'])->name('instagram-bots.update');
-        Route::delete('/instagram-bots/{instagramBotAccount}', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'destroy'])->name('instagram-bots.destroy');
-        Route::post('/instagram-bots/{instagramBotAccount}/test', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'testConnection'])->name('instagram-bots.test');
+        Route::post('/instagram-settings', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'updateSettings'])->name('instagram-settings.update');
+        Route::post('/instagram-scraper/run', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'runScraper'])->name('instagram-scraper.run');
+        Route::post('/instagram-scraper/single-post', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'scrapeSinglePost'])->name('instagram-scraper.single-post');
+        Route::post('/instagram-posts/{id}/approve', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'approvePost'])->name('instagram-posts.approve');
+        Route::post('/instagram-posts/{id}/process-ai', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'processWithAI'])->name('instagram-posts.process-ai');
+        Route::post('/instagram-posts/{id}/reset-status', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'resetProcessingStatus'])->name('instagram-posts.reset-status');
+        Route::delete('/instagram-posts/{id}/reject', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'rejectPost'])->name('instagram-posts.reject');
+        Route::post('/instagram-posts/bulk-approve', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'bulkApprove'])->name('instagram-posts.bulk-approve');
+        Route::post('/instagram-posts/cleanup-stuck', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'cleanupStuckPosts'])->name('instagram-posts.cleanup-stuck');
     });
 });
 // --- AKHIR RUTE ADMIN ---
@@ -954,6 +979,26 @@ Route::prefix('api')->name('api.')->group(function () {
         ->name('chat.history');
 });
 // --- AKHIR API ROUTES ---
+
+// --- INSTAGRAM SCRAPER IMAGES ROUTE ---
+Route::get('/scraped-images/{path}', function ($path) {
+    $fullPath = base_path('instagram-scraper/downloads/' . $path);
+    
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+    
+    // Security: only allow image files
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+    
+    if (!in_array($extension, $allowedExtensions)) {
+        abort(403);
+    }
+    
+    return response()->file($fullPath);
+})->where('path', '.*')->name('scraped-images');
+// --- AKHIR INSTAGRAM SCRAPER IMAGES ROUTE ---
 
 // --- SEO ROUTES ---
 Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');

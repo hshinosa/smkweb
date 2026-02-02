@@ -15,7 +15,7 @@ import ProcedureSection from '@/Components/Admin/SpmbSections/ProcedureSection';
 import FaqSection from '@/Components/Admin/SpmbSections/FaqSection';
 
 export default function SpmbContentPage() {
-    const { currentSettings } = usePage().props;
+    const { currentSettings, activeSection } = usePage().props;
 
     const {
         data,
@@ -41,11 +41,16 @@ export default function SpmbContentPage() {
         if (e) e.preventDefault();
         setLocalErrors({});
 
-        // Use standard PUT request
+        // Use standard PUT request with scroll preservation
+        // Note: useContentManagement hooks internal submit calls router.visit/post/put
+        // We might need to ensure preserveScroll is passed if available in that hook,
+        // but typically inertia helpers have it as option.
+        // Since we don't control the hook args here directly for options...
+        // Let's rely on the controller redirect with param & react state init to "feel" like persistence.
         originalHandleSubmit(e);
     };
 
-    const [activeTab, setActiveTab] = useState('pengaturan_umum');
+    const [activeTab, setActiveTab] = useState(activeSection || 'pengaturan_umum');
 
     // Tab configuration
     const tabs = [

@@ -6,6 +6,14 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 
+// Debug logging helper
+const DEBUG_CHAT = true; // Set to false to disable debug logs
+const logChat = (message, data = {}) => {
+    if (DEBUG_CHAT) {
+        console.log(`[ChatWidget] ${message}`, data);
+    }
+};
+
 export default function ChatWidget() {
     const page = usePage();
     if (!page) return null;
@@ -26,6 +34,11 @@ export default function ChatWidget() {
     const [isHidden, setIsHidden] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const [showSuggestions, setShowSuggestions] = useState(true);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [historyLoaded, setHistoryLoaded] = useState(false);
+    const [streamError, setStreamError] = useState(null);
+    const [retryCount, setRetryCount] = useState(0);
+    const maxRetries = 3;
     const [suggestionChips, setSuggestionChips] = useState([
         "Info PPDB?",
         "Program studi?",
@@ -33,27 +46,127 @@ export default function ChatWidget() {
         "Lokasi sekolah?",
     ]);
     const messagesEndRef = useRef(null);
+    const sessionInitializedRef = useRef(false);
 
-    // Initialize or get session ID from localStorage
+    // Initialize or get session ID from localStorage with lock mechanism
     useEffect(() => {
-        let sid = localStorage.getItem('chat_session_id');
+        // Prevent concurrent initialization
+        if (sessionInitializedRef.current) return;
         
-        // Generate unique session ID if not exists
-        if (!sid) {
-            // More robust unique ID: timestamp + random + user agent hash
-            const timestamp = Date.now();
-            const random = Math.random().toString(36).substr(2, 12);
-            const userAgentHash = navigator.userAgent.split('').reduce((a, b) => {
-                a = ((a << 5) - a) + b.charCodeAt(0);
-                return a & a;
-            }, 0);
+        const initializeSession = () => {
+            // Use atomic flag in localStorage to prevent race condition
+            const lockKey = 'chat_session_lock';
+            const lockTimeout = 5000; // 5 seconds
             
-            sid = `session_${timestamp}_${random}_${Math.abs(userAgentHash)}`;
-            localStorage.setItem('chat_session_id', sid);
-        }
+            try {
+                // Check if another tab is initializing
+                const existingLock = localStorage.getItem(lockKey);
+                if (existingLock) {
+                    const lockTime = parseInt(existingLock);
+                    if (Date.now() - lockTime < lockTimeout) {
+                        // Another tab is initializing, wait and retry
+                        setTimeout(initializeSession, 100);
+                        return;
+                    }
+                }
+                
+                // Acquire lock
+                localStorage.setItem(lockKey, Date.now().toString());
+                
+                let sid = localStorage.getItem('chat_session_id');
+                
+                // Generate unique session ID if not exists
+                if (!sid) {
+                    // More robust unique ID: timestamp + random + user agent hash
+                    const timestamp = Date.now();
+                    const random = Math.random().toString(36).substr(2, 12);
+                    const userAgentHash = navigator.userAgent.split('').reduce((a, b) => {
+                        a = ((a << 5) - a) + b.charCodeAt(0);
+                        return a & a;
+                    }, 0);
+                    
+                    sid = `session_${timestamp}_${random}_${Math.abs(userAgentHash)}`;
+                    localStorage.setItem('chat_session_id', sid);
+                }
+                
+                // Validate session ID format from backend perspective
+                if (!/^session_\d+_[a-z0-9]+_\d+$/.test(sid)) {
+                    console.warn('Invalid session ID format, regenerating...');
+                    localStorage.removeItem('chat_session_id');
+                    initializeSession();
+                    return;
+                }
+                
+                setSessionId(sid);
+                sessionInitializedRef.current = true;
+                
+                // Release lock
+                localStorage.removeItem(lockKey);
+            } catch (error) {
+                console.error('Session initialization error:', error);
+                localStorage.removeItem(lockKey);
+            }
+        };
         
-        setSessionId(sid);
+        initializeSession();
     }, []);
+
+    // Load chat history when widget opens
+    const loadChatHistory = async () => {
+        if (!sessionId || historyLoaded || isLoadingHistory) return;
+        
+        setIsLoadingHistory(true);
+        try {
+            const csrfToken = getCsrfToken();
+            const response = await axios.get('/api/chat/history', {
+                params: {
+                    session_id: sessionId,
+                    limit: 20
+                },
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+            
+            if (response.data.success && response.data.history.length > 0) {
+                // Convert history to message format
+                const historyMessages = response.data.history.map(msg => ({
+                    id: `history_${msg.id}`,
+                    sender: msg.sender,
+                    text: msg.message,
+                    isRagEnhanced: msg.is_rag_enhanced,
+                    timestamp: msg.timestamp,
+                }));
+                
+                // Replace initial greeting with history (keep greeting at start)
+                setMessages([
+                    {
+                        id: 1,
+                        sender: 'bot',
+                        text: `Halo! 👋 Selamat datang kembali di ${siteName}. Berikut adalah percakapan sebelumnya:`,
+                        isRagEnhanced: false,
+                    },
+                    ...historyMessages,
+                ]);
+                
+                // Hide default suggestions if we have history
+                setShowSuggestions(false);
+            }
+            setHistoryLoaded(true);
+        } catch (error) {
+            console.error('Failed to load chat history:', error);
+            setHistoryLoaded(true); // Mark as loaded even on error to prevent retry
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    };
+
+    // Load history when widget opens
+    useEffect(() => {
+        if (isOpen && sessionId && !historyLoaded) {
+            loadChatHistory();
+        }
+    }, [isOpen, sessionId]);
 
     // Initial Messages
     const [messages, setMessages] = useState([
@@ -107,8 +220,21 @@ export default function ChatWidget() {
         return null;
     }
 
+    // Get CSRF token from meta tag
+    const getCsrfToken = () => {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    };
+
     // Send message to RAG API with streaming
     const sendMessageToAPIStream = async (userMessage) => {
+        const requestStartTime = Date.now();
+        logChat('========== NEW MESSAGE REQUEST ==========');
+        logChat('Sending message to API', { 
+            userMessage: userMessage.substring(0, 50),
+            sessionId,
+            timestamp: new Date().toISOString()
+        });
+        
         return new Promise(async (resolve, reject) => {
             try {
                 // Create a temporary message for streaming (this will replace typing indicator)
@@ -123,11 +249,19 @@ export default function ChatWidget() {
                 let streamedText = '';
                 let isRagEnhanced = false;
 
+                const csrfToken = getCsrfToken();
+                logChat('Making fetch request', {
+                    url: '/api/chat/send',
+                    csrfToken: csrfToken ? 'present' : 'missing',
+                    sessionId,
+                });
+                
                 const response = await fetch('/api/chat/send', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'text/event-stream',
+                        'X-CSRF-TOKEN': csrfToken,
                     },
                     body: JSON.stringify({
                         message: userMessage,
@@ -136,14 +270,36 @@ export default function ChatWidget() {
                     })
                 });
 
+                logChat('Fetch response received', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    contentType: response.headers.get('content-type'),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    logChat('Response not OK', { status: response.status, errorText: errorText.substring(0, 200) });
+                    throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+                }
+
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
+                let chunkCount = 0;
 
                 while (true) {
                     const { value, done } = await reader.read();
-                    if (done) break;
+                    if (done) {
+                        logChat('Stream completed', { 
+                            totalChunks: chunkCount, 
+                            totalLength: streamedText.length,
+                            elapsedMs: Date.now() - requestStartTime
+                        });
+                        break;
+                    }
 
                     const chunk = decoder.decode(value);
+                    chunkCount++;
                     const lines = chunk.split('\n');
 
                     for (const line of lines) {
@@ -153,10 +309,15 @@ export default function ChatWidget() {
 
                                 if (data.type === 'metadata') {
                                     isRagEnhanced = data.is_rag_enhanced;
+                                    logChat('Metadata received', { isRagEnhanced, sessionId: data.session_id });
                                 } else if (data.type === 'content') {
                                     streamedText += data.content;
                                     updateMessage(botMessageId, streamedText, isRagEnhanced);
                                 } else if (data.type === 'done') {
+                                    logChat('Done event received', { 
+                                        messageLength: data.full_message?.length,
+                                        elapsedMs: Date.now() - requestStartTime
+                                    });
                                     updateMessage(botMessageId, data.full_message, isRagEnhanced);
                                     
                                     // Update WhatsApp number from site settings if provided
@@ -169,9 +330,12 @@ export default function ChatWidget() {
                                         isRagEnhanced: isRagEnhanced
                                     });
                                     return;
+                                } else if (data.type === 'error') {
+                                    logChat('Error event received', { message: data.message });
+                                    updateMessage(botMessageId, `❌ ${data.message}`, false);
                                 }
                             } catch (err) {
-                                console.error('Error parsing SSE data:', err);
+                                logChat('Error parsing SSE data', { error: err.message, line: line.substring(0, 100) });
                             }
                         }
                     }
@@ -180,9 +344,51 @@ export default function ChatWidget() {
                 resolve({ text: streamedText, isRagEnhanced });
 
             } catch (error) {
+                const elapsedMs = Date.now() - requestStartTime;
+                logChat('========== CHAT ERROR ==========');
+                logChat('Chat streaming error', { 
+                    error: error.message, 
+                    name: error.name,
+                    elapsedMs,
+                    stack: error.stack?.substring(0, 300)
+                });
                 console.error('Chat streaming error:', error);
                 setIsTyping(false);
-                reject(error);
+                
+                // Determine error type and provide user-friendly message
+                let errorMessage = 'Maaf, terjadi kesalahan saat memproses pesan Anda.';
+                let shouldRetry = false;
+                
+                if (error.name === 'AbortError' || error.message.includes('timeout')) {
+                    errorMessage = 'Koneksi timeout. Server memerlukan waktu terlalu lama untuk merespons.';
+                    shouldRetry = true;
+                } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage = 'Gagal terhubung ke server. Periksa koneksi internet Anda.';
+                    shouldRetry = true;
+                } else if (error.message.includes('419')) {
+                    errorMessage = 'Sesi Anda telah berakhir. Silakan refresh halaman.';
+                } else if (error.message.includes('429')) {
+                    errorMessage = 'Terlalu banyak permintaan. Mohon tunggu sebentar.';
+                }
+                
+                // Add error message to chat
+                updateMessage(botMessageId, `❌ ${errorMessage}`, false);
+                setStreamError(errorMessage);
+                
+                // Retry logic with exponential backoff
+                if (shouldRetry && retryCount < maxRetries) {
+                    const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+                    setTimeout(() => {
+                        setRetryCount(prev => prev + 1);
+                        updateMessage(botMessageId, `🔄 Mencoba kembali (${retryCount + 1}/${maxRetries})...`, false);
+                        sendMessageToAPIStream(userMessage)
+                            .then(resolve)
+                            .catch(reject);
+                    }, delay);
+                } else {
+                    setRetryCount(0); // Reset retry count
+                    reject(error);
+                }
             }
         });
     };
@@ -379,6 +585,9 @@ Silakan klik tombol di bawah ini untuk langsung chat:`,
         // Show suggestions again
         setShowSuggestions(true);
         
+        // Reset history loaded state so it will load fresh for new session
+        setHistoryLoaded(true); // Set to true so we don't load old history for new session
+        
         // Generate new session ID for fresh start
         const timestamp = Date.now();
         const random = Math.random().toString(36).substr(2, 12);
@@ -428,6 +637,16 @@ Silakan klik tombol di bawah ini untuk langsung chat:`,
                     {/* Chat Body */}
                     <div className="flex-1 bg-gray-50 p-4 overflow-y-auto">
                         <div className="space-y-4">
+                            {/* Loading History Indicator */}
+                            {isLoadingHistory && (
+                                <div className="flex justify-center items-center py-4">
+                                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                                        <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                                        <span>Memuat percakapan sebelumnya...</span>
+                                    </div>
+                                </div>
+                            )}
+                            
                             {messages.map((msg) => (
                                 <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     {/* Avatar for Bot */}

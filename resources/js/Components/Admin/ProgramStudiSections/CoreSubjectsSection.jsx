@@ -6,11 +6,12 @@ import { getImageUrl } from '@/Utils/imageUtils';
 import PrimaryButton from '@/Components/PrimaryButton';
 import DangerButton from '@/Components/DangerButton';
 import { Plus, Trash2 } from 'lucide-react';
+import IconPicker from '@/Components/Admin/IconPicker';
 
 export default function CoreSubjectsSection({ data, setData, errors }) {
     const addItem = () => {
         const currentItems = Array.isArray(data.items) ? data.items : [];
-        setData('items', [...currentItems, { title: '', description: '', icon: null }]);
+        setData('items', [...currentItems, { title: '', description: '', icon_name: 'BookOpen' }]);
     };
 
     const removeItem = (index) => {
@@ -107,12 +108,10 @@ export default function CoreSubjectsSection({ data, setData, errors }) {
                                 </div>
                                 
                                 <div>
-                                    <FileUploadField
-                                        id={`subject_icon_${index}`}
-                                        previewUrl={getImageUrl(item.icon)}
-                                        onChange={(file) => updateItem(index, 'icon', file)}
-                                        label="Icon Mata Pelajaran"
-                                        description="Icon atau gambar kecil untuk mata pelajaran ini."
+                                    <IconPicker
+                                        value={item.icon_name || 'BookOpen'}
+                                        onChange={(iconName) => updateItem(index, 'icon_name', iconName)}
+                                        label="Ikon Mata Pelajaran"
                                     />
                                 </div>
 

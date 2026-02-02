@@ -13,6 +13,7 @@ import Dropdown from '@/Components/Dropdown';
 import { Transition } from '@headlessui/react';
 import ChatWidget from '@/Components/ChatWidget';
 import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from '@/Components/ErrorBoundary';
 
 // Icons mapping for consistent visual language
 const getIconComponent = (iconName) => {
@@ -224,8 +225,9 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
     };
 
     return (
-        <div className="h-screen flex bg-gray-100 overflow-hidden font-sans">
-            <Head title={`${headerTitle} - Admin ${siteName}`} />
+        <ErrorBoundary homeUrl={route('admin.dashboard')}>
+            <div className="h-screen flex bg-gray-100 overflow-hidden font-sans">
+                <Head title={`${headerTitle} - Admin ${siteName}`} />
 
             {/* Desktop Sidebar - Fixed position with clear visual hierarchy */}
             <aside className="w-72 bg-primary border-r border-white/10 hidden lg:flex lg:flex-col fixed h-screen z-40 shadow-xl">
@@ -435,5 +437,6 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                 }} />
             </div>
         </div>
+        </ErrorBoundary>
     );
-}
+};

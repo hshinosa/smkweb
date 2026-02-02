@@ -15,7 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\CookieSecurity::class,
             \App\Http\Middleware\PerformanceOptimization::class,
+            \App\Http\Middleware\LogRequest::class,
         ]);
 
         // Exclude API routes and health check from CSRF protection

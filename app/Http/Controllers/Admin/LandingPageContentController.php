@@ -81,6 +81,15 @@ class LandingPageContentController extends Controller
 
     public function storeOrUpdate(Request $request)
     {
+        // Debug logging for file uploads
+        Log::info('LandingPageContentController@storeOrUpdate called', [
+            'has_kepsek_image' => $request->hasFile('kepsek_welcome_lp.kepsek_image'),
+            'has_hero_bg' => $request->hasFile('hero.background_image'),
+            'has_about_image' => $request->hasFile('about_lp.image'),
+            'all_files' => array_keys($request->allFiles()),
+            'content_type' => $request->header('Content-Type'),
+        ]);
+
         $inputData = $request->all();
         $rules = [];
         $sectionFields = LandingPageSetting::getSectionFields(); // Ambil dari model
@@ -167,6 +176,15 @@ class LandingPageContentController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
+        // Detect which section/tab is being updated based on input
+        $activeTab = 'hero'; // Default
+        if (isset($inputData['hero'])) $activeTab = 'hero';
+        elseif (isset($inputData['about_lp'])) $activeTab = 'about';
+        elseif (isset($inputData['kepsek_welcome_lp'])) $activeTab = 'kepsek';
+        elseif (isset($inputData['programs_lp'])) $activeTab = 'programs';
+        elseif (isset($inputData['gallery_lp'])) $activeTab = 'gallery';
+        elseif (isset($inputData['cta_lp'])) $activeTab = 'cta';
+
         // $validatedData = $validator->validated(); // Ini akan mengambil semua data yang tervalidasi
         // Kita akan menggunakan $finalDataToSave yang sudah difilter fieldnya
 
@@ -242,7 +260,7 @@ class LandingPageContentController extends Controller
 
             ActivityLogger::log('Update Konten Landing Page', 'Semua section Landing Page telah diperbarui.', $request);
 
-            return redirect()->route('admin.landingpage.content.index')
+            return redirect()->route('admin.landingpage.content.index', ['tab' => $activeTab])
                 ->with('success', 'Konten Landing Page berhasil diperbarui!');
 
         } catch (\Exception $e) {

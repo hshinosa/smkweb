@@ -30,8 +30,10 @@ class CurriculumController extends Controller
     public function update(Request $request)
     {
         $section = $request->input('section');
+        $redirectTab = 'intro'; // Default
 
         if ($section === 'intro_fases') {
+            $redirectTab = 'intro';
             // Handle Intro
             CurriculumSetting::updateOrCreate(
                 ['section_key' => 'intro'],
@@ -57,13 +59,12 @@ class CurriculumController extends Controller
                 $faseESetting->save();
             }
             
+            // Handle file upload for Fase E
             if ($request->hasFile("fase_e_image")) {
+                $file = $request->file("fase_e_image");
                 $faseESetting->clearMediaCollection('fase_e_image');
-                $faseESetting->addMediaFromRequest("fase_e_image")->toMediaCollection('fase_e_image');
-                $media = $faseESetting->getMedia('fase_e_image')->last();
-                if ($media) {
-                    $faseEContent['image'] = '/storage/' . $media->id . '/' . $media->file_name;
-                }
+                $media = $faseESetting->addMedia($file)->toMediaCollection('fase_e_image');
+                $faseEContent['image'] = $media->getUrl();
             }
             $faseESetting->content = $faseEContent;
             $faseESetting->save();
@@ -84,13 +85,12 @@ class CurriculumController extends Controller
                 $faseFSetting->save();
             }
             
+            // Handle file upload for Fase F
             if ($request->hasFile("fase_f_image")) {
+                $file = $request->file("fase_f_image");
                 $faseFSetting->clearMediaCollection('fase_f_image');
-                $faseFSetting->addMediaFromRequest("fase_f_image")->toMediaCollection('fase_f_image');
-                $media = $faseFSetting->getMedia('fase_f_image')->last();
-                if ($media) {
-                    $faseFContent['image'] = '/storage/' . $media->id . '/' . $media->file_name;
-                }
+                $media = $faseFSetting->addMedia($file)->toMediaCollection('fase_f_image');
+                $faseFContent['image'] = $media->getUrl();
             }
             $faseFSetting->content = $faseFContent;
             $faseFSetting->save();

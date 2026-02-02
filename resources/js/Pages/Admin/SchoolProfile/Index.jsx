@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import {
     History,
     Target,
@@ -115,15 +115,103 @@ export default function SchoolProfileIndex({ auth, sections, activeSection: init
 
     const handleSubmit = (e) => {
         if (e) e.preventDefault();
-        post(route('admin.school-profile.update'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Perubahan berhasil disimpan!');
-            },
-            onError: () => {
-                toast.error('Gagal menyimpan perubahan. Silakan periksa formulir.');
+        
+        // BUG-3 Fix: Validate files before submit
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        
+        // Check organization/history image
+        if ((activeTab === 'organization' || activeTab === 'history') && data.content?.image instanceof File) {
+            if (data.content.image.size > maxSize) {
+                toast.error('Ukuran gambar maksimal 10MB');
+                return;
             }
-        });
+            if (!allowedTypes.includes(data.content.image.type)) {
+                toast.error('Format gambar harus JPG, PNG, GIF, atau WebP');
+                return;
+            }
+        }
+        
+        // Check facilities images
+        if (activeTab === 'facilities' && data.content?.items) {
+            const invalidFile = data.content.items.find(item => {
+                if (item.image_file instanceof File) {
+                    return item.image_file.size > maxSize || !allowedTypes.includes(item.image_file.type);
+                }
+                return false;
+            });
+            
+            if (invalidFile) {
+                if (invalidFile.image_file.size > maxSize) {
+                    toast.error('Ukuran gambar fasilitas maksimal 10MB');
+                } else {
+                    toast.error('Format gambar fasilitas harus JPG, PNG, GIF, atau WebP');
+                }
+                return;
+            }
+        }
+        
+        // Check if we need to use FormData (for file uploads)
+        const hasFiles = (activeTab === 'facilities' && data.content?.items?.some(item => item.image_file instanceof File)) ||
+                         (activeTab === 'organization' && data.content?.image instanceof File) ||
+                         (activeTab === 'history' && data.content?.image instanceof File);
+        
+        if (hasFiles) {
+            // Use manual FormData for file uploads
+            const formData = new FormData();
+            formData.append('section', data.section);
+            
+            // Add title and description
+            if (data.content.title) formData.append('content[title]', data.content.title);
+            if (data.content.description) formData.append('content[description]', data.content.description);
+            
+            // Handle organization/history image upload
+            if ((activeTab === 'organization' || activeTab === 'history') && data.content.image instanceof File) {
+                formData.append('content[image]', data.content.image);
+            } else if (data.content.image_url) {
+                formData.append('content[image_url]', data.content.image_url);
+            }
+            
+            // Add items with files (for facilities)
+            if (data.content.items && Array.isArray(data.content.items)) {
+                data.content.items.forEach((item, index) => {
+                    const title = item.title || item.name || '';
+                    const imageUrl = item.image_url || item.image || '';
+                    formData.append(`content[items][${index}][title]`, title);
+                    formData.append(`content[items][${index}][image_url]`, imageUrl);
+                    if (item.image_file instanceof File) {
+                        formData.append(`content[items][${index}][image_file]`, item.image_file);
+                    }
+                });
+            }
+            
+            // Use router.post for FormData
+            router.post(route('admin.school-profile.update'), formData, {
+                forceFormData: true,
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    toast.success('Perubahan berhasil disimpan!');
+                },
+                onError: (errors) => {
+                    console.error('Save errors:', errors);
+                    toast.error('Gagal menyimpan perubahan.');
+                }
+            });
+        } else {
+            // Regular submit without files
+            post(route('admin.school-profile.update'), {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    toast.success('Perubahan berhasil disimpan!');
+                },
+                onError: (errors) => {
+                    console.error('Save errors:', errors);
+                    toast.error('Gagal menyimpan perubahan. Silakan periksa formulir.');
+                }
+            });
+        }
     };
 
     // Helper to update nested content
@@ -467,6 +555,7 @@ export default function SchoolProfileIndex({ auth, sections, activeSection: init
 
     const renderFacilitiesEditor = () => {
         const facilityData = data.content || {};
+        // Get items directly from data.content.items (don't create new array each render)
         const facilities = Array.isArray(facilityData.items) ? facilityData.items : [];
 
         const updateFacilities = (newItems) => {
@@ -474,7 +563,7 @@ export default function SchoolProfileIndex({ auth, sections, activeSection: init
         };
 
         const addFacility = () => {
-            updateFacilities([...facilities, { title: '', description: '', image_url: '' }]);
+            updateFacilities([...facilities, { title: '', image_url: '' }]);
         };
 
         const removeFacility = (index) => {
@@ -484,8 +573,18 @@ export default function SchoolProfileIndex({ auth, sections, activeSection: init
         };
 
         const updateFacility = (index, field, value) => {
-            const newList = [...facilities];
-            newList[index] = { ...newList[index], [field]: value };
+            const newList = facilities.map((item, i) => {
+                if (i !== index) return item;
+                // Normalize the item if it has old field names
+                const normalized = {
+                    title: item.title || item.name || '',
+                    image_url: item.image_url || item.image || '',
+                    image_file: item.image_file,
+                };
+                // Update the specific field
+                normalized[field] = value;
+                return normalized;
+            });
             updateFacilities(newList);
         };
 
@@ -578,7 +677,7 @@ export default function SchoolProfileIndex({ auth, sections, activeSection: init
                                                 </label>
                                                 <input
                                                     type="text"
-                                                    value={facility.title}
+                                                    value={facility.title || facility.name || ''}
                                                     onChange={(e) => updateFacility(index, 'title', e.target.value)}
                                                     className="w-full rounded-lg border-gray-300 focus:ring-primary focus:border-primary font-semibold"
                                                     placeholder="Contoh: Laboratorium Komputer"
@@ -586,23 +685,12 @@ export default function SchoolProfileIndex({ auth, sections, activeSection: init
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-1">
-                                                    <span>📄</span> Deskripsi
-                                                </label>
-                                                <textarea
-                                                    value={facility.description}
-                                                    onChange={(e) => updateFacility(index, 'description', e.target.value)}
-                                                    className="w-full rounded-lg border-gray-300 focus:ring-primary focus:border-primary"
-                                                    rows="2"
-                                                    placeholder="Jelaskan fasilitas secara singkat..."
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold text-gray-700 uppercase mb-2 flex items-center gap-1">
-                                                    <span>🖼️</span> Foto Fasilitas
+                                                    <span>📷</span> Foto Fasilitas
                                                 </label>
                                                 <FileUploadField
+                                                    id={`facility-image-${index}`}
                                                     label=""
-                                                    previewUrl={getImageUrl(facility.image_url)}
+                                                    previewUrl={getImageUrl(facility.image?.original_url || facility.image_url || facility.image)}
                                                     onChange={(file) => updateFacility(index, 'image_file', file)}
                                                 />
                                                 <p className="text-xs text-gray-500 mt-1">Upload foto fasilitas untuk ditampilkan di galeri profil sekolah.</p>
@@ -633,6 +721,7 @@ export default function SchoolProfileIndex({ auth, sections, activeSection: init
                         <p className="text-sm text-gray-600 mt-1">Upload gambar bagan organisasi sekolah</p>
                     </div>
                     <FileUploadField
+                        id="organization-image"
                         label=""
                         previewUrl={getImageUrl(orgData.image_url)}
                         onChange={(file) => updateContent('image', file)}

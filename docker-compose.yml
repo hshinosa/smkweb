@@ -71,10 +71,13 @@ services:
       - ./.env:/var/www/.env
       - ./storage:/var/www/storage
       - ./public:/var/www/public
+      - ./instagram-scraper:/var/www/instagram-scraper
+      - ./docker/php-fpm/php.ini:/usr/local/etc/php/conf.d/custom.ini
     env_file:
       - .env
     environment:
       - APP_ENV=production
+      - APP_KEY=${APP_KEY}
       - DB_CONNECTION=pgsql
       - DB_HOST=db
       - DB_PORT=5432
@@ -104,6 +107,7 @@ services:
     volumes:
       - ./public:/var/www/public:ro
       - ./storage:/var/www/storage:ro
+      - ./instagram-scraper:/var/www/instagram-scraper:ro
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./docker/nginx/sites/:/etc/nginx/sites-available
       - ./docker/nginx/ssl/:/etc/nginx/ssl/:ro
@@ -148,10 +152,11 @@ services:
     image: hshinosa/smkweb:latest
     container_name: sman1-baleendah-queue
     restart: unless-stopped
-    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600 --queue=default,instagram
     working_dir: /var/www
     volumes:
       - ./storage:/var/www/storage
+      - ./instagram-scraper:/var/www/instagram-scraper
       - ./.env:/var/www/.env
     env_file:
       - .env
@@ -206,6 +211,32 @@ services:
     networks:
       - sman1-network
 
+  # CLI Proxy API - OpenAI-compatible proxy for Claude/Gemini
+  cliproxyapi:
+    image: eceasy/cli-proxy-api:latest
+    container_name: sman1-baleendah-cliproxy
+    restart: unless-stopped
+    volumes:
+      - ./cliproxyapi/config.yaml:/CLIProxyAPI/config.yaml
+      - ./cliproxyapi/auths:/root/.cli-proxy-api
+      - ./cliproxyapi/logs:/CLIProxyAPI/logs
+    networks:
+      - sman1-network
+    # Internal network only - accessed by app container via http://cliproxyapi:8317
+    # Uncomment below to expose for external access if needed
+    # ports:
+    #   - "8317:8317"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8317/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # Ollama service for RAG and AI features
   ollama:
     image: ollama/ollama:latest
@@ -222,6 +253,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    environment:
+      - OLLAMA_NUM_THREADS=4
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_KEEP_ALIVE=30m
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 4G
 
   # One-time service to pull required models
   ollama-pull-models:
@@ -233,7 +274,7 @@ services:
       ollama:
         condition: service_healthy
     entrypoint: /bin/sh
-    command: -c "ollama pull qwen2.5:1.5b && ollama pull nomic-embed-text:v1.5"
+    command: -c "ollama pull llama3.2:1b && ollama pull nomic-embed-text:v1.5"
 
 volumes:
   postgres_data:

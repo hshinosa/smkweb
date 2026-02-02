@@ -14,7 +14,9 @@ import {
     HelpCircle,
     Info,
     MessageCircle,
-    PlayCircle
+    PlayCircle,
+    Phone,
+    Mail
 } from 'lucide-react';
 
 import Navbar from '@/Components/Navbar';
@@ -400,18 +402,28 @@ export default function InformasiSpmbPage({ spmbData }) {
                                     )}
                                 </div>
                                 
-                                {prosedur?.contact_info && (
-                                    <div className="mt-10 p-6 bg-blue-50 rounded-2xl border border-blue-100">
-                                        <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
-                                            <MessageCircle className="w-5 h-5" />
-                                            Bantuan Pendaftaran
-                                        </h4>
-                                        <div 
-                                            className="text-sm text-gray-700 prose prose-sm max-w-none"
-                                            dangerouslySetInnerHTML={{ __html: prosedur.contact_info }}
-                                        />
+                                {/* Bantuan Pendaftaran - From Site Settings */}
+                                <div className="mt-10 p-6 bg-blue-50 rounded-2xl border border-blue-100">
+                                    <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
+                                        <MessageCircle className="w-5 h-5" />
+                                        Bantuan Pendaftaran
+                                    </h4>
+                                    <div className="text-sm text-gray-700 space-y-3">
+                                        <p className="mb-3">Untuk informasi lebih lanjut, hubungi:</p>
+                                        <div className="flex items-start gap-2">
+                                            <Phone className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                                            <span className="font-medium">{siteSettings?.general?.phone || '(022) 5940262'}</span>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <Mail className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                                            <span className="font-medium">{siteSettings?.general?.email || 'info@sman1baleendah.sch.id'}</span>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                                            <span className="font-medium">{siteSettings?.general?.address || 'Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Kec. Baleendah, Kabupaten Bandung, Jawa Barat 40375'}</span>
+                                        </div>
                                     </div>
-                                )}
+                                </div>
                             </div>
 
                             {/* Persyaratan Umum */}
@@ -459,7 +471,7 @@ export default function InformasiSpmbPage({ spmbData }) {
                 </section>
 
                 {/* 3. SECTION: ALUR & JADWAL (Timeline) */}
-                <section className="py-20 bg-secondary overflow-hidden">
+                <section className="py-20 bg-white overflow-hidden">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
                             <h2 className={TYPOGRAPHY.sectionHeading}>{jadwal_penting?.title || "Alur & Jadwal Penting"}</h2>
@@ -468,7 +480,7 @@ export default function InformasiSpmbPage({ spmbData }) {
                             </p>
                         </div>
 
-                        <div className="relative max-w-5xl mx-auto">
+                        <div className="relative">
                             {/* Connecting Line (Desktop) */}
                             <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
                             
@@ -503,7 +515,7 @@ export default function InformasiSpmbPage({ spmbData }) {
                 </section>
 
                 {/* 4. SECTION: FAQ (Accordion) */}
-                <section className="py-20 bg-white">
+                <section className="py-20 bg-slate-50">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
                         <div className="text-center mb-12">
                             <h2 className={TYPOGRAPHY.sectionHeading}>{faq?.title || "Pertanyaan Umum (FAQ)"}</h2>
@@ -559,7 +571,7 @@ export default function InformasiSpmbPage({ spmbData }) {
                             </div>
                             <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                                 <a 
-                                    href={`https://wa.me/${pengaturan_umum?.whatsapp_number || '628123456789'}`}
+                                    href={`https://wa.me/${siteSettings?.general?.whatsapp?.replace(/[^0-9]/g, '') || '6281234567890'}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg"
@@ -568,13 +580,11 @@ export default function InformasiSpmbPage({ spmbData }) {
                                     Chat WhatsApp
                                 </a>
                                 <a 
-                                    href={pengaturan_umum?.video_guide_url || "#"}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                    href={`tel:${siteSettings?.general?.phone?.replace(/[^0-9]/g, '') || '0225940262'}`}
                                     className="px-6 py-3 bg-white text-primary font-bold rounded-xl hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 shadow-lg"
                                 >
-                                    <PlayCircle className="w-5 h-5" />
-                                    Panduan Video
+                                    <MessageCircle className="w-5 h-5" />
+                                    Telepon Kami
                                 </a>
                             </div>
                         </div>

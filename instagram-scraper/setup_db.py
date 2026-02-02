@@ -1,23 +1,24 @@
 """
 Database Setup Script
-SMAN 1 Baleendah - Instagram Scraper
+SMAN 1 Baleendah - Instagram Scraper (Apify-based)
 
 This script:
-1. Creates scraper tables (sc_bot_accounts, sc_raw_news_feeds)
-2. Seeds initial placeholder bot account for easy manual configuration
+1. Creates scraper table (sc_raw_news_feeds)
+2. Note: Using Apify API - token stored in Laravel database (settings table)
+3. Logs stored in sc_scraper_logs table
 """
 
-from models import Base, BotAccount, RawNewsFeed, create_db_engine, get_session
+from models import Base, RawNewsFeed, create_db_engine, get_session
 from sqlalchemy import inspect
-from datetime import datetime
 
 
 def setup_database():
     """
-    Initialize database tables and seed initial data
+    Initialize database tables
     """
     print("╔══════════════════════════════════════════════════════════════════════════════╗")
     print("║          Instagram Scraper Database Setup - SMAN 1 Baleendah                ║")
+    print("║                        (Apify API Integration)                               ║")
     print("╚══════════════════════════════════════════════════════════════════════════════╝\n")
     
     try:
@@ -30,57 +31,18 @@ def setup_database():
             print("✅ Database connection successful!\n")
         
         # Step 2: Create tables
-        print("📦 Creating scraper tables...")
+        print("📦 Creating scraper table...")
         Base.metadata.create_all(engine)
         
         inspector = inspect(engine)
         existing_tables = inspector.get_table_names()
         
-        if 'sc_bot_accounts' in existing_tables:
-            print("   ✓ Table 'sc_bot_accounts' created/verified")
         if 'sc_raw_news_feeds' in existing_tables:
             print("   ✓ Table 'sc_raw_news_feeds' created/verified")
         
         print()
         
-        # Step 3: Seed initial bot account if empty
-        print("👤 Checking bot accounts...")
-        session = get_session()
-        
-        bot_count = session.query(BotAccount).count()
-        
-        if bot_count == 0:
-            print("   ⚠️  No bot accounts found. Creating placeholder account...")
-            
-            placeholder = BotAccount(
-                username='CHANGE_ME',
-                password='CHANGE_ME',
-                is_active=False,  # Disabled by default until configured
-                notes='Placeholder account. Please update via SQL editor or Python script.'
-            )
-            
-            session.add(placeholder)
-            session.commit()
-            
-            print("   ✅ Placeholder account created:")
-            print("      Username: CHANGE_ME")
-            print("      Password: CHANGE_ME")
-            print("      Status: INACTIVE (update credentials to activate)\n")
-            print("   ⚡ Quick Update SQL:")
-            print("      UPDATE sc_bot_accounts")
-            print("      SET username='your_ig_username', password='your_ig_password', is_active=true")
-            print("      WHERE username='CHANGE_ME';\n")
-        else:
-            print(f"   ✓ Found {bot_count} existing bot account(s)")
-            accounts = session.query(BotAccount).all()
-            for acc in accounts:
-                status = "ACTIVE" if acc.is_active else "INACTIVE"
-                print(f"      - {acc.username} [{status}]")
-            print()
-        
-        session.close()
-        
-        # Step 4: Check raw news feeds
+        # Step 3: Check raw news feeds
         session = get_session()
         feed_count = session.query(RawNewsFeed).count()
         pending_count = session.query(RawNewsFeed).filter_by(is_processed=False).count()
@@ -98,9 +60,11 @@ def setup_database():
         print("╚══════════════════════════════════════════════════════════════════════════════╝\n")
         
         print("Next Steps:")
-        print("  1️⃣  Update bot account credentials (see SQL above)")
-        print("  2️⃣  Run scraper: python scraper.py --target <instagram_username>")
-        print("  3️⃣  Check scraped data: SELECT * FROM sc_raw_news_feeds WHERE is_processed=false;")
+        print("  1️⃣  Login to Laravel Admin Panel → Instagram Settings")
+        print("  2️⃣  Enter your Apify API token (stored in database)")
+        print("  3️⃣  Click 'Run Scraper' button in admin panel to scrape posts")
+        print("  4️⃣  Monitor logs in 'Scraper Logs' tab")
+        print("  5️⃣  Or run manually: php artisan instagram:scrape sman1baleendah --max-posts=25 --apify")
         print()
         
         return True

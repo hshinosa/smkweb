@@ -29,7 +29,7 @@ export function getNavigationData(siteSettings = {}) {
         akademikLinks: [
             { title: "Kalender Akademik", href: "/kalender-akademik" },
             { title: "Kurikulum", href: "/akademik/kurikulum" },
-            { title: "Ekstrakurikuler", href: "/akademik/ekstrakurikuler" },
+            { title: "Organisasi & Ekstrakurikuler", href: "/akademik/organisasi-ekstrakurikuler" },
         ],
 
         programStudiLinks: [

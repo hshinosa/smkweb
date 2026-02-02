@@ -30,7 +30,7 @@ export function useContentManagement(initialData, updateRoute, method = 'post') 
 
     const handleFileChange = (fileType, file, options = {}) => {
         if (file) {
-            const { maxSize = 2 * 1024 * 1024, allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/svg+xml'] } = options;
+            const { maxSize = 10 * 1024 * 1024, allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/svg+xml'] } = options;
 
             if (file.size > maxSize) {
                 setLocalErrors(prev => ({

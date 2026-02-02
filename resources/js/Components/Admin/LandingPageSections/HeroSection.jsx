@@ -1,35 +1,17 @@
 import React from 'react';
-import { Layout, Plus, Trash2 } from 'lucide-react';
+import { Layout } from 'lucide-react';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import FileUploadField from '@/Components/Admin/FileUploadField';
 import FormSection from '@/Components/Admin/FormSection';
+import IconPicker from '@/Components/Admin/IconPicker';
 
 export default function HeroSection({ data, setData, localErrors, formErrors, previewUrls, handleSectionInputChange, handleFileChange }) {
-    const addStat = () => {
-        const currentStats = data.hero?.stats || [];
-        setData('hero', {
-            ...data.hero,
-            stats: [...currentStats, { label: '', value: '', icon_name: 'Trophy' }]
-        });
-    };
-
-    const removeStat = (index) => {
-        const currentStats = data.hero?.stats || [];
-        setData('hero', {
-            ...data.hero,
-            stats: currentStats.filter((_, i) => i !== index)
-        });
-    };
-
     const updateStat = (index, key, value) => {
         const currentStats = [...(data.hero?.stats || [])];
         currentStats[index] = { ...currentStats[index], [key]: value };
-        setData('hero', {
-            ...data.hero,
-            stats: currentStats
-        });
+        handleSectionInputChange('hero', 'stats', currentStats);
     };
 
     return (
@@ -102,21 +84,12 @@ export default function HeroSection({ data, setData, localErrors, formErrors, pr
 
             {/* Statistik Section */}
             <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
-                <div className="border-b pb-3 flex justify-between items-start">
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
-                            Statistik Melayang (Floating Cards)
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">Card statistik yang melayang di hero section</p>
-                    </div>
-                    <button 
-                        type="button" 
-                        onClick={addStat}
-                        className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
-                    >
-                        <Plus className="w-4 h-4 mr-2" /> Tambah Statistik
-                    </button>
+                <div className="border-b pb-3">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                        Statistik Melayang (Floating Cards)
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Card statistik yang melayang di hero section (maksimal 3 item)</p>
                 </div>
                 <div className="space-y-4">
                     {(data.hero?.stats || []).length === 0 ? (
@@ -143,27 +116,13 @@ export default function HeroSection({ data, setData, localErrors, formErrors, pr
                                     />
                                 </div>
                                 <div className="w-full md:w-40">
-                                    <InputLabel value="Ikon (Lucide)" />
-                                    <select
+                                    <IconPicker
                                         value={stat.icon_name || 'Trophy'}
-                                        onChange={e => updateStat(index, 'icon_name', e.target.value)}
-                                        className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-xl shadow-sm"
-                                    >
-                                        <option value="Trophy">Trophy</option>
-                                        <option value="GraduationCap">GraduationCap</option>
-                                        <option value="Users">Users</option>
-                                        <option value="Calendar">Calendar</option>
-                                        <option value="Leaf">Leaf</option>
-                                    </select>
+                                        onChange={(iconName) => updateStat(index, 'icon_name', iconName)}
+                                        label="Ikon (Lucide)"
+                                    />
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => removeStat(index)}
-                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                >
-                                    <Trash2 size={20} />
-                            </button>
-                        </div>
+                            </div>
                     ))
                     )}
                 </div>

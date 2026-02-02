@@ -8,6 +8,7 @@ use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class ExtracurricularController extends Controller
 {
@@ -22,10 +23,12 @@ class ExtracurricularController extends Controller
     {
         $extracurriculars = Extracurricular::with('media')->orderBy('sort_order')->get();
 
+        $transformedData = $extracurriculars->map(function ($extracurricular) {
+            return $extracurricular->toArray();
+        });
+
         return Inertia::render('Admin/Extracurriculars/Index', [
-            'extracurriculars' => $extracurriculars->map(function ($extracurricular) {
-                return $this->imageService->transformModelWithMedia($extracurricular, ['images']);
-            })
+            'extracurriculars' => $transformedData
         ]);
     }
 
@@ -33,69 +36,124 @@ class ExtracurricularController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'type' => 'required|string|in:organisasi,ekstrakurikuler',
             'category' => 'required|string|max:255',
             'description' => 'required|string',
+            'activity_description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'bg_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'icon_name' => 'nullable|string|max:255',
-            'schedule' => 'nullable|string|max:255',
-            'coach_name' => 'nullable|string|max:255',
-            'achievements' => 'nullable|array', // New field
+            'achievements' => 'nullable|array',
+            'achievements_data' => 'nullable|array',
+            'achievements_data.*.title' => 'required|string',
+            'achievements_data.*.level' => 'nullable|string',
+            'achievements_data.*.year' => 'nullable|string',
+            'training_info' => 'nullable|array',
+            'training_info.days' => 'nullable|array',
+            'training_info.days.*' => 'string',
+            'training_info.start_time' => 'nullable|string',
+            'training_info.end_time' => 'nullable|string',
+            'training_info.location' => 'nullable|string',
+            'training_info.coach' => 'nullable|string',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ]);
 
-        // Remove image from validated array
-        unset($validated['image']);
+        // Remove images from validated array
+        $images = [
+            'image' => $request->file('image'),
+            'bg_image' => $request->file('bg_image'),
+            'profile_image' => $request->file('profile_image')
+        ];
+        unset($validated['image'], $validated['bg_image'], $validated['profile_image']);
 
         $extracurricular = Extracurricular::create($validated);
 
-        // NEW: Use Media Library for automatic WebP + responsive variants
-        if ($request->hasFile('image')) {
-            $extracurricular->addMediaFromRequest('image')
-                     ->toMediaCollection('images');
+        // Handle media uploads
+        if ($images['image']) {
+            $extracurricular->addMedia($images['image'])->toMediaCollection('images');
+        }
+        if ($images['bg_image']) {
+            $extracurricular->addMedia($images['bg_image'])->toMediaCollection('bg_images');
+        }
+        if ($images['profile_image']) {
+            $extracurricular->addMedia($images['profile_image'])->toMediaCollection('profile_images');
         }
 
-        return redirect()->back()->with('success', 'Ekstrakurikuler berhasil ditambahkan');
+        // Optionally allow redirecting with active_tab
+        $activeTab = $validated['type'];
+        return redirect()->route('admin.extracurriculars.index', ['tab' => $activeTab])
+                        ->with('success', 'Ekstrakurikuler berhasil ditambahkan');
     }
 
     public function update(Request $request, Extracurricular $extracurricular)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'type' => 'required|string|in:organisasi,ekstrakurikuler',
             'category' => 'required|string|max:255',
             'description' => 'required|string',
+            'activity_description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'bg_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'icon_name' => 'nullable|string|max:255',
-            'schedule' => 'nullable|string|max:255',
-            'coach_name' => 'nullable|string|max:255',
-            'achievements' => 'nullable|array', // New field
+            'achievements' => 'nullable|array',
+            'achievements_data' => 'nullable|array',
+            'achievements_data.*.title' => 'required|string',
+            'achievements_data.*.level' => 'nullable|string',
+            'achievements_data.*.year' => 'nullable|string',
+            'training_info' => 'nullable|array',
+            'training_info.days' => 'nullable|array',
+            'training_info.days.*' => 'string',
+            'training_info.start_time' => 'nullable|string',
+            'training_info.end_time' => 'nullable|string',
+            'training_info.location' => 'nullable|string',
+            'training_info.coach' => 'nullable|string',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ]);
 
-        // Remove image from validated array
-        unset($validated['image']);
+        // Remove images from validated array
+        $images = [
+            'image' => $request->file('image'),
+            'bg_image' => $request->file('bg_image'),
+            'profile_image' => $request->file('profile_image')
+        ];
+        unset($validated['image'], $validated['bg_image'], $validated['profile_image']);
 
         $extracurricular->update($validated);
 
-        // NEW: Update media if image provided
-        if ($request->hasFile('image')) {
-            // Clear old media
+        // Update media if provided
+        if ($images['image']) {
             $extracurricular->clearMediaCollection('images');
-            
-            // Add new media
-            $extracurricular->addMediaFromRequest('image')
-                     ->toMediaCollection('images');
+            $extracurricular->addMedia($images['image'])->toMediaCollection('images');
+        }
+        if ($images['bg_image']) {
+            $extracurricular->clearMediaCollection('bg_images');
+            $extracurricular->addMedia($images['bg_image'])->toMediaCollection('bg_images');
+        }
+        if ($images['profile_image']) {
+            $extracurricular->clearMediaCollection('profile_images');
+            $extracurricular->addMedia($images['profile_image'])->toMediaCollection('profile_images');
         }
 
-        return redirect()->back()->with('success', 'Ekstrakurikuler berhasil diperbarui');
+        // Optionally allow redirecting with active_tab
+        $activeTab = $validated['type'];
+        return redirect()->route('admin.extracurriculars.index', ['tab' => $activeTab])
+                        ->with('success', 'Ekstrakurikuler berhasil diperbarui');
     }
 
     public function destroy(Extracurricular $extracurricular)
     {
+        // Keep track of type before delete to redirect back to correct tab
+        $activeTab = $extracurricular->type;
+        
         // NEW: Media Library automatically deletes associated media
         $extracurricular->delete();
 
-        return redirect()->back()->with('success', 'Ekstrakurikuler berhasil dihapus');
+        return redirect()->route('admin.extracurriculars.index', ['tab' => $activeTab])
+                        ->with('success', 'Ekstrakurikuler berhasil dihapus');
     }
 }

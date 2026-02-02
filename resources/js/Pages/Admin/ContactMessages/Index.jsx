@@ -13,7 +13,7 @@ export default function Index({ messages }) {
     const tabs = [{ key: 'list', label: 'Pesan Masuk', description: 'Kelola pesan kontak.', icon: Mail }];
 
     const handleDelete = (id) => {
-        if (confirm('Hapus pesan ini?')) {
+        if (confirm('Apakah Anda yakin ingin menghapus pesan ini? Tindakan ini tidak dapat dibatalkan.')) {
             destroy(route('admin.contact-messages.destroy', id));
         }
     };

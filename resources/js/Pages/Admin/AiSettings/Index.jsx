@@ -1,9 +1,10 @@
 // FILE: resources/js/Pages/Admin/AiSettings/Index.jsx
 // Consistent design with accent color theme
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { Cpu, Zap, Database } from 'lucide-react';
+import { Cpu, Zap, Database, ChevronDown } from 'lucide-react';
+import axios from 'axios';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
@@ -13,7 +14,12 @@ import toast from 'react-hot-toast';
 
 export default function Index({ settings }) {
     const { success } = usePage().props;
-    const [activeTab, setActiveTab] = useState('primary');
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialTab = urlParams.get('tab') || 'primary';
+    const [activeTab, setActiveTab] = useState(initialTab);
+    const [showModelDropdown, setShowModelDropdown] = useState(false);
+    const [availableModels, setAvailableModels] = useState([]);
+    const [loadingModels, setLoadingModels] = useState(false);
 
     // Convert settings array to object
     const settingsMap = {};
@@ -27,7 +33,6 @@ export default function Index({ settings }) {
             { key: 'ai_model_base_url', value: settingsMap.ai_model_base_url || '' },
             { key: 'ai_model_api_key', value: settingsMap.ai_model_api_key || '' },
             { key: 'ai_model_name', value: settingsMap.ai_model_name || '' },
-            { key: 'ai_embedding_model', value: settingsMap.ai_embedding_model || '' },
             { key: 'ai_max_tokens', value: settingsMap.ai_max_tokens || '2000' },
             { key: 'ai_temperature', value: settingsMap.ai_temperature || '0.7' },
             
@@ -49,6 +54,31 @@ export default function Index({ settings }) {
         { key: 'rag', label: 'RAG Settings', description: 'Pengaturan Retrieval Augmented Generation.', icon: Database },
     ];
 
+    const fetchModels = async () => {
+        setLoadingModels(true);
+        try {
+            const response = await axios.get(route('admin.ai-settings.models'));
+            if (response.data.success) {
+                setAvailableModels(response.data.models || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch models:', error);
+        } finally {
+            setLoadingModels(false);
+        }
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showModelDropdown && !event.target.closest('.model-dropdown-container')) {
+                setShowModelDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showModelDropdown]);
+
     const handleChange = (key, value) => {
         const updatedSettings = data.settings.map(s => 
             s.key === key ? { ...s, value } : s
@@ -63,8 +93,15 @@ export default function Index({ settings }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         post(route('admin.ai-settings.update'), {
+            preserveScroll: true,
+            preserveState: false, // Ensure state reload for fresh backend data
             onSuccess: () => toast.success('Pengaturan AI berhasil diperbarui'),
         });
+    };
+
+    const handleModelSelect = (modelId) => {
+        handleChange('ai_model_name', modelId);
+        setShowModelDropdown(false);
     };
 
     return (
@@ -105,33 +142,64 @@ export default function Index({ settings }) {
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <InputLabel htmlFor="ai_model_name" value="Chat Model" />
+                            <div className="relative model-dropdown-container z-50">
+                                <InputLabel htmlFor="ai_model_name" value="Chat Model" />
+                                <div className="relative">
                                     <TextInput
                                         id="ai_model_name"
                                         type="text"
-                                        className="mt-1 block w-full"
+                                        className="mt-1 block w-full pr-10"
                                         value={getSetting('ai_model_name')}
                                         onChange={(e) => handleChange('ai_model_name', e.target.value)}
+                                        onFocus={() => {
+                                            setShowModelDropdown(true);
+                                            if (availableModels.length === 0) {
+                                                fetchModels();
+                                            }
+                                        }}
                                         placeholder="gemini-claude-sonnet-4-5-thinking"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowModelDropdown(!showModelDropdown);
+                                            if (!showModelDropdown && availableModels.length === 0) {
+                                                fetchModels();
+                                            }
+                                        }}
+                                        className="absolute right-0 top-1/2 -translate-y-1/2 pr-3 flex items-center"
+                                    >
+                                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                                    </button>
                                 </div>
-                                <div>
-                                    <InputLabel htmlFor="ai_embedding_model" value="Embedding Model" />
-                                    <TextInput
-                                        id="ai_embedding_model"
-                                        type="text"
-                                        className="mt-1 block w-full"
-                                        value={getSetting('ai_embedding_model')}
-                                        onChange={(e) => handleChange('ai_embedding_model', e.target.value)}
-                                        placeholder="text-embedding-3-small"
-                                        disabled
-                                    />
-                                    <p className="mt-1 text-xs text-gray-500">
-                                        Embedding menggunakan Ollama (primary API tidak support)
-                                    </p>
-                                </div>
+                                {showModelDropdown && (
+                                    <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-xl max-h-60 overflow-y-auto">
+                                        {loadingModels ? (
+                                            <div className="p-4 text-sm text-gray-500">Loading models...</div>
+                                        ) : availableModels.length > 0 ? (
+                                            <div className="py-1">
+                                                {availableModels.map((model) => (
+                                                    <button
+                                                        key={model.id}
+                                                        type="button"
+                                                        onClick={() => handleModelSelect(model.id)}
+                                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm flex items-center justify-between border-b border-gray-100 last:border-b-0"
+                                                    >
+                                                        <span>{model.id}</span>
+                                                        {model.owned_by && (
+                                                            <span className="text-xs text-gray-400 capitalize">{model.owned_by}</span>
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 text-sm text-gray-500">No models available. Configure Base URL and API Key first.</div>
+                                        )}
+                                    </div>
+                                )}
+                                <p className="mt-1 text-xs text-gray-500">
+                                    Pilih model dari daftar atau ketik manual. Available dari OpenAI API dan Ollama.
+                                </p>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>

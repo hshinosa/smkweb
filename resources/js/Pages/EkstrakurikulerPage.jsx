@@ -1,30 +1,32 @@
 import React, { useState, useMemo } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { 
-    Dribbble, 
-    Activity, 
-    Music, 
-    Mic, 
-    Cpu, 
-    Bot, 
-    Flag, 
-    BookHeart, 
-    Target, 
-    Palette, 
-    Globe, 
-    Zap, 
-    Users, 
-    Trophy, 
-    Clock, 
-    MapPin, 
-    Phone, 
+import {
+    Dribbble,
+    Activity,
+    Music,
+    Mic,
+    Cpu,
+    Bot,
+    Flag,
+    BookHeart,
+    Target,
+    Palette,
+    Globe,
+    Zap,
+    Users,
+    Trophy,
+    Clock,
+    MapPin,
+    Phone,
     Calendar,
     ArrowRight,
     Star,
     Award,
     Heart,
     Microscope,
-    Compass
+    Compass,
+    Crown,
+    Shield
 } from 'lucide-react';
 
 import Navbar from '@/Components/Navbar';
@@ -35,6 +37,7 @@ import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { getPageMetadata } from '@/Utils/academicData';
+import { getImageUrl } from '@/Utils/imageUtils';
 import { usePage } from '@inertiajs/react';
 
 // --- Helper Functions for Visuals ---
@@ -44,7 +47,10 @@ const getCategoryTheme = (categoryName) => {
         'Olahraga': Activity,
         'Seni & Budaya': Palette,
         'Akademik & Sains': Cpu,
-        'Keagamaan & Sosial': Heart
+        'Keagamaan & Sosial': Heart,
+        'Organisasi Siswa': Crown,
+        'Kepemimpinan & Bela Negara': Flag,
+        'Teknologi & Inovasi': Bot
     };
 
     // Unified theme using project primary colors
@@ -58,8 +64,18 @@ const getCategoryTheme = (categoryName) => {
     };
 };
 
-const getActivityIcon = (name) => {
+const getActivityIcon = (name, type = 'ekstrakurikuler') => {
     const lowerName = name.toLowerCase();
+    
+    // Organisasi icons
+    if (type === 'organisasi') {
+        if (lowerName.includes('osis')) return Crown;
+        if (lowerName.includes('mpk')) return Shield;
+        if (lowerName.includes('paskibra')) return Flag;
+        return Crown;
+    }
+    
+    // Ekstrakurikuler icons
     if (lowerName.includes('basket')) return Dribbble;
     if (lowerName.includes('futsal') || lowerName.includes('sepak bola')) return Target;
     if (lowerName.includes('voli')) return Activity;
@@ -81,17 +97,35 @@ const getActivityIcon = (name) => {
 
 // --- Components ---
 
-const ActivityCard = ({ activity, categoryTheme, onClick }) => {
-    const Icon = getActivityIcon(activity.name);
+const ActivityCard = ({ activity, categoryTheme, onClick, isOrganisasi = false }) => {
+    const Icon = getActivityIcon(activity.name, isOrganisasi ? 'organisasi' : 'ekstrakurikuler');
+    const cardImage = getImageUrl(activity.image_url || activity.bg_image_url);
     
     return (
         <div className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full transform hover:-translate-y-1">
             {/* Header Visual */}
-            <div className={`h-32 ${categoryTheme.light} flex items-center justify-center relative overflow-hidden`}>
-                <div className="absolute inset-0 opacity-10 bg-pattern-dots"></div>
-                <div className={`w-16 h-16 ${categoryTheme.accent} rounded-2xl rotate-3 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300`}>
-                    <Icon className="w-8 h-8 text-white" />
-                </div>
+            <div className="h-48 relative overflow-hidden bg-gray-900">
+                {cardImage ? (
+                    <>
+                        <ResponsiveImage
+                            src={cardImage}
+                            alt={activity.name}
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                    </>
+                ) : (
+                    <>
+                        <div className={`absolute inset-0 ${categoryTheme.light}`}></div>
+                        <div className="absolute inset-0 opacity-10 bg-pattern-dots"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className={`w-16 h-16 ${categoryTheme.accent} rounded-2xl rotate-3 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300`}>
+                                <Icon className="w-8 h-8 text-white" />
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Body */}
@@ -99,14 +133,6 @@ const ActivityCard = ({ activity, categoryTheme, onClick }) => {
                 <h3 className="font-serif text-xl font-bold text-gray-900 mb-3 group-hover:text-primary transition-colors">
                     {activity.name}
                 </h3>
-                
-                {/* Schedule Badge */}
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5" />
-                        {activity.schedule ? activity.schedule.split(',')[0] : 'Jadwal Menyusul'} {/* Take first part of schedule */}
-                    </div>
-                </div>
 
                 {/* Description Truncated */}
                 <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-2 flex-1">
@@ -122,7 +148,7 @@ const ActivityCard = ({ activity, categoryTheme, onClick }) => {
                 )}
 
                 {/* Action Button */}
-                <button 
+                <button
                     onClick={onClick}
                     className="w-full py-2.5 rounded-xl border-2 border-primary text-primary font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 hover:bg-primary hover:text-white"
                 >
@@ -133,38 +159,64 @@ const ActivityCard = ({ activity, categoryTheme, onClick }) => {
     );
 };
 
-const ActivityDetailModal = ({ show, onClose, activity, categoryTheme }) => {
+const ActivityDetailModal = ({ show, onClose, activity, categoryTheme, isOrganisasi = false }) => {
     if (!activity) return null;
-    const Icon = getActivityIcon(activity.name);
+    const Icon = getActivityIcon(activity.name, isOrganisasi ? 'organisasi' : 'ekstrakurikuler');
+
+    // Use specific detailed fields if available, otherwise fallback
+    // Process URLs using getImageUrl helper
+    const headerImage = getImageUrl(activity.bg_image_url || activity.image_url);
+    // User requested to use main image (image_url) for the profile box, not the background image
+    const mainImage = getImageUrl(activity.image_url);
+    const description = activity.activity_description || activity.description;
+    
+    // Check if achievements_data exists and is an array (new format), otherwise use achievements (old format)
+    const hasNewAchievements = Array.isArray(activity.achievements_data) && activity.achievements_data.length > 0;
+    const achievementsList = hasNewAchievements ? activity.achievements_data : (activity.achievements || []);
+    
+    // Check if training_info exists and has the new structure (object with days array, start_time, end_time, etc.)
+    const hasTrainingInfo = activity.training_info && typeof activity.training_info === 'object' && (activity.training_info.days || activity.training_info.start_time || activity.training_info.location || activity.training_info.coach);
 
     return (
         <Modal show={show} onClose={onClose} maxWidth="4xl">
-            <div className="bg-white rounded-2xl overflow-hidden">
-                {/* Modal Header Banner */}
-                <div className="h-48 relative overflow-hidden bg-gray-900">
-                    {/* Image */}
-                    <ResponsiveImage 
-                        src={activity.image_url} 
-                        alt={activity.name} 
-                        className="absolute inset-0 w-full h-full object-cover"
+             <div className="bg-white rounded-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                {/* Modal Header Banner - Fixed height */}
+                <div className="h-48 relative overflow-hidden bg-gray-900 shrink-0 rounded-t-2xl">
+                    {/* Background Image */}
+                    <ResponsiveImage
+                        src={headerImage}
+                        alt={activity.name}
+                        className="absolute inset-0 w-full h-full object-cover opacity-80"
                         loading="lazy"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
                     
-                    <div className="absolute bottom-0 left-0 p-8 w-full bg-gradient-to-t from-black/80 to-transparent">
+                    <div className="absolute bottom-0 left-0 p-8 w-full">
                         <div className="flex items-end gap-6">
-                            <div className="w-20 h-20 bg-white rounded-2xl shadow-xl flex items-center justify-center transform translate-y-4">
-                                <Icon className={`w-10 h-10 ${categoryTheme.color}`} />
+                            {/* Profile Image / Logo */}
+                            <div className="w-20 h-20 bg-white rounded-2xl shadow-xl flex items-center justify-center transform translate-y-6 overflow-hidden border-2 border-white">
+                                {mainImage ? (
+                                    <img src={mainImage} alt={activity.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <Icon className={`w-10 h-10 ${categoryTheme.color}`} />
+                                )}
                             </div>
-                            <div className="text-white pb-2">
-                                <div className="text-white/80 text-sm font-bold uppercase tracking-wider mb-1">Ekstrakurikuler</div>
-                                <h2 className="text-3xl md:text-4xl font-serif font-bold">{activity.name}</h2>
+                            
+                            <div className="text-white flex-1 transform translate-y-3">
+                                <div className="text-white/80 text-sm font-bold uppercase tracking-wider mb-1 flex items-center gap-2">
+                                    <span className={`${categoryTheme.bg} ${categoryTheme.color} px-2 py-0.5 rounded text-xs`}>
+                                        {isOrganisasi ? 'Organisasi' : 'Ekstrakurikuler'}
+                                    </span>
+                                    <span>{activity.category}</span>
+                                </div>
+                                <h2 className="text-xl md:text-2xl font-serif font-bold drop-shadow-md">{activity.name}</h2>
                             </div>
                         </div>
                     </div>
                     
-                    <button 
+                    <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 rounded-full text-white transition-colors"
+                        className="absolute top-4 right-4 p-2 bg-black/30 hover:bg-black/50 backdrop-blur-sm rounded-full text-white transition-all z-10"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -172,90 +224,156 @@ const ActivityDetailModal = ({ show, onClose, activity, categoryTheme }) => {
                     </button>
                 </div>
 
-                {/* Modal Content */}
-                <div className="p-8 pt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left Column: Main Info */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <BookHeart className="w-5 h-5 text-gray-400" />
-                                Deskripsi Kegiatan
-                            </h3>
-                            <p className="text-gray-600 leading-relaxed text-lg">
-                                {activity.description}
-                            </p>
-                        </div>
+                {/* Modal Content - Scrollable */}
+                <div className="overflow-y-auto p-8 pt-12">
+                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Left Column: Main Info */}
+                        <div className="lg:col-span-2 space-y-8">
+                            {/* Description */}
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <BookHeart className="w-5 h-5 text-primary" />
+                                    Tentang {isOrganisasi ? 'Organisasi' : 'Kegiatan'}
+                                </h3>
+                                <div className="text-gray-600 leading-relaxed text-sm prose prose-blue max-w-none">
+                                    {description ? description.split('\n').map((line, i) => (
+                                        <p key={i} className="mb-2">{line}</p>
+                                    )) : <p className="italic text-gray-400">Belum ada deskripsi detail.</p>}
+                                </div>
+                            </div>
 
-                        <div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                <Trophy className="w-5 h-5 text-yellow-500" />
-                                Jejak Prestasi
-                            </h3>
-                            
-                            {/* Vertical Timeline for Achievements */}
-                            <div className="relative pl-4 border-l-2 border-gray-100 space-y-8">
-                                {activity.achievements && activity.achievements.length > 0 ? (
-                                    activity.achievements.map((achievement, idx) => (
-                                        <div key={idx} className="relative">
-                                            <div className={`absolute -left-[21px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm ${categoryTheme.accent}`}></div>
-                                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                                                <p className="font-bold text-gray-800">{achievement}</p>
-                                                <p className="text-sm text-gray-500 mt-1">Tingkat Kota/Provinsi • 2024</p>
+                            {/* Achievements - Scrollable Section */}
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                    <Trophy className="w-5 h-5 text-yellow-500" />
+                                    Jejak Prestasi
+                                </h3>
+                                
+                                <div className="max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                                    <div className="relative pl-4 border-l-2 border-gray-100 space-y-4">
+                                        {achievementsList.length > 0 ? (
+                                            achievementsList.map((achievement, idx) => {
+                                                const title = hasNewAchievements ? achievement.title : achievement;
+                                                const year = hasNewAchievements ? achievement.year : '2024';
+                                                const desc = hasNewAchievements ? achievement.description : 'Tingkat Kota/Provinsi';
+
+                                                return (
+                                                    <div key={idx} className="relative group">
+                                                        <div className={`absolute -left-[21px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm transition-colors ${categoryTheme.accent} group-hover:scale-110`}></div>
+                                                        <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 hover:shadow-md transition-all hover:bg-white hover:border-blue-100">
+                                                            <div className="flex justify-between items-start mb-1">
+                                                                <p className="font-bold text-sm text-gray-800">{title}</p>
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 bg-white rounded-full border border-gray-200 text-gray-500">{year}</span>
+                                                            </div>
+                                                            <p className="text-xs text-gray-600">{desc}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                                 <Trophy className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                                                 <p className="text-gray-500 italic">Belum ada data prestasi tercatat.</p>
                                             </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-gray-500 italic pl-4">Belum ada data prestasi terbaru.</p>
-                                )}
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Right Column: Info Box */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 sticky top-8">
-                            <h3 className="font-bold text-gray-900 mb-6 text-lg">Informasi Latihan</h3>
-                            
-                            <div className="space-y-6">
-                                <div className="flex items-start gap-4">
-                                    <div className={`p-2.5 rounded-lg ${categoryTheme.light} ${categoryTheme.color}`}>
-                                        <Clock className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Jadwal</p>
-                                        <p className="font-medium text-gray-900">{activity.schedule}</p>
-                                    </div>
+                        {/* Right Column: Info Box */}
+                        <div className="lg:col-span-1">
+                            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm sticky top-0">
+                                <h3 className="font-bold text-gray-900 mb-6 text-base border-b pb-2">
+                                    Informasi & Jadwal
+                                </h3>
+                                
+                                <div className="space-y-5">
+                                    {/* Training Info / Schedule */}
+                                    {hasTrainingInfo ? (
+                                        <div className="pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                                            {activity.training_info.days && activity.training_info.days.length > 0 && (
+                                                <div className="flex items-start gap-3 mb-3">
+                                                    <div className={`p-1.5 rounded-lg shrink-0 ${categoryTheme.light} ${categoryTheme.color}`}>
+                                                        <Calendar className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Hari Latihan</p>
+                                                        <p className="font-medium text-sm text-gray-900">{activity.training_info.days.join(', ')}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {(activity.training_info.start_time || activity.training_info.end_time) && (
+                                                <div className="flex items-start gap-3 mb-3">
+                                                    <div className={`p-1.5 rounded-lg shrink-0 ${categoryTheme.light} ${categoryTheme.color}`}>
+                                                        <Clock className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Waktu Latihan</p>
+                                                        <p className="font-medium text-sm text-gray-900">
+                                                            {activity.training_info.start_time && activity.training_info.end_time
+                                                                ? `${activity.training_info.start_time} - ${activity.training_info.end_time}`
+                                                                : (activity.training_info.start_time || activity.training_info.end_time || 'Menyusul')}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {activity.training_info.location && (
+                                                <div className="flex items-start gap-3 mb-3">
+                                                    <div className={`p-1.5 rounded-lg shrink-0 ${categoryTheme.light} ${categoryTheme.color}`}>
+                                                        <MapPin className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Lokasi Latihan</p>
+                                                        <p className="font-medium text-sm text-gray-900">{activity.training_info.location}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {activity.training_info.coach && (
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`p-1.5 rounded-lg shrink-0 ${categoryTheme.light} ${categoryTheme.color}`}>
+                                                        <Users className="w-3.5 h-3.5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Pembina/Pelatih</p>
+                                                        <p className="font-medium text-sm text-gray-900">{activity.training_info.coach}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-start gap-3">
+                                                <div className={`p-2 rounded-lg ${categoryTheme.light} ${categoryTheme.color}`}>
+                                                    <Clock className="w-4 h-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Jadwal Umum</p>
+                                                    <p className="font-medium text-sm text-gray-900">{activity.schedule || 'Menyusul'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <div className={`p-2 rounded-lg ${categoryTheme.light} ${categoryTheme.color}`}>
+                                                    <MapPin className="w-4 h-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Lokasi</p>
+                                                    <p className="font-medium text-sm text-gray-900">{isOrganisasi ? 'Sekretariat' : 'Area Sekolah'}</p>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
 
-                                <div className="flex items-start gap-4">
-                                    <div className={`p-2.5 rounded-lg ${categoryTheme.light} ${categoryTheme.color}`}>
-                                        <MapPin className="w-5 h-5" />
+                                <div className="mt-8 pt-6 border-t border-gray-100">
+                                    <div className={`${categoryTheme.bg} border ${categoryTheme.border} rounded-xl p-4 text-center`}>
+                                        <p className={`text-sm font-bold ${categoryTheme.color} mb-1`}>
+                                            Tertarik Bergabung?
+                                        </p>
+                                        <p className="text-xs text-gray-600">
+                                            Hubungi pembina atau datang langsung saat jadwal latihan.
+                                        </p>
                                     </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Lokasi</p>
-                                        <p className="font-medium text-gray-900">Lapangan Utama / Aula</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start gap-4">
-                                    <div className={`p-2.5 rounded-lg ${categoryTheme.light} ${categoryTheme.color}`}>
-                                        <Users className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Pembina</p>
-                                        <p className="font-medium text-gray-900">{activity.coach_name || 'Akan diinformasikan'}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 pt-6 border-t border-gray-200">
-                                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
-                                    <p className="text-sm font-bold text-primary mb-1">
-                                        Tertarik Bergabung?
-                                    </p>
-                                    <p className="text-xs text-gray-600">
-                                        Silakan hubungi Wali Kelas atau Pembina Ekstrakurikuler untuk informasi pendaftaran lebih lanjut.
-                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -277,6 +395,7 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
     const [selectedActivity, setSelectedActivity] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [activeCategoryTheme, setActiveCategoryTheme] = useState(null);
+    const [selectedIsOrganisasi, setSelectedIsOrganisasi] = useState(false);
 
     const heroSettings = siteSettings?.hero_extracurricular || {};
     
@@ -299,9 +418,10 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
         );
     };
 
-    const openDetailModal = (activity, categoryName) => {
+    const openDetailModal = (activity, categoryName, isOrganisasi = false) => {
         setSelectedActivity(activity);
         setActiveCategoryTheme(getCategoryTheme(categoryName));
+        setSelectedIsOrganisasi(isOrganisasi);
         setShowModal(true);
     };
 
@@ -310,20 +430,39 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
         setTimeout(() => setSelectedActivity(null), 300); // Delay clear for animation
     };
 
-    const groupedActivities = useMemo(() => {
-        const categories = [...new Set(extracurriculars.map(e => e.category))];
+    // Separate organisasi and ekstrakurikuler
+    const organisasiItems = useMemo(() => {
+        return extracurriculars.filter(e => e.type === 'organisasi');
+    }, [extracurriculars]);
+
+    const ekstrakurikulerItems = useMemo(() => {
+        return extracurriculars.filter(e => e.type === 'ekstrakurikuler' || !e.type);
+    }, [extracurriculars]);
+
+    // Group ekstrakurikuler by category
+    const groupedEkstrakurikuler = useMemo(() => {
+        const categories = [...new Set(ekstrakurikulerItems.map(e => e.category))];
         return categories.map(cat => ({
             category: cat,
-            activities: extracurriculars.filter(e => e.category === cat)
+            activities: ekstrakurikulerItems.filter(e => e.category === cat)
         }));
-    }, [extracurriculars]);
+    }, [ekstrakurikulerItems]);
+
+    // Group organisasi by category
+    const groupedOrganisasi = useMemo(() => {
+        const categories = [...new Set(organisasiItems.map(e => e.category))];
+        return categories.map(cat => ({
+            category: cat,
+            activities: organisasiItems.filter(e => e.category === cat)
+        }));
+    }, [organisasiItems]);
 
     return (
         <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
-            <SEOHead 
-                title={pageMetadata?.ekstrakurikuler?.title || 'Ekstrakurikuler'}
-                description={pageMetadata?.ekstrakurikuler?.description || ''}
-                keywords={`ekstrakurikuler, ekskul, kegiatan sekolah, OSIS, pramuka, basket, futsal, musik, sains, robotika, ${siteName}`}
+            <SEOHead
+                title="Organisasi & Ekstrakurikuler"
+                description={pageMetadata?.ekstrakurikuler?.description || 'Wadah pengembangan bakat, kreativitas, dan kepemimpinan siswa melalui kegiatan organisasi dan ekstrakurikuler.'}
+                keywords={`organisasi, ekstrakurikuler, ekskul, kegiatan sekolah, OSIS, MPK, paskibra, pramuka, basket, futsal, musik, seni, sains, robotika, ${siteName}`}
                 image="/images/ekskul-banner.jpg"
             />
             
@@ -342,7 +481,7 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
                     {formatImagePath(heroImage) && (
                         <HeroImage 
                             src={formatImagePath(heroImage)} 
-                            alt={`Background Ekstrakurikuler ${siteName}`} 
+                            alt={`Background Organisasi & Ekstrakurikuler ${siteName}`} 
                         />
                     )}
                     <div className="absolute inset-0 bg-black/60"></div>
@@ -350,46 +489,76 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
 
                 <div className="relative z-10 container mx-auto px-4 text-center text-white">
                     <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
-                        {renderHighlightedTitle(heroSettings.title || 'Ekstrakurikuler')}
+                        {renderHighlightedTitle('Organisasi & Ekstrakurikuler')}
                     </h1>
                     <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
-                        {heroSettings.subtitle || `Wadah kreativitas dan prestasi siswa ${siteName} untuk membentuk karakter unggul.`}
+                        {heroSettings.subtitle || `Wadah pengembangan bakat, kreativitas dan kepemimpinan siswa ${siteName} untuk membentuk karakter unggul.`}
                     </p>
                 </div>
             </section>
 
-            {/* 2. CATALOG SECTION */}
-            <section className="py-20 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    
-                    {/* Render Categories */}
-                    {groupedActivities.length > 0 ? (
-                        groupedActivities.map((group, idx) => {
+            {/* 2. ORGANISASI SECTION - Langsung tampilkan kategori tanpa header section */}
+            {organisasiItems.length > 0 && (
+                <section className="py-20 bg-secondary">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                        {/* Render Organisasi Groups */}
+                        {groupedOrganisasi.map((group, idx) => {
                             const theme = getCategoryTheme(group.category);
                             
                             return (
                                 <div key={idx} className="mb-20 last:mb-0">
-                                    {/* Category Header */}
-                                    <div className="flex items-center gap-4 mb-10">
-                                        <div className={`p-3 rounded-xl ${theme.light} ${theme.color}`}>
-                                            <theme.icon className="w-8 h-8" />
-                                        </div>
-                                        <div>
-                                            <h2 className={`${TYPOGRAPHY.sectionHeading} text-gray-900`}>
-                                                {group.category}
-                                            </h2>
-                                            <div className={`h-1.5 w-24 ${theme.accent} mt-2 rounded-full`}></div>
-                                        </div>
+                                    {/* Category Header - Aligned left */}
+                                    <div className="text-left mb-12">
+                                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                                            {group.category.split(' ').slice(0, -1).join(' ')} <span className="text-primary">{group.category.split(' ').slice(-1)}</span>
+                                        </h2>
                                     </div>
 
                                     {/* Grid */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                         {group.activities.map((activity, index) => (
-                                            <ActivityCard 
-                                                key={index} 
-                                                activity={activity} 
+                                            <ActivityCard
+                                                key={index}
+                                                activity={activity}
                                                 categoryTheme={theme}
-                                                onClick={() => openDetailModal(activity, group.category)}
+                                                isOrganisasi={true}
+                                                onClick={() => openDetailModal(activity, group.category, true)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
+
+            {/* 3. EKSTRAKURIKULER SECTION - Langsung tampilkan kategori tanpa header section */}
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Render Ekstrakurikuler Categories */}
+                    {groupedEkstrakurikuler.length > 0 ? (
+                        groupedEkstrakurikuler.map((group, idx) => {
+                            const theme = getCategoryTheme(group.category);
+                            
+                            return (
+                                <div key={idx} className="mb-20 last:mb-0">
+                                    {/* Category Header - Aligned left */}
+                                    <div className="text-left mb-12">
+                                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`}>
+                                            {group.category.split(' ').slice(0, -1).join(' ')} <span className="text-primary">{group.category.split(' ').slice(-1)}</span>
+                                        </h2>
+                                    </div>
+
+                                    {/* Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        {group.activities.map((activity, index) => (
+                                            <ActivityCard
+                                                key={index}
+                                                activity={activity}
+                                                categoryTheme={theme}
+                                                isOrganisasi={false}
+                                                onClick={() => openDetailModal(activity, group.category, false)}
                                             />
                                         ))}
                                     </div>
@@ -397,7 +566,7 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
                             );
                         })
                     ) : (
-                        <div className="text-center py-20">
+                        <div className="text-center py-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
                             <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                             <h3 className="text-xl font-bold text-gray-900">Belum ada data ekstrakurikuler</h3>
                             <p className="text-gray-500">Silakan kembali lagi nanti.</p>
@@ -407,7 +576,7 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
                 </div>
             </section>
 
-            {/* 3. CTA / JOIN SECTION */}
+            {/* 4. CTA / JOIN SECTION */}
             <section className="py-20 bg-primary relative overflow-hidden">
                 {/* Decorative Circles */}
                 <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
@@ -449,6 +618,7 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
                 onClose={closeModal} 
                 activity={selectedActivity} 
                 categoryTheme={activeCategoryTheme}
+                isOrganisasi={selectedIsOrganisasi}
             />
         </div>
     );

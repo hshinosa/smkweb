@@ -84,3 +84,11 @@ deploy-*.log
 
 docs
 foto-guru
+
+# CLIProxyAPI - AI Proxy for Claude/Gemini
+cliproxyapi/auths/*
+cliproxyapi/logs/*
+!cliproxyapi/auths/.gitkeep
+!cliproxyapi/logs/.gitkeep
+# Keep config.yaml as example
+# Actual credentials are inside auths/

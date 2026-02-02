@@ -7,7 +7,7 @@ export default function ThumbnailCardSection({ data, setData, errors, programNam
     const programLabels = {
         mipa: 'MIPA (Matematika & Ilmu Pengetahuan Alam)',
         ips: 'IPS (Ilmu Pengetahuan Sosial)',
-        bahasa: 'Bahasa & Budaya'
+        bahasa: 'Bahasa'
     };
 
     return (

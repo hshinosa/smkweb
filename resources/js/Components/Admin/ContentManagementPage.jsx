@@ -25,7 +25,7 @@ export default function ContentManagementPage({
 }) {
     const activeTabData = tabs.find(t => t.key === activeTab);
     const Wrapper = noForm ? 'div' : 'form';
-    const wrapperProps = noForm ? {} : { onSubmit: onSave };
+    const wrapperProps = noForm ? { className: "space-y-6" } : { onSubmit: onSave, className: "space-y-6" };
 
     return (
         <AdminLayout headerTitle={headerTitle}>

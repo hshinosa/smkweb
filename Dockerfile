@@ -51,7 +51,8 @@ COPY --from=node-builder /app/public/build ./public/build
 RUN rm -f bootstrap/cache/*.php
 
 # 5. Jalankan package discovery secara manual setelah semua file lengkap
-RUN php artisan package:discover --ansi
+# Allow build to continue even if DB is not reachable at build time
+RUN php artisan package:discover --ansi || true
 
 # Set permissions and create necessary directories
 RUN chown -R www-data:www-data /var/www \

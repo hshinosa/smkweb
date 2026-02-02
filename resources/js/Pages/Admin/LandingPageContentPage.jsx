@@ -48,7 +48,8 @@ export default function LandingPageContentPage() {
         });
     });
 
-    const [activeTab, setActiveTab] = useState('hero');
+    const { activeTab: initialTab } = usePage().props;
+    const [activeTab, setActiveTab] = useState(initialTab || 'hero');
 
     // Tab configuration
     const tabs = [
@@ -107,7 +108,21 @@ export default function LandingPageContentPage() {
             formData.append('kepsek_welcome_lp[kepsek_image]', selectedFiles.kepsekImage);
         }
 
-        baseHandleSubmit(e, formData);
+        // Add explicit preserve options for Inertia
+        const options = {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: (page) => {
+                // Determine active tab based on what was saved or use default fallback if server doesn't return
+                // Although server should redirect with ?tab=...
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('tab')) {
+                    setActiveTab(urlParams.get('tab'));
+                }
+            }
+        };
+
+        baseHandleSubmit(e, formData, options);
     };
 
     // Render content based on active tab

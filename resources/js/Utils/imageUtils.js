@@ -26,9 +26,24 @@ export const normalizeUrl = (url) => {
         return url;
     }
 
-    // If it already starts with /, return as-is
+    // If it already starts with /, check if it is a valid path or needs storage prefix
     if (typeof url === 'string' && url.startsWith('/')) {
+        // Known public paths that should NOT get /storage prefix
+        const publicPaths = ['/images/', '/scraped-images/', '/logo.png', '/favicon.ico', '/storage/'];
+        if (publicPaths.some(path => url.startsWith(path))) {
+            return url;
+        }
+        // If it starts with / but not in public paths, it might be a relative path that needs storage
+        // However, standard Laravel storage storage:link creates /storage
         return url;
+    }
+
+    // New: Handle common public root directories/files starting without /
+    if (typeof url === 'string') {
+        const publicRootPatterns = ['images/', 'scraped-images/', 'logo.png', 'favicon.ico'];
+        if (publicRootPatterns.some(pattern => url.startsWith(pattern))) {
+            return `/${url}`;
+        }
     }
 
     // Otherwise, assume it's a relative path from the storage disk and prefix it

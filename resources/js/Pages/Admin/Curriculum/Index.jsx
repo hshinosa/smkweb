@@ -12,8 +12,8 @@ import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import FileUploadField from '@/Components/Admin/FileUploadField';
 import toast from 'react-hot-toast';
 
-export default function Index({ auth, settings = {} }) {
-    const [activeTab, setActiveTab] = useState('intro');
+export default function Index({ auth, settings = {}, activeSection = 'intro' }) {
+    const [activeTab, setActiveTab] = useState(activeSection);
 
 
     // Form for Intro & Fases
@@ -72,6 +72,8 @@ export default function Index({ auth, settings = {} }) {
         if (e) e.preventDefault();
         introForm.post(route('admin.curriculum.update'), {
             forceFormData: true,
+            preserveScroll: true,
+            preserveState: false, // Reload to ensure data consistency
             onSuccess: () => {
                 toast.success('Intro & Fase berhasil disimpan!');
             },
@@ -84,6 +86,8 @@ export default function Index({ auth, settings = {} }) {
     const handleGradingSubmit = (e) => {
         if (e) e.preventDefault();
         gradingForm.post(route('admin.curriculum.update'), {
+            preserveScroll: true,
+            preserveState: false,
             onSuccess: () => {
                 toast.success('Sistem Penilaian berhasil disimpan!');
             },
@@ -96,6 +100,8 @@ export default function Index({ auth, settings = {} }) {
     const handleGoalsSubmit = (e) => {
         if (e) e.preventDefault();
         goalsForm.post(route('admin.curriculum.update'), {
+            preserveScroll: true,
+            preserveState: false,
             onSuccess: () => {
                 toast.success('Tujuan Belajar berhasil disimpan!');
             },
@@ -108,6 +114,8 @@ export default function Index({ auth, settings = {} }) {
     const handleMetodeSubmit = (e) => {
         if (e) e.preventDefault();
         metodeForm.post(route('admin.curriculum.update'), {
+            preserveScroll: true,
+            preserveState: false,
             onSuccess: () => {
                 toast.success('Metode Pembelajaran berhasil disimpan!');
             },
@@ -263,6 +271,7 @@ export default function Index({ auth, settings = {} }) {
                                 </div>
                                 <div>
                                     <FileUploadField
+                                        id="fase-e-image"
                                         label="Gambar Fase E"
                                         previewUrl={introForm.data.fase_e_image_url}
                                         onChange={(file) => introForm.setData('fase_e_image', file)}
@@ -328,6 +337,7 @@ export default function Index({ auth, settings = {} }) {
                                 </div>
                                 <div>
                                     <FileUploadField
+                                        id="fase-f-image"
                                         label="Gambar Fase F"
                                         previewUrl={introForm.data.fase_f_image_url}
                                         onChange={(file) => introForm.setData('fase_f_image', file)}

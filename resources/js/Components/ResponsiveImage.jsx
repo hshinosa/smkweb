@@ -111,59 +111,9 @@ export default function ResponsiveImage({
         return fallback || null;
     }
 
-    // Check if this is a Spatie Media Library URL
-    if (isSpatieMediaPath(src)) {
-        const mobileUrl = getSpatieConversionUrl(src, 'mobile');
-        const tabletUrl = getSpatieConversionUrl(src, 'tablet');
-        const desktopUrl = getSpatieConversionUrl(src, 'desktop');
-        const webpUrl = getSpatieConversionUrl(src, 'webp');
-
-        return (
-            <picture>
-                {mobileUrl && (
-                    <source
-                        media="(max-width: 640px)"
-                        srcSet={mobileUrl}
-                        type="image/webp"
-                        sizes={sizes}
-                    />
-                )}
-                {tabletUrl && (
-                    <source
-                        media="(max-width: 1024px)"
-                        srcSet={tabletUrl}
-                        type="image/webp"
-                        sizes={sizes}
-                    />
-                )}
-                {desktopUrl && (
-                    <source
-                        media="(min-width: 1025px)"
-                        srcSet={desktopUrl}
-                        type="image/webp"
-                        sizes={sizes}
-                    />
-                )}
-                {webpUrl && (
-                    <source
-                        srcSet={webpUrl}
-                        type="image/webp"
-                    />
-                )}
-                <img
-                    src={normalizedSrc}
-                    alt={alt}
-                    className={className}
-                    loading={loading}
-                    fetchpriority={fetchpriority}
-                    width={width}
-                    height={height}
-                    onError={handleError}
-                    {...props}
-                />
-            </picture>
-        );
-    }
+    // For Spatie Media Library URLs - use original for now
+    // Conversions will be created automatically on next upload
+    // This provides faster page loads without regenerating all media
 
     // For static images or external URLs - just render img tag
     return (

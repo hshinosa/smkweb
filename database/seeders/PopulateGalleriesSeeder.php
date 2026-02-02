@@ -32,13 +32,14 @@ class PopulateGalleriesSeeder extends Seeder
         ];
 
         foreach ($galleryData as $title => $imageName) {
+            // Create gallery with temporary URL
             $gallery = Gallery::create([
                 'title' => $title,
                 'description' => "Dokumentasi kegiatan {$title} di SMAN 1 Baleendah.",
                 'type' => 'photo',
                 'category' => 'Kegiatan',
                 'is_featured' => true,
-                'url' => "/storage/gallery/{$imageName}", // Dummy
+                'url' => 'temp', // Temporary placeholder
             ]);
 
             // ALWAYS use Smansa for gallery as requested
@@ -53,6 +54,12 @@ class PopulateGalleriesSeeder extends Seeder
                         ->preservingOriginal()
                         ->toMediaCollection('images');
                 }
+            }
+
+            // Update URL to actual Media Library URL
+            $media = $gallery->getFirstMedia('images');
+            if ($media) {
+                $gallery->update(['url' => $media->getUrl()]);
             }
         }
         

@@ -18,18 +18,23 @@ export default function Index({ documents }) {
     ];
 
     const handleReprocess = (id) => {
-        if (confirm('Proses ulang embeddings untuk dokumen ini?')) {
+        if (confirm('Apakah Anda yakin ingin memproses ulang embeddings untuk dokumen ini? Proses ini mungkin memakan waktu beberapa menit.')) {
             setProcessing(id);
+            toast.loading('Memproses embeddings... Ini mungkin memakan waktu beberapa menit.', { duration: 5000 });
+            
             router.post(route('admin.rag-documents.reprocess', id), {}, {
                 preserveScroll: true,
                 onFinish: () => setProcessing(null),
-                onSuccess: () => toast.success('Dokumen berhasil diproses ulang'),
+                onSuccess: () => toast.success('Dokumen berhasil diproses ulang! Embeddings sudah diperbarui.'),
+                onError: () => {
+                    toast.error('Gagal memproses dokumen. Periksa konfigurasi AI atau coba lagi.');
+                }
             });
         }
     };
 
     const handleDelete = (id) => {
-        if (confirm('Hapus dokumen ini? Semua chunks dan embeddings akan dihapus.')) {
+        if (confirm('Apakah Anda yakin ingin menghapus dokumen ini? Semua chunks dan embeddings akan dihapus dan tidak dapat dipulihkan.')) {
             router.delete(route('admin.rag-documents.destroy', id), {
                 preserveScroll: true,
                 onSuccess: () => toast.success('Dokumen berhasil dihapus'),

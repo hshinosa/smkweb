@@ -35,6 +35,7 @@ class SpmbContentController extends Controller
 
         return Inertia::render('Admin/SpmbContentPage', [
             'currentSettings' => $pageData,
+            'activeSection' => request('section', 'pengaturan_umum'), // Capture section passed from redirect
         ]);
     }
 
@@ -42,6 +43,18 @@ class SpmbContentController extends Controller
     {
         $inputData = $request->all();
         Log::info('SPMB Update Input Data Raw:', $inputData);
+
+        // Determine which section is being updated to preserve it after redirect
+        $targetSection = 'pengaturan_umum';
+        // Priority check based on keys in request.
+        // Note: The request structure might contain keys for multiple sections or just one.
+        // Assuming the form submission structure from the frontend, we can infer the section.
+        if (isset($inputData['pengaturan_umum'])) $targetSection = 'pengaturan_umum';
+        elseif (isset($inputData['jalur_pendaftaran'])) $targetSection = 'jalur_pendaftaran';
+        elseif (isset($inputData['jadwal_penting'])) $targetSection = 'jadwal_penting';
+        elseif (isset($inputData['persyaratan'])) $targetSection = 'persyaratan';
+        elseif (isset($inputData['prosedur'])) $targetSection = 'prosedur';
+        elseif (isset($inputData['faq'])) $targetSection = 'faq';
 
         // Preprocess FormData inputs (strings -> arrays/booleans)
         // 1. Handle Boolean fields
@@ -230,7 +243,7 @@ class SpmbContentController extends Controller
 
             ActivityLogger::log('Update Konten SPMB', 'Semua section SPMB telah diperbarui.', $request);
 
-            return redirect()->route('admin.spmb.index')
+            return redirect()->route('admin.spmb.index', ['section' => $targetSection])
                 ->with('success', 'Konten SPMB berhasil diperbarui!');
 
         } catch (\Exception $e) {

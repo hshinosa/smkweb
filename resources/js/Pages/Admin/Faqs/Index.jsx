@@ -72,14 +72,16 @@ export default function Index({ faqs }) {
         if (editMode) {
             put(route('admin.faqs.update', currentId), {
                 onSuccess: () => {
-                    closeModal();
+                    reset(); // Reset form first
+                    setIsModalOpen(false); // Then close modal
                     toast.success('FAQ berhasil diperbarui');
                 }
             });
         } else {
             post(route('admin.faqs.store'), {
                 onSuccess: () => {
-                    closeModal();
+                    reset(); // Reset form first
+                    setIsModalOpen(false); // Then close modal
                     toast.success('FAQ baru berhasil ditambahkan');
                 }
             });
@@ -87,7 +89,7 @@ export default function Index({ faqs }) {
     };
 
     const handleDelete = (id) => {
-        if (confirm('Hapus FAQ ini?')) {
+        if (confirm('Apakah Anda yakin ingin menghapus FAQ ini? Tindakan ini tidak dapat dibatalkan.')) {
             destroy(route('admin.faqs.destroy', id), {
                 preserveScroll: true,
                 onSuccess: () => toast.success('FAQ berhasil dihapus')
@@ -111,15 +113,28 @@ export default function Index({ faqs }) {
         const dragIndex = parseInt(e.dataTransfer.getData("index"));
         if (dragIndex === dropIndex) return;
         
+        // Backup for rollback
+        const backupItems = [...orderedFaqs];
+        
         const newItems = [...orderedFaqs];
         const [draggedItem] = newItems.splice(dragIndex, 1);
         newItems.splice(dropIndex, 0, draggedItem);
         
+        // Optimistic update
         setOrderedFaqs(newItems);
         
-        // Save to server
+        // Save to server with error handling and rollback
         const ids = newItems.map(item => item.id);
-        axios.post(route('admin.faqs.reorder'), { items: ids });
+        axios.post(route('admin.faqs.reorder'), { items: ids })
+            .then(() => {
+                toast.success('Urutan FAQ berhasil disimpan');
+            })
+            .catch((error) => {
+                // Rollback on error
+                setOrderedFaqs(backupItems);
+                toast.error('Gagal menyimpan urutan FAQ');
+                console.error('Reorder error:', error);
+            });
     };
 
     return (

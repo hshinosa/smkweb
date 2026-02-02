@@ -76,25 +76,6 @@ export default function ProcedureSection({ data, setData, addStep, removeStep, u
                     )}
                 </div>
             </div>
-
-            {/* Informasi Kontak */}
-            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 space-y-4">
-                <div className="border-b pb-3">
-                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <span className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
-                        Informasi Kontak
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">Kontak untuk bantuan pendaftaran</p>
-                </div>
-                <MiniTextEditor
-                    initialValue={data.prosedur.contact_info || ''}
-                    onChange={(value) => setData('prosedur', {
-                        ...data.prosedur,
-                        contact_info: value
-                    })}
-                    placeholder="Informasi kontak untuk bantuan pendaftaran..."
-                />
-            </div>
         </div>
     );
 }

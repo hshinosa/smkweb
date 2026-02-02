@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronRight, X, ChevronDown } from 'lucide-react';
+import '../../css/scrollbar.css';
 
 export default function ContentEditorSidebar({ tabs, activeTab, setActiveTab }) {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -37,7 +38,7 @@ export default function ContentEditorSidebar({ tabs, activeTab, setActiveTab }) 
 
             {/* Navigation - Card-based design with clear active states */}
             <nav className={`lg:block ${isExpanded ? 'block' : 'hidden'}`} aria-label="Menu navigasi editor">
-                <div className="bg-white rounded-b-xl lg:rounded-xl shadow-sm border border-gray-100 lg:border-none lg:shadow-none overflow-hidden">
+                <div className="bg-white rounded-b-xl lg:rounded-xl shadow-sm border border-gray-100 lg:border-none lg:shadow-none overflow-y-auto max-h-[550px] custom-scrollbar">
                     {tabs.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.key;

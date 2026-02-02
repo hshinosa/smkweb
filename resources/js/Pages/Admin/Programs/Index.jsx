@@ -1,7 +1,7 @@
 // FILE: resources/js/Pages/Admin/Programs/Index.jsx
 // Fully responsive programs management page with accent color theme
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
@@ -15,6 +15,144 @@ import toast from 'react-hot-toast';
 import { getImageUrl } from '@/Utils/imageUtils';
 
 export default function Index({ programs }) {
+    const { success } = usePage().props;
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [currentId, setCurrentId] = useState(null);
+    const [activeTab, setActiveTab] = useState('list');
+    const [previewUrl, setPreviewUrl] = useState(null);
+
+    const { data, setData, post, put, delete: destroy, processing, errors, reset } = useForm({
+        title: '', category: '', description: '', link: '', image: null, image_url: '', sort_order: 0, is_featured: true,
+    });
+
+    // BUG-8 Fix: Cleanup URL.createObjectURL to prevent memory leak
+    useEffect(() => {
+        return () => {
+            if (previewUrl && previewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
+
+    // Update preview URL when image changes
+    useEffect(() => {
+        if (data.image instanceof File) {
+            if (previewUrl && previewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl);
+            }
+            const newPreviewUrl = URL.createObjectURL(data.image);
+            setPreviewUrl(newPreviewUrl);
+        } else if (data.image_url) {
+            setPreviewUrl(data.image_url);
+        } else {
+            setPreviewUrl(null);
+        }
+    }, [data.image, data.image_url]);
+
+    // BUG-8 Fix: Cleanup URL.createObjectURL to prevent memory leak
+    useEffect(() => {
+        return () => {
+            if (previewUrl && previewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
+
+    // Update preview URL when image changes
+    useEffect(() => {
+        if (data.image instanceof File) {
+            // Revoke old preview URL
+            if (previewUrl && previewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl);
+            }
+            // Create new preview URL
+            const newPreviewUrl = URL.createObjectURL(data.image);
+            setPreviewUrl(newPreviewUrl);
+        } else if (data.image_url) {
+            setPreviewUrl(data.image_url);
+        } else {
+            setPreviewUrl(null);
+        }
+    }, [data.image, data.image_url]);
+
+    const tabs = [{ key: 'list', label: 'Program Sekolah', description: 'Kelola program unggulan sekolah.', icon: Grid }];
+
+    const openModal = (program = null) => {
+        if (program) { 
+            setEditMode(true); 
+            setCurrentId(program.id); 
+            setData({ 
+                title: program.title || '', 
+                category: program.category || '', 
+                description: program.description || '', 
+                link: program.link || '', 
+                image: null, 
+                image_url: program.image_url || '', 
+                sort_order: program.sort_order || 0, 
+                is_featured: !!program.is_featured 
+            }); 
+        } else { 
+            setEditMode(false); 
+            setCurrentId(null); 
+            reset();
+        }
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => { setIsModalOpen(false); reset(); };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        
+        // BUG-3 Fix: Validate file before submit
+        if (data.image instanceof File) {
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            
+            if (data.image.size > maxSize) {
+                toast.error('Ukuran gambar maksimal 10MB');
+                return;
+            }
+            
+            if (!allowedTypes.includes(data.image.type)) {
+                toast.error('Format gambar harus JPG, PNG, GIF, atau WebP');
+                return;
+            }
+        }
+        
+        const needsFormData = data.image instanceof File;
+        if (editMode) {
+            put(route('admin.programs.update', currentId), {
+                forceFormData: needsFormData,
+                preserveState: true,
+                onSuccess: () => {
+                    reset(); // BUG-2 Fix: Reset form first
+                    setIsModalOpen(false); // Then close modal
+                    setEditMode(false);
+                    setCurrentId(null);
+                    toast.success('Program berhasil diperbarui');
+                },
+            });
+        } else {
+            post(route('admin.programs.store'), {
+                onSuccess: () => {
+                    reset(); // BUG-2 Fix: Reset form first
+                    setIsModalOpen(false); // Then close modal
+                    toast.success('Program baru berhasil ditambahkan');
+                }
+            });
+        }
+    };
+
+    const handleDelete = (id) => {
+        if (confirm('Apakah Anda yakin ingin menghapus program ini? Tindakan ini tidak dapat dibatalkan.')) {
+            destroy(route('admin.programs.destroy', id), {
+                preserveScroll: true,
+                onSuccess: () => toast.success('Program berhasil dihapus')
+            });
+        }
+    };
 
     return (
         <ContentManagementPage 
@@ -86,7 +224,7 @@ export default function Index({ programs }) {
                         <div><InputLabel htmlFor="description" value="Deskripsi" /><textarea id="description" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:border-accent-yellow text-sm" rows="3" value={data.description} onChange={(e) => setData('description', e.target.value)} required></textarea><InputError message={errors.description} className="mt-2" /></div>
                         <div><InputLabel htmlFor="link" value="Link Halaman (Opsional)" /><TextInput id="link" type="text" className="mt-1 block w-full" value={data.link} onChange={(e) => setData('link', e.target.value)} placeholder="/akademik/..." /></div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div><InputLabel value="Gambar (Opsional)" /><FileUploadField id="program_image" label="Gambar" previewUrl={data.image_url && !data.image ? data.image_url : (data.image ? URL.createObjectURL(data.image) : '')} onChange={(file) => setData('image', file)} error={errors.image} /></div>
+                            <div><InputLabel value="Gambar (Opsional)" /><FileUploadField id="program_image" label="Gambar" previewUrl={previewUrl || ''} onChange={(file) => setData('image', file)} error={errors.image} /></div>
                             <div className="space-y-4"><div><InputLabel htmlFor="sort_order" value="Urutan" /><TextInput id="sort_order" type="number" className="mt-1 block w-full max-w-[100px]" value={data.sort_order} onChange={(e) => setData('sort_order', parseInt(e.target.value) || 0)} min="0" /></div><label className="flex items-center gap-2"><input type="checkbox" id="is_featured" checked={data.is_featured} onChange={(e) => setData('is_featured', e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-accent-yellow focus:ring-accent-yellow" /><span className="text-sm text-gray-700">Tampilkan di Landing Page</span></label></div>
                         </div>
                         <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200"><button type="button" onClick={closeModal} className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium">Batal</button><PrimaryButton type="submit" disabled={processing} className="!bg-accent-yellow !text-gray-900 hover:!bg-yellow-500 px-5 py-2">{processing ? '...' : (editMode ? 'Simpan' : 'Tambah')}</PrimaryButton></div>

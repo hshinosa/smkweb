@@ -39,6 +39,17 @@ class SchoolProfileController extends Controller
                 if ($media) {
                     $content['backgroundImage'] = $media;
                 }
+                
+                // Inject media for facilities items
+                if ($key === 'facilities' && isset($content['items']) && is_array($content['items'])) {
+                    foreach ($content['items'] as $index => &$item) {
+                        $itemMedia = $this->imageService->getFirstMediaData($dbRow, "facilities_item_{$index}");
+                        if ($itemMedia) {
+                            $item['image'] = $itemMedia;
+                            $item['image_url'] = $itemMedia['original_url'];
+                        }
+                    }
+                }
             }
             
             $sections[$key] = $content;
@@ -54,7 +65,7 @@ class SchoolProfileController extends Controller
     {
         $sectionKey = $request->input('section');
         $content = $request->input('content');
-
+        
         // Find or create setting
         $setting = SchoolProfileSetting::firstOrNew(['section_key' => $sectionKey]);
         $existingContent = $setting->content ?? [];
@@ -65,10 +76,10 @@ class SchoolProfileController extends Controller
             $setting->save();
         }
 
-        // Handle file uploads with Media Library
-        if ($request->hasFile('content')) {
-            $files = $request->file('content');
-            
+        // Get files - use file() directly, not hasFile() which doesn't work for nested files
+        $files = $request->file('content');
+        
+        if ($files) {
             // 1. Handle flat fields (like image_url in history or organization)
             foreach ($files as $field => $file) {
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
@@ -92,10 +103,6 @@ class SchoolProfileController extends Controller
                         // Update the specific item's image_url in the content array
                         if (isset($content['items'][$index])) {
                             $content['items'][$index]['image_url'] = $media->getUrl();
-                            // Remove the temporary file object from the content array to avoid JSON encoding issues
-                            if (isset($content['items'][$index]['image_file'])) {
-                                unset($content['items'][$index]['image_file']);
-                            }
                         }
                     }
                 }
@@ -118,6 +125,7 @@ class SchoolProfileController extends Controller
         $setting->content = HtmlSanitizer::sanitizeSection($sectionKey, $content);
         $setting->save();
 
-        return redirect()->back()->with('success', 'Konten profil berhasil diperbarui.');
+        return redirect()->route('admin.school-profile.index', ['section' => $sectionKey])
+            ->with('success', 'Konten profil berhasil diperbarui.');
     }
 }

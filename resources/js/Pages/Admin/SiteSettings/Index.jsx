@@ -3,10 +3,18 @@ import { Head, useForm } from '@inertiajs/react';
 import { Save, Globe, Share2, Layout, Image as ImageIcon } from 'lucide-react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import FileUploadField from '@/Components/Admin/FileUploadField';
+import MapsPicker from '@/Components/Admin/MapsPicker';
 import toast from 'react-hot-toast';
 
 export default function Index({ auth, sections, activeSection: initialActiveSection }) {
     const [activeTab, setActiveTab] = useState(initialActiveSection || 'general');
+
+    // Sync activeTab with initialActiveSection whenever it changes (due to Inertia reload)
+    React.useEffect(() => {
+        if (initialActiveSection) {
+            setActiveTab(initialActiveSection);
+        }
+    }, [initialActiveSection]);
 
     const { data, setData, post, processing, errors } = useForm({
         section: activeTab,
@@ -32,6 +40,7 @@ export default function Index({ auth, sections, activeSection: initialActiveSect
         
         post(route('admin.site-settings.update'), {
             preserveScroll: true,
+            preserveState: false, // Ensure we get fresh props back
             forceFormData: true,
             transform: (data) => {
                 // Create a clean copy
@@ -172,24 +181,19 @@ export default function Index({ auth, sections, activeSection: initialActiveSect
                     <p className="text-sm text-gray-600 mt-1">Integrasi peta lokasi sekolah</p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Google Maps URL (Link Berbagi)</label>
-                    <input
-                        type="text"
-                        value={data.content.google_maps_url || ''}
-                        onChange={(e) => handleInputChange('google_maps_url', e.target.value)}
-                        className="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                    <MapsPicker
+                        initialLat={data.content.latitude}
+                        initialLng={data.content.longitude}
+                        onChange={(locationData) => {
+                            setData('content', {
+                                ...data.content,
+                                latitude: locationData.lat,
+                                longitude: locationData.lng,
+                                google_maps_url: locationData.mapsUrl,
+                                google_maps_embed_url: locationData.embedUrl
+                            });
+                        }}
                     />
-                    <p className="text-sm text-gray-500 mt-1">Link untuk membuka di Google Maps</p>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Google Maps Embed URL (src dari iframe)</label>
-                    <textarea
-                        value={data.content.google_maps_embed_url || ''}
-                        onChange={(e) => handleInputChange('google_maps_embed_url', e.target.value)}
-                        rows={3}
-                        className="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                    />
-                    <p className="text-sm text-gray-500 mt-1">URL embed untuk menampilkan peta di website</p>
                 </div>
             </div>
 

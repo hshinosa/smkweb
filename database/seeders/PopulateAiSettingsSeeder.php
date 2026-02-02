@@ -18,19 +18,20 @@ class PopulateAiSettingsSeeder extends Seeder
             ],
             
             // OpenAI Configuration (for content creation & fallback)
+            // Using CLIProxyAPI as the proxy for Claude/Gemini models
             [
                 'key' => 'ai_model_base_url',
-                'value' => 'https://api-ai.hshinoshowcase.site/v1',
+                'value' => env('CLIPROXY_BASE_URL', 'http://cliproxyapi:8317/v1'),
                 'type' => 'string', 
             ],
             [
                 'key' => 'ai_model_api_key',
-                'value' => 'sk-hshinosa',
+                'value' => env('CLIPROXY_API_KEY', 'smkweb-internal-api-key-2026'),
                 'type' => 'string', 
             ],
             [
                 'key' => 'ai_model_name',
-                'value' => 'gemini-claude-sonnet-4-5-thinking',
+                'value' => env('CLIPROXY_MODEL', 'gemini-claude-sonnet-4-5-thinking'),
                 'type' => 'string',
             ],
             [
@@ -69,12 +70,13 @@ class PopulateAiSettingsSeeder extends Seeder
             ],
             [
                 'key' => 'ollama_base_url',
-                'value' => 'http://localhost:11434',
+                // Use 'ollama' hostname for Docker, 'localhost' for local dev
+                'value' => env('OLLAMA_BASE_URL', 'http://ollama:11434'),
                 'type' => 'string',
             ],
             [
                 'key' => 'ollama_model',
-                'value' => 'qwen2.5:1.5b',
+                'value' => 'llama3.2:1b',
                 'type' => 'string',
             ],
             [
@@ -86,7 +88,7 @@ class PopulateAiSettingsSeeder extends Seeder
             // System Prompt
             [
                 'key' => 'system_prompt',
-                'value' => "Anda adalah AI SMANSA, asisten virtual ramah untuk SMAN 1 Baleendah. Tugas Anda membantu memberikan informasi sekolah yang akurat.",
+                'value' => "Anda adalah AI SMANSA. Jawab singkat dan jelas, maksimal 3-4 kalimat.",
                 'type' => 'string',
             ]
         ];

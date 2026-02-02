@@ -23,59 +23,89 @@ class ContentCreationService
      * Uses OpenAI with force_provider flag for better quality
      * 
      * @param string $caption Instagram caption or source content
-     * @param array $metadata Additional metadata (hashtags, images, etc.)
+     * @param array $metadata Additional metadata (hashtags, images, date, etc.)
      * @param array $options Generation options
      * @return array Result with success status and generated content
      */
     public function generateNewsArticle(string $caption, array $metadata = [], array $options = []): array
     {
-        $systemPrompt = "Anda adalah penulis berita profesional untuk website SMA Negeri 1 Baleendah. "
-            . "Tugas Anda adalah membuat artikel berita formal, informatif, dan menarik dari konten yang diberikan. "
-            . "Artikel harus:\n"
-            . "- Panjang 500-800 kata\n"
-            . "- Menggunakan Bahasa Indonesia formal dan baku\n"
-            . "- Memiliki struktur: judul, lead paragraph, isi, dan penutup\n"
-            . "- Objektif dan faktual\n"
-            . "- SEO-friendly dengan keyword natural\n"
-            . "- Menyertakan call-to-action di akhir jika relevan";
+        // Build comprehensive school news system prompt
+        $systemPrompt = "Anda adalah jurnalis dan penulis berita profesional untuk website resmi SMA Negeri 1 Baleendah, Kabupaten Bandung, Jawa Barat. "
+            . "Tugas Anda adalah menulis artikel berita sekolah yang:\n\n"
+            . "**GAYA PENULISAN:**\n"
+            . "- Menggunakan Bahasa Indonesia baku, formal, dan profesional\n"
+            . "- Objektif, informatif, dan faktual\n"
+            . "- Tidak berlebihan atau bombastis, tetapi tetap menarik\n"
+            . "- Menghindari kata-kata klise seperti 'luar biasa', 'menggemparkan', 'memukau'\n"
+            . "- Menggunakan kalimat aktif dan efektif\n\n"
+            . "**STRUKTUR ARTIKEL:**\n"
+            . "- Judul: Singkat, jelas, to-the-point (maks 100 karakter)\n"
+            . "- Lead paragraph: 5W+1H (What, When, Where, Who, Why, How)\n"
+            . "- Isi: Elaborasi detail dengan kutipan jika ada\n"
+            . "- Penutup: Kesimpulan atau harapan/call-to-action\n\n"
+            . "**SEO OPTIMIZATION:**\n"
+            . "- Judul mengandung keyword utama di awal\n"
+            . "- Gunakan variasi kata kunci secara natural\n"
+            . "- Struktur heading yang jelas (H2, H3)\n"
+            . "- Meta description ringkas dan menarik\n\n"
+            . "**KONTEKS SEKOLAH:**\n"
+            . "- Nama lengkap: SMA Negeri 1 Baleendah (bisa disingkat SMAN 1 Baleendah/Smansa Baleendah)\n"
+            . "- Lokasi: Kabupaten Bandung, Jawa Barat\n"
+            . "- Gunakan istilah yang tepat: siswa/siswi (bukan murid), guru (bukan pengajar), "
+            . "kepala sekolah, wakil kepala sekolah, ekstrakurikuler, OSIS, dll.\n\n"
+            . "PENTING: Judul harus langsung menggambarkan inti berita, bukan sapaan atau pembuka.";
 
-        $userPrompt = "Buatkan artikel berita untuk website sekolah dari konten berikut:\n\n";
-        $userPrompt .= "Caption/Konten:\n{$caption}\n\n";
+        $userPrompt = "Buatkan artikel berita sekolah dari konten Instagram berikut:\n\n";
+        $userPrompt .= "**CAPTION:**\n{$caption}\n\n";
+
+        // Add image context if available
+        if (!empty($metadata['image_count'])) {
+            $userPrompt .= "**KONTEKS VISUAL:**\n";
+            $userPrompt .= "- Post ini memiliki {$metadata['image_count']} gambar\n";
+            if (!empty($metadata['image_description'])) {
+                $userPrompt .= "- Deskripsi gambar: {$metadata['image_description']}\n";
+            }
+            $userPrompt .= "- Sesuaikan narasi dengan konteks visual (kegiatan, suasana, peserta)\n\n";
+        }
 
         if (!empty($metadata['hashtags'])) {
-            $userPrompt .= "Hashtags: " . implode(', ', $metadata['hashtags']) . "\n\n";
+            $userPrompt .= "**HASHTAGS:** " . implode(', ', $metadata['hashtags']) . "\n\n";
         }
 
         if (!empty($metadata['date'])) {
-            $userPrompt .= "Tanggal: {$metadata['date']}\n\n";
+            $userPrompt .= "**TANGGAL POSTING:** {$metadata['date']}\n\n";
+        }
+
+        if (!empty($metadata['engagement'])) {
+            $userPrompt .= "**ENGAGEMENT:** {$metadata['engagement']} likes\n\n";
         }
 
         $userPrompt .= "Format output dalam JSON dengan struktur:\n";
         $userPrompt .= "{\n";
-        $userPrompt .= '  "title": "Judul berita (ambil INTI peristiwa/subjek utama, max 100 karakter. HINDARI judul sapaan umum/pembuka)",' . "\n";
-        $userPrompt .= '  "excerpt": "Ringkasan singkat 2-3 kalimat (max 200 karakter)",' . "\n";
-        // $userPrompt .= '  "content": "Isi artikel lengkap dalam format HTML dengan paragraf <p>, heading <h3> jika perlu, dan list <ul><li> jika ada",' . "\n";
-        // $userPrompt .= '  "meta_description": "Meta description untuk SEO (max 160 karakter)",' . "\n";
-        $userPrompt .= '  "keywords": ["keyword1", "keyword2", "keyword3"],' . "\n";
-        $userPrompt .= '  "category": "Kategori berita (Berita Sekolah/Prestasi/Kegiatan/Pengumuman)"' . "\n";
+        $userPrompt .= '  "title": "Judul berita SEO-friendly (keyword di awal, maks 100 karakter)",' . "\n";
+        $userPrompt .= '  "excerpt": "Ringkasan 2-3 kalimat untuk preview (maks 200 karakter)",' . "\n";
+        $userPrompt .= '  "content": "Isi artikel lengkap dalam format HTML dengan <p>, <h3>, <ul><li> jika perlu",' . "\n";
+        $userPrompt .= '  "meta_description": "Meta description untuk SEO (maks 160 karakter)",' . "\n";
+        $userPrompt .= '  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],' . "\n";
+        $userPrompt .= '  "category": "Kategori (Berita/Prestasi/Kegiatan/Pengumuman/Akademik)"' . "\n";
         $userPrompt .= "}";
 
         $messages = [
-            ['role' => 'system', 'content' => $systemPrompt . " PENTING: Judul harus to-the-point pada inti berita (misal: 'Siswa X Juara Lomba Y' atau 'Kegiatan Z Berlangsung Meriah'). JANGAN gunakan kalimat pembuka/sapaan sebagai judul (contoh HINDARI: 'Seluruh civitas akademik mengucapkan..')."], 
+            ['role' => 'system', 'content' => $systemPrompt], 
             ['role' => 'user', 'content' => $userPrompt],
         ];
 
         // Force OpenAI for content creation (better quality)
         $completionOptions = array_merge($options, [
             'force_provider' => 'openai',
-            // 'max_tokens' => 3000, // Reduced max tokens since we don't generate full content
-            'max_tokens' => 1000, 
-            'temperature' => 0.7,
+            'max_tokens' => 2000, // Increased for full article generation
+            'temperature' => 0.6, // Slightly lower for more consistent output
         ]);
 
-        Log::info('[ContentCreationService] Generating news article (metadata only)', [
+        Log::info('[ContentCreationService] Generating news article', [
             'source' => 'instagram',
             'caption_length' => strlen($caption),
+            'has_images' => !empty($metadata['image_count']),
             'forced_provider' => 'openai',
         ]);
 
@@ -160,8 +190,15 @@ class ContentCreationService
             ];
         }
 
-        // Use formatted caption content
-        $articleData['content'] = $this->formatCaptionAsHtml($caption);
+        // Keep the AI-generated content (don't overwrite with formatted caption)
+        // Only format the content if it's missing proper HTML structure
+        if (!empty($articleData['content'])) {
+            // Ensure proper HTML formatting and capitalization
+            $articleData['content'] = $this->ensureProperHtmlFormat($articleData['content']);
+        } else {
+            // Fallback: use formatted caption if AI didn't generate content
+            $articleData['content'] = $this->formatCaptionAsHtml($caption);
+        }
         
         // Validation for title from AI
         if (str_starts_with($articleData['title'], '#') || strlen($articleData['title']) < 5) {
@@ -200,7 +237,10 @@ class ContentCreationService
         // 1. Escape HTML entities to prevent XSS (if caption has raw html) - but we want to allow newlines
         $text = htmlspecialchars($caption, ENT_QUOTES, 'UTF-8');
 
-        // 2. Convert newlines to paragraphs or line breaks
+        // 2. Capitalize first letter of sentences
+        $text = $this->capitalizeSentences($text);
+
+        // 3. Convert newlines to paragraphs or line breaks
         // Split by double newlines for paragraphs
         $paragraphs = preg_split('/\n\s*\n/', $text);
         $html = '';
@@ -236,6 +276,140 @@ class ContentCreationService
             $html .= "<p class=\"mb-4 text-gray-700 leading-relaxed\">{$p}</p>";
         }
 
+        return $html;
+    }
+
+    /**
+     * Capitalize first letter of each sentence
+     * Also handles common Indonesian text patterns
+     * 
+     * @param string $text
+     * @return string
+     */
+    protected function capitalizeSentences(string $text): string
+    {
+        // First, capitalize the very first character of the text
+        $text = mb_strtoupper(mb_substr($text, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($text, 1, null, 'UTF-8');
+        
+        // Capitalize after sentence-ending punctuation followed by space/newline
+        $text = preg_replace_callback(
+            '/([.!?])\s+([a-záàâäãåæçéèêëíìîïñóòôöõøúùûüýÿ])/u',
+            function ($matches) {
+                return $matches[1] . ' ' . mb_strtoupper($matches[2], 'UTF-8');
+            },
+            $text
+        );
+        
+        // Capitalize after newlines
+        $text = preg_replace_callback(
+            '/(\n\s*)([a-záàâäãåæçéèêëíìîïñóòôöõøúùûüýÿ])/u',
+            function ($matches) {
+                return $matches[1] . mb_strtoupper($matches[2], 'UTF-8');
+            },
+            $text
+        );
+        
+        // Capitalize after colon followed by newline or double space (common in announcements)
+        $text = preg_replace_callback(
+            '/(:\s*\n\s*)([a-záàâäãåæçéèêëíìîïñóòôöõøúùûüýÿ])/u',
+            function ($matches) {
+                return $matches[1] . mb_strtoupper($matches[2], 'UTF-8');
+            },
+            $text
+        );
+
+        // Capitalize after numbered list items (1. 2. 3. etc.)
+        $text = preg_replace_callback(
+            '/(\d+\.\s*)([a-záàâäãåæçéèêëíìîïñóòôöõøúùûüýÿ])/u',
+            function ($matches) {
+                return $matches[1] . mb_strtoupper($matches[2], 'UTF-8');
+            },
+            $text
+        );
+        
+        // Capitalize after bullet points (- or *)
+        $text = preg_replace_callback(
+            '/([\-\*]\s+)([a-záàâäãåæçéèêëíìîïñóòôöõøúùûüýÿ])/u',
+            function ($matches) {
+                return $matches[1] . mb_strtoupper($matches[2], 'UTF-8');
+            },
+            $text
+        );
+
+        return $text;
+    }
+
+    /**
+     * Ensure AI-generated content has proper HTML formatting
+     * Fixes common issues with AI HTML output
+     * 
+     * @param string $content
+     * @return string
+     */
+    protected function ensureProperHtmlFormat(string $content): string
+    {
+        // If content already has HTML tags, just clean it up
+        if (preg_match('/<[^>]+>/', $content)) {
+            // Ensure paragraph tags have proper classes
+            $content = preg_replace(
+                '/<p>/',
+                '<p class="mb-4 text-gray-700 leading-relaxed">',
+                $content
+            );
+            
+            // Ensure h3 tags have proper classes
+            $content = preg_replace(
+                '/<h3>/',
+                '<h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">',
+                $content
+            );
+            
+            // Ensure ul tags have proper classes
+            $content = preg_replace(
+                '/<ul>/',
+                '<ul class="list-disc pl-6 mb-4 space-y-2">',
+                $content
+            );
+            
+            // Ensure li tags have proper classes
+            $content = preg_replace(
+                '/<li>/',
+                '<li class="text-gray-700">',
+                $content
+            );
+            
+            return $content;
+        }
+        
+        // Content is plain text - convert to HTML paragraphs
+        return $this->convertTextToHtml($content);
+    }
+
+    /**
+     * Convert plain text to proper HTML paragraphs
+     * 
+     * @param string $text
+     * @return string
+     */
+    protected function convertTextToHtml(string $text): string
+    {
+        // Apply capitalization
+        $text = $this->capitalizeSentences($text);
+        
+        // Split by double newlines for paragraphs
+        $paragraphs = preg_split('/\n\s*\n/', $text);
+        $html = '';
+        
+        foreach ($paragraphs as $p) {
+            $p = trim($p);
+            if (empty($p)) continue;
+            
+            // Convert single newlines to <br>
+            $p = nl2br(htmlspecialchars($p, ENT_QUOTES, 'UTF-8'));
+            
+            $html .= "<p class=\"mb-4 text-gray-700 leading-relaxed\">{$p}</p>";
+        }
+        
         return $html;
     }
 

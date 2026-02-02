@@ -125,7 +125,7 @@ class LandingPageSetting extends Model implements HasMedia
                     ],
                     [
                         'title' => 'Bahasa',
-                        'fullName' => 'Ilmu Bahasa & Budaya',
+                        'fullName' => 'Ilmu Bahasa',
                         'icon_name' => 'BookOpen',
                         'description' => 'Eksplorasi bahasa asing dan seni budaya. Mempersiapkan siswa kompeten dalam komunikasi global.',
                         'link' => '/akademik/program-studi/bahasa'

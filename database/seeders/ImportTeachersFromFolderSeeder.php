@@ -26,10 +26,58 @@ class ImportTeachersFromFolderSeeder extends Seeder
         // Bersihkan data lama
         Teacher::query()->delete(); 
 
-        $directories = File::directories($basePath);
         $totalImported = 0;
         $sortOrder = 0;
 
+        // 1. Process individual files in root directory first (Kepala Sekolah, Wakasek)
+        $rootFiles = File::files($basePath);
+        foreach ($rootFiles as $file) {
+            // Skip non-images and special files
+            if (!in_array(strtolower($file->getExtension()), ['jpg', 'jpeg', 'png', 'webp'])) {
+                continue;
+            }
+            
+            // Skip utility images
+            if (in_array($file->getFilename(), ['SMANSA.jpeg', 'UPACARA.jpeg'])) {
+                continue;
+            }
+
+            $filename = $file->getFilenameWithoutExtension();
+            
+            // Determine type based on filename
+            $mapping = $this->getFolderMapping($filename);
+            
+            // Extract name from filename
+            $name = $this->extractNameFromFilename($filename);
+            
+            $this->command->line("Memproses file root: <info>{$filename}</info> → {$name}");
+
+            $teacher = Teacher::updateOrCreate(
+                ['name' => $name],
+                [
+                    'type' => $mapping['type'],
+                    'department' => $mapping['department'],
+                    'position' => $mapping['default_position'],
+                    'is_active' => true,
+                    'sort_order' => $sortOrder++,
+                    'nip' => '19' . rand(70, 99) . rand(10, 12) . rand(10, 28) . '200' . rand(1, 9) . rand(100, 999),
+                ]
+            );
+
+            // Attach Image
+            try {
+                $teacher->clearMediaCollection('photos');
+                $teacher->addMedia($file->getPathname())
+                    ->preservingOriginal()
+                    ->toMediaCollection('photos');
+                $totalImported++;
+            } catch (\Exception $e) {
+                $this->command->error("Gagal mengimpor foto untuk {$name}: " . $e->getMessage());
+            }
+        }
+
+        // 2. Process directories
+        $directories = File::directories($basePath);
         foreach ($directories as $dirPath) {
             $folderName = basename($dirPath);
             $mapping = $this->getFolderMapping($folderName);
@@ -50,13 +98,21 @@ class ImportTeachersFromFolderSeeder extends Seeder
                 
                 // Tentukan position (jika ada info di nama file)
                 $position = $mapping['default_position'];
+                $department = $mapping['department'];
                 
                 // Khusus untuk folder Manajemen, coba tebak jabatan
-                if ($mapping['department'] === 'Manajemen') {
+                if ($mapping['department'] === 'Pimpinan') {
                     if (Str::contains(strtoupper($name), 'KEPALA SEKOLAH')) {
                         $position = 'Kepala Sekolah';
-                    } elseif (Str::contains(strtoupper($name), 'WAKASEK') || Str::contains(strtoupper($name), 'WAKIL KEPALA')) {
-                        $position = 'Wakil Kepala Sekolah';
+                    }
+                }
+                
+                // Detect Wakasek from name
+                if (Str::contains(strtoupper($name), 'WAKASEK') || Str::contains(strtoupper($name), 'WAKIL KEPALA')) {
+                    $position = 'Wakasek';
+                    // Extract bidang if possible
+                    if (preg_match('/WAKASEK\s+(\w+)/i', strtoupper($name), $matches)) {
+                        $department = ucfirst(strtolower($matches[1]));
                     }
                 }
 
@@ -64,7 +120,14 @@ class ImportTeachersFromFolderSeeder extends Seeder
                     // Contoh: "Nama (Guru PKn)"
                     preg_match('/\((.*?)\)/', $name, $matches);
                     if (isset($matches[1])) {
-                        $position = $matches[1];
+                        // Extract only position type (Guru, Staff, Wakasek, etc)
+                        if (Str::contains(strtoupper($matches[1]), 'GURU')) {
+                            $position = 'Guru';
+                        } elseif (Str::contains(strtoupper($matches[1]), 'STAFF')) {
+                            $position = 'Staff';
+                        } elseif (Str::contains(strtoupper($matches[1]), 'WAKASEK')) {
+                            $position = 'Wakasek';
+                        }
                         $name = trim(preg_replace('/\s*\(.*?\)\s*/', '', $name));
                     }
                 }
@@ -74,7 +137,7 @@ class ImportTeachersFromFolderSeeder extends Seeder
                     ['name' => $name],
                     [
                         'type' => $mapping['type'],
-                        'department' => $mapping['department'],
+                        'department' => $department,
                         'position' => $position,
                         'is_active' => true,
                         'sort_order' => $sortOrder++,
@@ -109,64 +172,121 @@ class ImportTeachersFromFolderSeeder extends Seeder
     {
         $name = strtoupper(trim($folderName));
 
-        // 1. Pimpinan & Manajemen
-        if (Str::contains($name, 'WAKASEK')) {
+        // 1. Kepala Sekolah (file individual di root)
+        if (Str::contains($name, 'KEPALA SEKOLAH')) {
             return [
                 'type' => 'guru',
-                'department' => 'Wakasek',
-                'default_position' => 'Wakil Kepala Sekolah'
-            ];
-        }
-        if (Str::contains($name, 'MANAJEMEN')) {
-            return [
-                'type' => 'guru',
-                'department' => 'Manajemen',
-                'default_position' => 'Manajemen Sekolah'
+                'department' => 'Pimpinan',
+                'default_position' => 'Kepala Sekolah'
             ];
         }
 
-        // 2. Staff & Support
+        // 2. Wakasek (folder dan file individual)
+        if (Str::contains($name, 'WAKASEK')) {
+            // Try to extract bidang (Kesiswaan, Kurikulum, etc)
+            $bidang = 'Umum';
+            if (preg_match('/WAKASEK\s+(\w+)/i', $name, $matches)) {
+                $bidang = ucfirst(strtolower($matches[1]));
+            }
+            return [
+                'type' => 'guru',
+                'department' => $bidang,
+                'default_position' => 'Wakasek'
+            ];
+        }
+        
+        // 3. Manajemen & Komite
+        if (Str::contains($name, 'MANAJEMEN')) {
+            return [
+                'type' => 'staff',
+                'department' => 'Manajemen',
+                'default_position' => 'Staff'
+            ];
+        }
+
+        // 4. Staff & Support
         if (Str::contains($name, 'STAFF TU')) {
             return [
                 'type' => 'staff',
-                'department' => 'Staff TU',
-                'default_position' => 'Staff Tata Usaha'
+                'department' => 'Tata Usaha',
+                'default_position' => 'Staff'
             ];
         }
         if (Str::contains($name, 'PERPUSTAKAAN')) {
             return [
                 'type' => 'staff',
                 'department' => 'Perpustakaan',
-                'default_position' => 'Pustakawan'
+                'default_position' => 'Staff'
             ];
         }
 
-        // 3. Counseling
-        if (Str::contains($name, 'BK') || Str::contains($name, 'KONSELING')) {
+        // 5. Counseling (MG BIMBINGAN KONSELING)
+        if (Str::contains($name, 'BK') || Str::contains($name, 'BIMBINGAN') || Str::contains($name, 'KONSELING')) {
             return [
                 'type' => 'guru',
                 'department' => 'Bimbingan Konseling',
-                'default_position' => 'Guru Bimbingan Konseling'
+                'default_position' => 'Guru'
             ];
         }
 
-        // 4. MGMP Subjects (Handling Abbreviations)
-        $cleanDept = trim(str_ireplace('MGMP ', '', $folderName));
+        // 6. MGMP Subjects - Normalize department names
+        $cleanDept = trim(str_ireplace(['MGMP ', 'MG '], '', $folderName));
         
-        $prettyNames = [
+        // Map folder names to standardized department names
+        $departmentMap = [
+            // Bahasa
+            'BAHASA JEPANG' => 'Bahasa Jepang',
+            'BAHASA SUNDA' => 'Bahasa Sunda',
+            'BAHASA INDONESIA' => 'Bahasa Indonesia',
+            'BAHASA INGGRIS' => 'Bahasa Inggris',
             'B. JEPANG' => 'Bahasa Jepang',
-            'B.SUNDA' => 'Bahasa Sunda',
-            'BHS INDONESIA' => 'Bahasa Indonesia',
-            'BHS INGGRIS' => 'Bahasa Inggris',
+            'B. SUNDA' => 'Bahasa Sunda',
+            'B. INDONESIA' => 'Bahasa Indonesia',
+            'B. INGGRIS' => 'Bahasa Inggris',
+            
+            // MIPA
+            'BIOLOGI' => 'Biologi',
+            'FISIKA' => 'Fisika',
+            'KIMIA' => 'Kimia',
+            'MATEMATIKA' => 'Matematika',
+            'MTK' => 'Matematika',
+            'MATH' => 'Matematika',
+            
+            // IPS
+            'EKONOMI' => 'Ekonomi',
+            'GEOGRAFI' => 'Geografi',
+            'SEJARAH' => 'Sejarah',
+            'SOSIOLOGI' => 'Sosiologi',
+            
+            // Agama & PKN
+            'PENDIDIKAN AGAMA ISLAM' => 'Pendidikan Agama Islam',
+            'PENDIDIKAN PANCASILA' => 'Pendidikan Pancasila',
             'PAI' => 'Pendidikan Agama Islam',
-            'PEND PANCASILA' => 'Pendidikan Pancasila',
-            'SENBUD' => 'Seni Budaya',
-            // Add more if needed
+            'PPKN' => 'Pendidikan Pancasila',
+            'PKN' => 'Pendidikan Pancasila',
+            
+            // Olahraga & Seni
+            'PJOK' => 'Penjasorkes',
+            'PENJASORKES' => 'Penjasorkes',
+            'PENDIDIKAN JASMANI' => 'Penjasorkes',
+            'PENDIDIKAN JASMANI OLAHRAGA DAN KESEHATAN' => 'Penjasorkes',
+            'PENJAS' => 'Penjasorkes',
+            'OLAHRAGA' => 'Penjasorkes',
+            
+            // PKWU
+            'PKWU' => 'Prakarya dan Kewirausahaan',
+            'PRAKARYA DAN KEWIRAUSAHAAN' => 'Prakarya dan Kewirausahaan',
+            'PRAKARYA' => 'Prakarya dan Kewirausahaan',
+            'KEWIRAUSAHAAN' => 'Prakarya dan Kewirausahaan',
+            
+            // Seni
+            'SENI BUDAYA' => 'Seni Budaya',
+            'SENI' => 'Seni Budaya',
         ];
 
         $deptKey = strtoupper($cleanDept);
-        if (isset($prettyNames[$deptKey])) {
-            $displayName = $prettyNames[$deptKey];
+        if (isset($departmentMap[$deptKey])) {
+            $displayName = $departmentMap[$deptKey];
         } else {
             $displayName = ucwords(strtolower($cleanDept));
         }
@@ -174,7 +294,25 @@ class ImportTeachersFromFolderSeeder extends Seeder
         return [
             'type' => 'guru',
             'department' => $displayName, 
-            'default_position' => 'Guru ' . $displayName
+            'default_position' => 'Guru'
         ];
+    }
+
+    /**
+     * Extract clean name from filename
+     * Example: "KEPALA SEKOLAH ( H. Dudi Rohdiana, S.Pd., M.M )" → "H. Dudi Rohdiana, S.Pd., M.M"
+     * Example: "WAKASEK KESISWAAN ( Dadang Sofyan, M.Pd. )" → "Dadang Sofyan, M.Pd."
+     */
+    private function extractNameFromFilename(string $filename): string
+    {
+        // Check if name is in parentheses
+        if (preg_match('/\(\s*(.+?)\s*\)/', $filename, $matches)) {
+            return trim($matches[1]);
+        }
+        
+        // Remove position prefixes
+        $name = preg_replace('/^(KEPALA SEKOLAH|WAKASEK\s+\w+)\s*-?\s*/i', '', $filename);
+        
+        return trim($name);
     }
 }

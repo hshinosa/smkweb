@@ -5,11 +5,12 @@ import FileUploadField from '@/Components/Admin/FileUploadField';
 import { getImageUrl } from '@/Utils/imageUtils';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { Plus, Trash2 } from 'lucide-react';
+import IconPicker from '@/Components/Admin/IconPicker';
 
 export default function CareerPathsSection({ data, setData, errors }) {
     const addItem = () => {
         const currentItems = Array.isArray(data.items) ? data.items : [];
-        setData('items', [...currentItems, { title: '', description: '', icon: null }]);
+        setData('items', [...currentItems, { title: '', description: '', icon_name: 'Briefcase' }]);
     };
 
     const removeItem = (index) => {
@@ -106,12 +107,10 @@ export default function CareerPathsSection({ data, setData, errors }) {
                                 </div>
                                 
                                 <div>
-                                    <FileUploadField
-                                        id={`career_icon_${index}`}
-                                        previewUrl={getImageUrl(item.icon)}
-                                        onChange={(file) => updateItem(index, 'icon', file)}
-                                        label="Icon Karir"
-                                        description="Icon atau gambar kecil untuk bidang karir ini."
+                                    <IconPicker
+                                        value={item.icon_name || 'Briefcase'}
+                                        onChange={(iconName) => updateItem(index, 'icon_name', iconName)}
+                                        label="Ikon Karir"
                                     />
                                 </div>
 

@@ -116,17 +116,9 @@ class ProgramStudiController extends Controller
                 'section_key' => 'hero'
             ]);
             
+            $file = $request->file('thumbnail_card');
             $heroSetting->clearMediaCollection('thumbnail_card');
-            $heroSetting->addMediaFromRequest('thumbnail_card')
-                        ->toMediaCollection('thumbnail_card');
-            
-            // Refresh to get latest media
-            $heroSetting->refresh();
-            $mediaUrl = $heroSetting->getFirstMediaUrl('thumbnail_card');
-            if ($mediaUrl) {
-                $heroSetting->thumbnail_card_url = parse_url($mediaUrl, PHP_URL_PATH);
-                $heroSetting->save();
-            }
+            $heroSetting->addMedia($file)->toMediaCollection('thumbnail_card');
         }
 
         $sectionFields = ProgramStudiSetting::getSectionFields();
@@ -136,6 +128,9 @@ class ProgramStudiController extends Controller
 
             $content = $request->input($sectionKey);
             $setting = ProgramStudiSetting::firstOrNew(['program_name' => $programName, 'section_key' => $sectionKey]);
+            
+            // Get existing content to preserve images/data
+            $existingContent = $setting->content ?? [];
             
             // Save the setting first to ensure it has an ID for media library
             if (!$setting->exists) {
@@ -155,6 +150,11 @@ class ProgramStudiController extends Controller
                         if ($mediaUrl) {
                             $content[$fieldKey] = parse_url($mediaUrl, PHP_URL_PATH);
                         }
+                    } else {
+                        // Preserve existing image if no new upload
+                        if (isset($existingContent[$fieldKey])) {
+                            $content[$fieldKey] = $existingContent[$fieldKey];
+                        }
                     }
                 }
             }
@@ -162,35 +162,59 @@ class ProgramStudiController extends Controller
             // Handle lists with files
             if (isset($fields["items"]) && $fields["items"] === "list") {
                 if (isset($content["items"]) && is_array($content["items"])) {
+                    // Get existing content to preserve images
+                    $existingContent = $setting->content ?? [];
+                    
                     foreach ($content["items"] as $index => &$item) {
                         // Core Subjects Icon
-                        if ($sectionKey === "core_subjects" && $request->hasFile("{$sectionKey}.items.{$index}.icon")) {
-                             $collection = "{$sectionKey}_item_{$index}_icon";
-                             $setting->clearMediaCollection($collection);
-                             $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.icon")->toMediaCollection($collection);
-                             
-                             $mediaUrl = $setting->getFirstMediaUrl($collection);
-                             if ($mediaUrl) $item["icon"] = parse_url($mediaUrl, PHP_URL_PATH);
+                        if ($sectionKey === "core_subjects") {
+                            if ($request->hasFile("{$sectionKey}.items.{$index}.icon")) {
+                                $collection = "{$sectionKey}_item_{$index}_icon";
+                                $setting->clearMediaCollection($collection);
+                                $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.icon")->toMediaCollection($collection);
+                                
+                                $mediaUrl = $setting->getFirstMediaUrl($collection);
+                                if ($mediaUrl) $item["icon"] = parse_url($mediaUrl, PHP_URL_PATH);
+                            } else {
+                                // Preserve existing icon if no new upload
+                                if (isset($existingContent["items"][$index]["icon"])) {
+                                    $item["icon"] = $existingContent["items"][$index]["icon"];
+                                }
+                            }
                         }
                         
                         // Facilities Image
-                        if ($sectionKey === "facilities" && $request->hasFile("{$sectionKey}.items.{$index}.image")) {
-                             $collection = "{$sectionKey}_item_{$index}_image";
-                             $setting->clearMediaCollection($collection);
-                             $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.image")->toMediaCollection($collection);
-                             
-                             $mediaUrl = $setting->getFirstMediaUrl($collection);
-                             if ($mediaUrl) $item["image"] = parse_url($mediaUrl, PHP_URL_PATH);
+                        if ($sectionKey === "facilities") {
+                            if ($request->hasFile("{$sectionKey}.items.{$index}.image")) {
+                                $collection = "{$sectionKey}_item_{$index}_image";
+                                $setting->clearMediaCollection($collection);
+                                $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.image")->toMediaCollection($collection);
+                                
+                                $mediaUrl = $setting->getFirstMediaUrl($collection);
+                                if ($mediaUrl) $item["image"] = parse_url($mediaUrl, PHP_URL_PATH);
+                            } else {
+                                // Preserve existing image if no new upload
+                                if (isset($existingContent["items"][$index]["image"])) {
+                                    $item["image"] = $existingContent["items"][$index]["image"];
+                                }
+                            }
                         }
 
                         // Career Paths Icon
-                        if ($sectionKey === "career_paths" && $request->hasFile("{$sectionKey}.items.{$index}.icon")) {
-                             $collection = "{$sectionKey}_item_{$index}_icon";
-                             $setting->clearMediaCollection($collection);
-                             $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.icon")->toMediaCollection($collection);
-                             
-                             $mediaUrl = $setting->getFirstMediaUrl($collection);
-                             if ($mediaUrl) $item["icon"] = parse_url($mediaUrl, PHP_URL_PATH);
+                        if ($sectionKey === "career_paths") {
+                            if ($request->hasFile("{$sectionKey}.items.{$index}.icon")) {
+                                $collection = "{$sectionKey}_item_{$index}_icon";
+                                $setting->clearMediaCollection($collection);
+                                $setting->addMediaFromRequest("{$sectionKey}.items.{$index}.icon")->toMediaCollection($collection);
+                                
+                                $mediaUrl = $setting->getFirstMediaUrl($collection);
+                                if ($mediaUrl) $item["icon"] = parse_url($mediaUrl, PHP_URL_PATH);
+                            } else {
+                                // Preserve existing icon if no new upload
+                                if (isset($existingContent["items"][$index]["icon"])) {
+                                    $item["icon"] = $existingContent["items"][$index]["icon"];
+                                }
+                            }
                         }
                     }
                 }

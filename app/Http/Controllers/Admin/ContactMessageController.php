@@ -7,6 +7,10 @@ use App\Models\ContactMessage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+use App\Http\Requests\ContactMessageRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 class ContactMessageController extends Controller
 {
     public function index()
@@ -20,8 +24,15 @@ class ContactMessageController extends Controller
 
     public function show(ContactMessage $contactMessage)
     {
-        if (!$contactMessage->is_read) {
-            $contactMessage->update(['is_read' => true]);
+        try {
+            DB::beginTransaction();
+            if (!$contactMessage->is_read) {
+                $contactMessage->update(['is_read' => true]);
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update message read status: ' . $e->getMessage());
         }
 
         return Inertia::render('Admin/ContactMessages/Show', [
@@ -31,8 +42,15 @@ class ContactMessageController extends Controller
 
     public function destroy(ContactMessage $contactMessage)
     {
-        $contactMessage->delete();
-
-        return redirect()->back()->with('success', 'Pesan berhasil dihapus.');
+        try {
+            DB::beginTransaction();
+            $contactMessage->delete();
+            DB::commit();
+            return redirect()->back()->with('success', 'Pesan berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete contact message: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['general' => 'Gagal menghapus pesan.']);
+        }
     }
 }

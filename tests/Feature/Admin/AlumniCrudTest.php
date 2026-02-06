@@ -40,10 +40,8 @@ class AlumniCrudTest extends TestCase
         $data = [
             'name' => 'Ahmad Fauzi',
             'graduation_year' => 2020,
-            'current_position' => 'Software Engineer',
-            'education' => 'S1 Teknik Informatika',
             'testimonial' => 'Sekolah ini memberikan bekal yang baik untuk karir saya.',
-            'category' => 'Teknologi',
+            'content_type' => 'text',
             'is_featured' => true,
             'is_published' => true,
             'sort_order' => 1,
@@ -68,6 +66,7 @@ class AlumniCrudTest extends TestCase
             'name' => 'Dewi Sartika',
             'graduation_year' => 2019,
             'testimonial' => 'Prestasi terbaik dari sekolah ini.',
+            'content_type' => 'text',
             'image' => $file,
             'is_published' => true,
         ];
@@ -103,6 +102,7 @@ class AlumniCrudTest extends TestCase
             'name' => 'Alumni Name',
             'graduation_year' => 2020,
             'testimonial' => 'Testimonial',
+            'content_type' => 'text',
             'image' => $newFile,
             'is_published' => true,
         ];
@@ -148,6 +148,7 @@ class AlumniCrudTest extends TestCase
             'name' => 'Unpublished Alumni',
             'graduation_year' => 2023,
             'testimonial' => 'Testimonial',
+            'content_type' => 'text',
             'is_published' => false,
         ];
 
@@ -165,6 +166,7 @@ class AlumniCrudTest extends TestCase
             'name' => 'Featured Alumni',
             'graduation_year' => 2022,
             'testimonial' => 'Testimonial',
+            'content_type' => 'text',
             'is_featured' => true,
             'is_published' => true,
         ];
@@ -183,6 +185,7 @@ class AlumniCrudTest extends TestCase
             'name' => 'Ordered Alumni',
             'graduation_year' => 2020,
             'testimonial' => 'Testimonial',
+            'content_type' => 'text',
             'sort_order' => 15,
             'is_published' => true,
         ];
@@ -201,6 +204,7 @@ class AlumniCrudTest extends TestCase
             'name' => str_repeat('A', 256), // exceeds max of 255
             'graduation_year' => 2020,
             'testimonial' => 'Testimonial',
+            'content_type' => 'text',
             'is_published' => true,
         ];
 
@@ -209,33 +213,18 @@ class AlumniCrudTest extends TestCase
         $response->assertSessionHasErrors(['name']);
     }
 
-    public function test_education_max_length_validation(): void
+    public function test_testimonial_required_if_text(): void
     {
         $data = [
             'name' => 'Alumni Name',
             'graduation_year' => 2020,
-            'education' => str_repeat('A', 256), // exceeds max of 255
-            'testimonial' => 'Testimonial',
+            'testimonial' => '',
+            'content_type' => 'text',
             'is_published' => true,
         ];
 
         $response = $this->post(route('admin.alumni.store'), $data);
 
-        $response->assertSessionHasErrors(['education']);
-    }
-
-    public function test_current_position_max_length_validation(): void
-    {
-        $data = [
-            'name' => 'Alumni Name',
-            'graduation_year' => 2020,
-            'current_position' => str_repeat('A', 256), // exceeds max of 255
-            'testimonial' => 'Testimonial',
-            'is_published' => true,
-        ];
-
-        $response = $this->post(route('admin.alumni.store'), $data);
-
-        $response->assertSessionHasErrors(['current_position']);
+        $response->assertSessionHasErrors(['testimonial']);
     }
 }

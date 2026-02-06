@@ -9,6 +9,9 @@ use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use App\Http\Requests\SchoolProfileRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SchoolProfileController extends Controller
 {
@@ -25,22 +28,15 @@ class SchoolProfileController extends Controller
         $sections = [];
         foreach (array_keys(SchoolProfileSetting::getSectionFields()) as $key) {
             $dbRow = $settings->get($key);
-            
-            // Get content - accessor automatically handles JSON decoding
             $dbContent = ($dbRow && $dbRow->content) ? $dbRow->content : null;
-            
-            // Get merged content with defaults
             $content = SchoolProfileSetting::getContent($key, $dbContent);
             
-            // Append responsive image data if exists
             if ($dbRow) {
-                // Check if we have media for this section
                 $media = $this->imageService->getFirstMediaData($dbRow, $key);
                 if ($media) {
                     $content['backgroundImage'] = $media;
                 }
                 
-                // Inject media for facilities items
                 if ($key === 'facilities' && isset($content['items']) && is_array($content['items'])) {
                     foreach ($content['items'] as $index => &$item) {
                         $itemMedia = $this->imageService->getFirstMediaData($dbRow, "facilities_item_{$index}");
@@ -61,71 +57,67 @@ class SchoolProfileController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function update(SchoolProfileRequest $request)
     {
-        $sectionKey = $request->input('section');
-        $content = $request->input('content');
-        
-        // Find or create setting
-        $setting = SchoolProfileSetting::firstOrNew(['section_key' => $sectionKey]);
-        $existingContent = $setting->content ?? [];
+        try {
+            DB::beginTransaction();
 
-        // Save first if new to ensure it has an ID for media library
-        if (!$setting->exists) {
-            $setting->content = $content;
-            $setting->save();
-        }
+            $sectionKey = $request->input('section');
+            $content = $request->input('content');
+            
+            $setting = SchoolProfileSetting::firstOrCreate(['section_key' => $sectionKey]);
+            $existingContent = $setting->content ?? [];
 
-        // Get files - use file() directly, not hasFile() which doesn't work for nested files
-        $files = $request->file('content');
-        
-        if ($files) {
-            // 1. Handle flat fields (like image_url in history or organization)
-            foreach ($files as $field => $file) {
-                if ($file instanceof \Illuminate\Http\UploadedFile) {
-                    if ($field === 'image_url' || $field === 'image') {
-                        $setting->clearMediaCollection($sectionKey);
-                        $media = $setting->addMedia($file)->toMediaCollection($sectionKey);
-                        $content['image_url'] = $media->getUrl();
-                        if (isset($content['image'])) unset($content['image']);
+            $files = $request->file('content');
+            
+            if ($files) {
+                foreach ($files as $field => $file) {
+                    if ($file instanceof \Illuminate\Http\UploadedFile) {
+                        if ($field === 'image_url' || $field === 'image') {
+                            $setting->clearMediaCollection($sectionKey);
+                            $media = $setting->addMedia($file)->toMediaCollection($sectionKey);
+                            $content['image_url'] = $media->getUrl();
+                            if (isset($content['image'])) unset($content['image']);
+                        }
                     }
                 }
-            }
 
-            // 2. Handle nested items (like facilities images)
-            if ($sectionKey === 'facilities' && isset($files['items']) && is_array($files['items'])) {
-                foreach ($files['items'] as $index => $itemFile) {
-                    if (isset($itemFile['image_file']) && $itemFile['image_file'] instanceof \Illuminate\Http\UploadedFile) {
-                        $collectionName = "facilities_item_{$index}";
-                        $setting->clearMediaCollection($collectionName);
-                        $media = $setting->addMedia($itemFile['image_file'])->toMediaCollection($collectionName);
-                        
-                        // Update the specific item's image_url in the content array
-                        if (isset($content['items'][$index])) {
-                            $content['items'][$index]['image_url'] = $media->getUrl();
+                if ($sectionKey === 'facilities' && isset($files['items']) && is_array($files['items'])) {
+                    foreach ($files['items'] as $index => $itemFile) {
+                        if (isset($itemFile['image_file']) && $itemFile['image_file'] instanceof \Illuminate\Http\UploadedFile) {
+                            $collectionName = "facilities_item_{$index}";
+                            $setting->clearMediaCollection($collectionName);
+                            $media = $setting->addMedia($itemFile['image_file'])->toMediaCollection($collectionName);
+                            if (isset($content['items'][$index])) {
+                                $content['items'][$index]['image_url'] = $media->getUrl();
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Preserve existing images if no new one was uploaded
-        if (isset($existingContent['image_url']) && !isset($content['image_url']) && !isset($content['image'])) {
-            $content['image_url'] = $existingContent['image_url'];
-        }
+            if (isset($existingContent['image_url']) && !isset($content['image_url']) && !isset($content['image'])) {
+                $content['image_url'] = $existingContent['image_url'];
+            }
 
-        // Preserve existing facility images if no new one was uploaded and items still exist
-        if ($sectionKey === 'facilities' && isset($existingContent['items']) && isset($content['items'])) {
-            foreach ($content['items'] as $index => $item) {
-                if (!isset($item['image_url']) && isset($existingContent['items'][$index]['image_url'])) {
-                    $content['items'][$index]['image_url'] = $existingContent['items'][$index]['image_url'];
+            if ($sectionKey === 'facilities' && isset($existingContent['items']) && isset($content['items'])) {
+                foreach ($content['items'] as $index => $item) {
+                    if (!isset($item['image_url']) && isset($existingContent['items'][$index]['image_url'])) {
+                        $content['items'][$index]['image_url'] = $existingContent['items'][$index]['image_url'];
+                    }
                 }
             }
-        }
-        $setting->content = HtmlSanitizer::sanitizeSection($sectionKey, $content);
-        $setting->save();
 
-        return redirect()->route('admin.school-profile.index', ['section' => $sectionKey])
-            ->with('success', 'Konten profil berhasil diperbarui.');
+            $setting->content = HtmlSanitizer::sanitizeSection($sectionKey, $content);
+            $setting->save();
+
+            DB::commit();
+            return redirect()->route('admin.school-profile.index', ['section' => $sectionKey])
+                ->with('success', 'Konten profil berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update school profile: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['general' => 'Gagal memperbarui profil sekolah.']);
+        }
     }
 }

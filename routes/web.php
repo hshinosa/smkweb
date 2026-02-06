@@ -1036,9 +1036,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
 
         Route::get('/extracurriculars', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'index'])->name('extracurriculars.index');
-Route::post('/extracurriculars', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'store'])->name('extracurriculars.store');
-Route::post('/extracurriculars/{extracurricular}', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'update'])->name('extracurriculars.update');
-Route::delete('/extracurriculars/{extracurricular}', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'destroy'])->name('extracurriculars.destroy');
+        Route::post('/extracurriculars', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'store'])->name('extracurriculars.store');
+        Route::put('/extracurriculars/{extracurricular}', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'update'])->name('extracurriculars.update');
+        Route::delete('/extracurriculars/{extracurricular}', [\App\Http\Controllers\Admin\ExtracurricularController::class, 'destroy'])->name('extracurriculars.destroy');
 
         // RAG Documents Management
         Route::resource('rag-documents', \App\Http\Controllers\Admin\RagDocumentController::class);

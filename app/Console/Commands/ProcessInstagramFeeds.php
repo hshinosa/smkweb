@@ -122,7 +122,7 @@ class ProcessInstagramFeeds extends Command
         // Prepare metadata
         $metadata = [
             'hashtags' => $this->extractHashtags($feed->caption),
-            'date' => $feed->post_date,
+            'date' => $feed->scraped_at,
             'source' => "@{$feed->source_username}",
             'instagram_url' => "https://www.instagram.com/p/{$feed->post_shortcode}/",
         ];

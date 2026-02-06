@@ -28,37 +28,7 @@ class CurriculumTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_can_update_intro_and_fases()
-    {
-        $faseEImage = \Illuminate\Http\UploadedFile::fake()->image('fase_e.jpg');
-        $faseFImage = \Illuminate\Http\UploadedFile::fake()->image('fase_f.jpg');
-
-        $data = [
-            'section' => 'intro_fases',
-            'intro_title' => 'Intro Title',
-            'intro_description' => 'Intro Desc',
-            'fase_e_title' => 'Fase E Title',
-            'fase_e_description' => 'Desc E',
-            'fase_e_points' => ['Point 1'],
-            'fase_e_image' => $faseEImage,
-            'fase_f_title' => 'Fase F Title',
-            'fase_f_description' => 'Desc F',
-            'fase_f_points' => ['Point 2'],
-            'fase_f_image' => $faseFImage,
-        ];
-
-        $response = $this->post(route('admin.curriculum.update'), $data);
-
-        $response->assertRedirect();
-        
-        $faseESetting = CurriculumSetting::where('section_key', 'fase_e')->first();
-        $this->assertTrue($faseESetting->hasMedia('fase_e_image'));
-        
-        $faseFSetting = CurriculumSetting::where('section_key', 'fase_f')->first();
-        $this->assertTrue($faseFSetting->hasMedia('fase_f_image'));
-    }
-
-    public function test_can_update_hero()
+    public function test_can_update_section_with_media()
     {
         $heroImage = \Illuminate\Http\UploadedFile::fake()->image('hero.jpg');
 
@@ -67,8 +37,8 @@ class CurriculumTest extends TestCase
             'content' => [
                 'title' => 'Hero Title',
                 'subtitle' => 'Hero Sub',
-                'image' => $heroImage,
-            ]
+            ],
+            'media' => $heroImage,
         ];
 
         $response = $this->post(route('admin.curriculum.update'), $data);
@@ -77,5 +47,26 @@ class CurriculumTest extends TestCase
         
         $setting = CurriculumSetting::where('section_key', 'hero')->first();
         $this->assertTrue($setting->hasMedia('hero_bg'));
+    }
+
+    public function test_can_update_section_without_media()
+    {
+        $data = [
+            'section' => 'problem',
+            'content' => [
+                'title' => 'PISA',
+                'description' => 'Schooling But Not Learning',
+                'stats' => [
+                    ['label' => 'Membaca', 'lots' => '99,2%', 'hots' => '0,8%']
+                ],
+            ],
+        ];
+
+        $response = $this->post(route('admin.curriculum.update'), $data);
+
+        $response->assertRedirect();
+
+        $setting = CurriculumSetting::where('section_key', 'problem')->first();
+        $this->assertEquals('PISA', $setting->content['title']);
     }
 }

@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use App\Http\Requests\RagDocumentRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RagDocumentController extends Controller
 {
@@ -35,47 +38,47 @@ class RagDocumentController extends Controller
         return Inertia::render('Admin/RagDocuments/Create');
     }
 
-    public function store(Request $request)
+    public function store(RagDocumentRequest $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required_without:file|string',
-            'excerpt' => 'nullable|string',
-            'category' => 'nullable|string|max:100',
-            'file' => 'nullable|file|mimes:pdf,txt,doc,docx|max:10240', // 10MB max
-            'is_active' => 'boolean',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        $document = new RagDocument();
-        $document->title = $validated['title'];
-        $document->excerpt = $validated['excerpt'] ?? null;
-        $document->category = $validated['category'] ?? 'Umum';
-        $document->is_active = $validated['is_active'] ?? true;
-        $document->uploaded_by = Auth::guard('admin')->id();
-        $document->source = $request->hasFile('file') ? 'upload' : 'manual';
+            $validated = $request->validated();
+            
+            $document = new RagDocument();
+            $document->title = strip_tags($validated['title']);
+            $document->excerpt = isset($validated['excerpt']) ? strip_tags($validated['excerpt']) : null;
+            $document->category = $validated['category'] ?? 'Umum';
+            $document->is_active = $validated['is_active'] ?? true;
+            $document->uploaded_by = Auth::guard('admin')->id();
+            $document->source = $request->hasFile('file') ? 'upload' : 'manual';
 
-        // Handle file upload
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $path = $file->store('rag_documents', 'public');
-            
-            $document->file_path = $path;
-            $document->file_type = $file->getClientOriginalExtension();
-            $document->file_size = $file->getSize();
-            
-            // Extract text from file (basic implementation)
-            $document->content = $this->extractTextFromFile($file);
-        } else {
-            $document->content = $validated['content'];
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $path = $file->store('rag_documents', 'public');
+                
+                $document->file_path = $path;
+                $document->file_type = $file->getClientOriginalExtension();
+                $document->file_size = $file->getSize();
+                $document->content = $this->extractTextFromFile($file);
+            } else {
+                $document->content = $validated['content'];
+            }
+
+            $document->save();
+
+            DB::commit();
+
+            // Background processing recommended, but keep sequential for now as per original
+            $this->ragService->processDocument($document);
+
+            return redirect()->route('admin.rag-documents.index')
+                ->with('success', 'Dokumen berhasil ditambahkan dan diproses untuk RAG.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to store RAG document: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal menambah dokumen RAG.']);
         }
-
-        $document->save();
-
-        // Process document (generate chunks and embeddings)
-        $this->ragService->processDocument($document);
-
-        return redirect()->route('admin.rag-documents.index')
-            ->with('success', 'Dokumen berhasil ditambahkan dan diproses untuk RAG.');
     }
 
     public function edit(RagDocument $ragDocument)
@@ -87,30 +90,37 @@ class RagDocumentController extends Controller
         ]);
     }
 
-    public function update(Request $request, RagDocument $ragDocument)
+    public function update(RagDocumentRequest $request, RagDocument $ragDocument)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'excerpt' => 'nullable|string',
-            'category' => 'nullable|string|max:100',
-            'is_active' => 'boolean',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        $ragDocument->update($validated);
+            $validated = $request->validated();
+            $validated['title'] = strip_tags($validated['title']);
+            if (isset($validated['excerpt'])) {
+                $validated['excerpt'] = strip_tags($validated['excerpt']);
+            }
 
-        // Reprocess document if content changed
-        if ($ragDocument->wasChanged('content')) {
-            $this->ragService->processDocument($ragDocument);
+            $oldContent = $ragDocument->content;
+            $ragDocument->update($validated);
+
+            DB::commit();
+
+            if ($ragDocument->content !== $oldContent) {
+                $this->ragService->processDocument($ragDocument);
+            }
+
+            return redirect()->route('admin.rag-documents.index')
+                ->with('success', 'Dokumen berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update RAG document: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal memperbarui dokumen RAG.']);
         }
-
-        return redirect()->route('admin.rag-documents.index')
-            ->with('success', 'Dokumen berhasil diperbarui.');
     }
 
     public function destroy(RagDocument $ragDocument)
     {
-        // Delete file if exists
         if ($ragDocument->file_path) {
             Storage::disk('public')->delete($ragDocument->file_path);
         }
@@ -121,30 +131,20 @@ class RagDocumentController extends Controller
             ->with('success', 'Dokumen berhasil dihapus.');
     }
 
-    /**
-     * Reprocess document chunks and embeddings
-     */
     public function reprocess(RagDocument $ragDocument)
     {
         $this->ragService->processDocument($ragDocument);
-
         return back()->with('success', 'Dokumen berhasil diproses ulang.');
     }
 
-    /**
-     * Extract text from uploaded file
-     * Supports: TXT (built-in), PDF (with smalot/pdfparser), DOCX (with phpoffice/phpword)
-     */
     protected function extractTextFromFile($file): string
     {
         $extension = $file->getClientOriginalExtension();
 
-        // TXT files - built-in support
         if ($extension === 'txt') {
             return file_get_contents($file->getRealPath());
         }
 
-        // PDF files - requires: composer require smalot/pdfparser
         if ($extension === 'pdf') {
             if (class_exists('\Smalot\PdfParser\Parser')) {
                 try {
@@ -153,18 +153,17 @@ class RagDocumentController extends Controller
                     $text = $pdf->getText();
                     return !empty($text) ? $text : "PDF content is empty or unreadable.";
                 } catch (\Exception $e) {
-                    \Log::error('PDF extraction failed', [
+                    Log::error('PDF extraction failed', [
                         'file' => $file->getClientOriginalName(),
                         'error' => $e->getMessage()
                     ]);
                     return "PDF extraction error: " . $e->getMessage();
                 }
             } else {
-                return "PDF extraction requires 'smalot/pdfparser' package.\n\nRun: composer require smalot/pdfparser";
+                return "PDF extraction requires 'smalot/pdfparser' package.";
             }
         }
 
-        // DOCX files - requires: composer require phpoffice/phpword
         if (in_array($extension, ['doc', 'docx'])) {
             if (class_exists('\PhpOffice\PhpWord\IOFactory')) {
                 try {
@@ -175,7 +174,6 @@ class RagDocumentController extends Controller
                             if (method_exists($element, 'getText')) {
                                 $text .= $element->getText() . "\n";
                             } elseif (method_exists($element, 'getElements')) {
-                                // Handle nested elements (tables, etc)
                                 foreach ($element->getElements() as $childElement) {
                                     if (method_exists($childElement, 'getText')) {
                                         $text .= $childElement->getText() . " ";
@@ -187,19 +185,17 @@ class RagDocumentController extends Controller
                     }
                     return !empty($text) ? trim($text) : "DOCX content is empty.";
                 } catch (\Exception $e) {
-                    \Log::error('DOCX extraction failed', [
+                    Log::error('DOCX extraction failed', [
                         'file' => $file->getClientOriginalName(),
                         'error' => $e->getMessage()
                     ]);
                     return "DOCX extraction error: " . $e->getMessage();
                 }
             } else {
-                return "DOCX extraction requires 'phpoffice/phpword' package.\n\nRun: composer require phpoffice/phpword";
+                return "DOCX extraction requires 'phpoffice/phpword' package.";
             }
         }
 
-        // Unsupported file type
-        return "File type '{$extension}' is not supported.\n\nSupported: TXT, PDF (with smalot/pdfparser), DOCX (with phpoffice/phpword)";
+        return "File type '{$extension}' is not supported.";
     }
 }
-

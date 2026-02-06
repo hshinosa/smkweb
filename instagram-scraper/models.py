@@ -19,6 +19,23 @@ load_dotenv()
 Base = declarative_base()
 
 
+class BotAccount(Base):
+    """
+    Instagram Bot Accounts for scraper authentication.
+    Table: sc_bot_accounts
+    """
+    __tablename__ = 'sc_bot_accounts'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(100), unique=True, nullable=False, index=True)
+    password = Column(String(255), nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    last_used_at = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class RawNewsFeed(Base):
     """
     Raw scraped Instagram posts to be processed by AI News Generator.

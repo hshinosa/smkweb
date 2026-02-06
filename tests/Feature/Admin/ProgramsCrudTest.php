@@ -284,7 +284,7 @@ class ProgramsCrudTest extends TestCase
 
     public function test_image_max_size_validation(): void
     {
-        $largeFile = \Illuminate\Http\UploadedFile::fake()->image('large.jpg')->size(3000); // 3MB, exceeds 2MB limit
+        $largeFile = \Illuminate\Http\UploadedFile::fake()->image('large.jpg')->size(12000); // 12MB, exceeds 10MB limit
 
         $data = [
             'title' => 'Program',

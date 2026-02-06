@@ -9,6 +9,9 @@ use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\TeacherRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TeacherController extends Controller
 {
@@ -38,118 +41,98 @@ class TeacherController extends Controller
             'image_file' => 'nullable|image|max:10240',
         ]);
 
-        $settings = SiteSetting::firstOrNew(['section_key' => 'hero_teachers']);
-        $content = $settings->content ?? SiteSetting::getDefaults('hero_teachers');
+        try {
+            DB::beginTransaction();
 
-        $content['title'] = $validated['title'];
-        $content['subtitle'] = $validated['subtitle'];
+            $settings = SiteSetting::firstOrCreate(['section_key' => 'hero_teachers']);
+            $content = $settings->content ?? SiteSetting::getDefaults('hero_teachers');
 
-        // Save first if new to ensure it has an ID for media library
-        if (!$settings->exists) {
+            $content['title'] = $validated['title'];
+            $content['subtitle'] = $validated['subtitle'];
+
+            if ($request->hasFile('image_file')) {
+                $settings->clearMediaCollection('hero_bg');
+                $settings->addMediaFromRequest('image_file')->toMediaCollection('hero_bg');
+                $media = $settings->getFirstMedia('hero_bg');
+                if ($media) {
+                    $content['image'] = $media->getUrl();
+                }
+            }
+
             $settings->content = $content;
             $settings->save();
+
+            DB::commit();
+            SiteSetting::forgetCache();
+
+            return redirect()->back()->with('success', 'Pengaturan hero berhasil diperbarui');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update teacher settings: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal memperbarui pengaturan hero.']);
         }
-
-        if ($request->hasFile('image_file')) {
-            $settings->clearMediaCollection('hero_bg');
-            $settings->addMediaFromRequest('image_file')->toMediaCollection('hero_bg');
-            $media = $settings->getFirstMedia('hero_bg');
-            if ($media) {
-                $content['image'] = $media->getUrl();
-            }
-        }
-
-        $settings->content = $content;
-        $settings->save();
-
-        SiteSetting::forgetCache();
-
-        return redirect()->back()->with('success', 'Pengaturan hero berhasil diperbarui');
     }
 
-    public function store(Request $request)
+    public function store(TeacherRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|in:guru,staff',
-            'position' => 'required|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
-            'nip' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:255',
-            'bio' => 'nullable|string',
-            'sort_order' => 'integer',
-            'is_active' => 'boolean',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        // Remove image from validated array
-        unset($validated['image']);
-
-        // Create teacher
-        $teacher = Teacher::create($validated);
-
-        // NEW: Use Media Library for automatic WebP + responsive variants
-        if ($request->hasFile('image')) {
-            $teacher->addMediaFromRequest('image')
-                     ->toMediaCollection('photos');
+            $validated = $request->validated();
             
-            // Update image_url with proper media URL
-            $media = $teacher->getFirstMedia('photos');
-            if ($media) {
-                $teacher->update(['image_url' => $media->getUrl()]);
+            if (isset($validated['bio'])) {
+                $validated['bio'] = strip_tags($validated['bio'], '<b><i><u><p><br>');
             }
-        }
 
-        return redirect()->back()->with('success', 'Data Guru/Staff berhasil ditambahkan');
+            unset($validated['image']);
+
+            $teacher = Teacher::create($validated);
+
+            if ($request->hasFile('image')) {
+                $teacher->addMediaFromRequest('image')->toMediaCollection('photos');
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Data Guru/Staff berhasil ditambahkan');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to store teacher: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal menambah data Guru/Staff.']);
+        }
     }
 
-    public function update(Request $request, Teacher $teacher)
+    public function update(TeacherRequest $request, Teacher $teacher)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|in:guru,staff',
-            'position' => 'required|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
-            'nip' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:255',
-            'bio' => 'nullable|string',
-            'sort_order' => 'integer',
-            'is_active' => 'boolean',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        // Remove image from validated array
-        unset($validated['image']);
-
-        // Update teacher data
-        $teacher->update($validated);
-
-        // NEW: Update media if image provided
-        if ($request->hasFile('image')) {
-            // Clear old media
-            $teacher->clearMediaCollection('photos');
+            $validated = $request->validated();
             
-            // Add new media
-            $teacher->addMediaFromRequest('image')
-                     ->toMediaCollection('photos');
-            
-            // Update image_url with proper media URL
-            $media = $teacher->getFirstMedia('photos');
-            if ($media) {
-                $teacher->update(['image_url' => $media->getUrl()]);
+            if (isset($validated['bio'])) {
+                $validated['bio'] = strip_tags($validated['bio'], '<b><i><u><p><br>');
             }
-        }
 
-        return redirect()->back()->with('success', 'Data Guru/Staff berhasil diperbarui');
+            unset($validated['image']);
+
+            $teacher->update($validated);
+
+            if ($request->hasFile('image')) {
+                $teacher->clearMediaCollection('photos');
+                $teacher->addMediaFromRequest('image')->toMediaCollection('photos');
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Data Guru/Staff berhasil diperbarui');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update teacher: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal memperbarui data Guru/Staff.']);
+        }
     }
 
     public function destroy(Teacher $teacher)
     {
-        // NEW: Media Library automatically deletes associated media
         $teacher->delete();
-
         return redirect()->back()->with('success', 'Data Guru/Staff berhasil dihapus');
     }
 }

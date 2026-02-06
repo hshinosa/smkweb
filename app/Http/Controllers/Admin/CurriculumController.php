@@ -8,148 +8,88 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 
+use App\Http\Requests\CurriculumUpdateRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 class CurriculumController extends Controller
 {
     public function index()
     {
         $settings = CurriculumSetting::all()->keyBy('section_key');
         $sections = [];
-        
+        $mediaCollections = CurriculumSetting::getMediaCollections();
+        $imageService = new \App\Services\ImageService();
+
         foreach (array_keys(CurriculumSetting::getSectionFields()) as $key) {
             $dbRow = $settings->get($key);
             $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
-            $sections[$key] = CurriculumSetting::getContent($key, $dbContent);
+            $content = CurriculumSetting::getContent($key, $dbContent);
+
+            if ($dbRow && isset($mediaCollections[$key])) {
+                $media = $imageService->getFirstMediaData($dbRow, $mediaCollections[$key]);
+                if ($media) {
+                    $content['image'] = $media;
+                }
+            }
+
+            $sections[$key] = $content;
         }
 
         return Inertia::render('Admin/Curriculum/Index', [
             'settings' => $sections,
-            'activeSection' => request('section', 'intro')
+            'sectionMeta' => CurriculumSetting::getSectionMeta(),
+            'activeSection' => request('section', 'hero')
         ]);
     }
 
-    public function update(Request $request)
+    public function update(CurriculumUpdateRequest $request)
     {
-        $section = $request->input('section');
-        $redirectTab = 'intro'; // Default
+        $section = $request->validated('section');
+        $content = $request->validated('content');
 
-        if ($section === 'intro_fases') {
-            $redirectTab = 'intro';
-            // Handle Intro
-            CurriculumSetting::updateOrCreate(
-                ['section_key' => 'intro'],
-                ['content' => [
-                    'title' => $request->input('intro_title'),
-                    'description' => $request->input('intro_description'),
-                ]]
-            );
+        try {
+            DB::beginTransaction();
 
-            // Handle Fase E
-            $faseEContent = [
-                'title' => $request->input('fase_e_title'),
-                'description' => $request->input('fase_e_description'),
-                'points' => $request->input('fase_e_points', []),
-                'image' => $request->input('fase_e_image_url'),
-            ];
-            
-            $faseESetting = CurriculumSetting::firstOrNew(['section_key' => 'fase_e']);
-            
-            // Save first if new to ensure it has an ID
-            if (!$faseESetting->exists) {
-                $faseESetting->content = $faseEContent;
-                $faseESetting->save();
-            }
-            
-            // Handle file upload for Fase E
-            if ($request->hasFile("fase_e_image")) {
-                $file = $request->file("fase_e_image");
-                $faseESetting->clearMediaCollection('fase_e_image');
-                $media = $faseESetting->addMedia($file)->toMediaCollection('fase_e_image');
-                $faseEContent['image'] = $media->getUrl();
-            }
-            $faseESetting->content = $faseEContent;
-            $faseESetting->save();
+            $setting = CurriculumSetting::firstOrCreate(['section_key' => $section]);
 
-            // Handle Fase F
-            $faseFContent = [
-                'title' => $request->input('fase_f_title'),
-                'description' => $request->input('fase_f_description'),
-                'points' => $request->input('fase_f_points', []),
-                'image' => $request->input('fase_f_image_url'),
-            ];
-            
-            $faseFSetting = CurriculumSetting::firstOrNew(['section_key' => 'fase_f']);
-            
-            // Save first if new to ensure it has an ID
-            if (!$faseFSetting->exists) {
-                $faseFSetting->content = $faseFContent;
-                $faseFSetting->save();
-            }
-            
-            // Handle file upload for Fase F
-            if ($request->hasFile("fase_f_image")) {
-                $file = $request->file("fase_f_image");
-                $faseFSetting->clearMediaCollection('fase_f_image');
-                $media = $faseFSetting->addMedia($file)->toMediaCollection('fase_f_image');
-                $faseFContent['image'] = $media->getUrl();
-            }
-            $faseFSetting->content = $faseFContent;
-            $faseFSetting->save();
+            $mediaCollections = CurriculumSetting::getMediaCollections();
+            $collection = $mediaCollections[$section] ?? null;
 
-        } elseif ($section === 'hero') {
-            $content = $request->input('content');
-            $heroSetting = CurriculumSetting::firstOrNew(['section_key' => 'hero']);
-            
-            // Save first if new to ensure it has an ID
-            if (!$heroSetting->exists) {
-                $heroSetting->content = $content;
-                $heroSetting->save();
-            }
-            
-            if ($request->hasFile("content.image")) {
-                $heroSetting->clearMediaCollection('hero_bg');
-                $heroSetting->addMediaFromRequest("content.image")->toMediaCollection('hero_bg');
-                $media = $heroSetting->getMedia('hero_bg')->last();
-                if ($media) {
-                    $content['image'] = '/storage/' . $media->id . '/' . $media->file_name;
-                }
-            } else {
-                $content['image'] = $content['image_url'] ?? null;
-            }
-            unset($content['image_url']);
-            
-            $heroSetting->content = $content;
-            $heroSetting->save();
-
-        } else {
-            // Handle Grading System, Learning Goals, and Metode
-            $content = $request->input('content');
-            
-            if (!$content) {
-                if ($section === 'grading_system') {
-                    $content = [
-                        'title' => $request->input('title'),
-                        'description' => $request->input('description'),
-                        'scales' => $request->input('scales', []),
-                    ];
-                } elseif ($section === 'learning_goals') {
-                    $content = [
-                        'title' => $request->input('title'),
-                        'goals' => $request->input('goals', []),
-                    ];
-                } elseif ($section === 'metode') {
-                    $content = [
-                        'title' => $request->input('title'),
-                        'items' => $request->input('items', []),
-                    ];
-                }
+            if ($collection && $request->hasFile('media')) {
+                $setting->clearMediaCollection($collection);
+                $setting->addMediaFromRequest('media')->toMediaCollection($collection);
             }
 
-            CurriculumSetting::updateOrCreate(
-                ['section_key' => $section],
-                ['content' => $content]
-            );
+            // Clean content to prevent slop and maintain structure
+            $setting->content = $this->sanitizeContent($content);
+            $setting->save();
+
+            DB::commit();
+
+            return back()->with('success', 'Konten kurikulum berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to update curriculum section {$section}: " . $e->getMessage());
+
+            return back()->withErrors(['general' => 'Gagal memperbarui konten. Silakan coba lagi.']);
         }
+    }
 
-        return back()->with('success', 'Konten kurikulum berhasil diperbarui.');
+    private function sanitizeContent(array $content): array
+    {
+        return array_map(function ($value) {
+            if (is_array($value)) {
+                return $this->sanitizeContent($value);
+            }
+            
+            if (is_string($value)) {
+                // Remove potential script tags, keep basic formatting if needed
+                // For now, full strip to be safe, or use HTMLPurifier if rich text is needed
+                return strip_tags($value);
+            }
+
+            return $value;
+        }, $content);
     }
 }

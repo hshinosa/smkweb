@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Helpers\ActivityLogger;
-use App\Helpers\HtmlSanitizer;
 use App\Http\Controllers\Controller;
 use App\Models\LandingPageSetting;
 use App\Services\ImageService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use App\Helpers\ActivityLogger;
+use App\Helpers\HtmlSanitizer;
+use App\Http\Requests\LandingPageRequest;
 
 class LandingPageContentController extends Controller
 {
@@ -21,7 +20,6 @@ class LandingPageContentController extends Controller
     {
         $this->imageService = $imageService;
     }
-    // Tidak perlu getDefaults() lagi di sini, kita pakai dari model
 
     public function index()
     {
@@ -35,7 +33,6 @@ class LandingPageContentController extends Controller
                 $dbContent = ($dbRow && isset($dbRow['content']) && is_array($dbRow['content'])) ? $dbRow['content'] : null;
                 $content = LandingPageSetting::getContent($key, $dbContent);
 
-                // Inject Media Library data if available
                 if ($dbRow) {
                     if ($key === 'hero') {
                         $bgMedia = $this->imageService->getFirstMediaData($dbRow, 'hero_background');
@@ -66,207 +63,79 @@ class LandingPageContentController extends Controller
 
                 $pageData[$key] = $content;
             }
-            // Log::info('Admin Landing Page Data to View:', $pageData);
 
             return Inertia::render('Admin/LandingPageContentPage', [
                 'currentSettings' => $pageData,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error in LandingPageContentController@index: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            return back()->withErrors(['general' => 'Gagal memuat data: ' . $e->getMessage()]);
+            Log::error('Error in LandingPageContentController@index: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal memuat data.']);
         }
     }
 
-    public function storeOrUpdate(Request $request)
+    public function storeOrUpdate(LandingPageRequest $request)
     {
-        // Debug logging for file uploads
-        Log::info('LandingPageContentController@storeOrUpdate called', [
-            'has_kepsek_image' => $request->hasFile('kepsek_welcome_lp.kepsek_image'),
-            'has_hero_bg' => $request->hasFile('hero.background_image'),
-            'has_about_image' => $request->hasFile('about_lp.image'),
-            'all_files' => array_keys($request->allFiles()),
-            'content_type' => $request->header('Content-Type'),
-        ]);
-
-        $inputData = $request->all();
-        $rules = [];
-        $sectionFields = LandingPageSetting::getSectionFields(); // Ambil dari model
-        $finalDataToSave = [];
-
-        foreach ($sectionFields as $sectionKey => $fields) {
-            if (isset($inputData[$sectionKey])) {
-                $sectionRules = [];
-                $currentSectionDataFromRequest = $inputData[$sectionKey];
-                $dataForThisSection = [];
-
-                // Bangun aturan validasi berdasarkan $fields
-                if ($sectionKey === 'hero') {
-                    $sectionRules["{$sectionKey}.title_line1"] = 'required|string|max:100';
-                    $sectionRules["{$sectionKey}.title_line2"] = 'required|string|max:100';
-                    $sectionRules["{$sectionKey}.hero_text"] = 'required|string|max:500';
-                    $sectionRules["{$sectionKey}.background_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240';
-                    $sectionRules["{$sectionKey}.student_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240';
-                    $sectionRules["{$sectionKey}.stats"] = 'nullable|array';
-                    $sectionRules["{$sectionKey}.stats.*.label"] = 'required|string|max:50';
-                    $sectionRules["{$sectionKey}.stats.*.value"] = 'required|string|max:50';
-                    $sectionRules["{$sectionKey}.stats.*.icon_name"] = 'required|string|max:50';
-                } elseif ($sectionKey === 'about_lp') {
-                    $sectionRules["{$sectionKey}.title"] = 'required|string|max:150';
-                    $sectionRules["{$sectionKey}.description_html"] = 'required|string|max:5000';
-                    $sectionRules["{$sectionKey}.image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240';
-                } elseif ($sectionKey === 'kepsek_welcome_lp') {
-                    $sectionRules["{$sectionKey}.title"] = 'required|string|max:150';
-                    $sectionRules["{$sectionKey}.kepsek_name"] = 'required|string|max:100';
-                    $sectionRules["{$sectionKey}.kepsek_title"] = 'required|string|max:100';
-                    $sectionRules["{$sectionKey}.kepsek_image"] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240';
-                    $sectionRules["{$sectionKey}.welcome_text_html"] = 'required|string|max:10000';
-                } elseif ($sectionKey === 'programs_lp') {
-                    $sectionRules["{$sectionKey}.title"] = 'required|string|max:150';
-                    $sectionRules["{$sectionKey}.description"] = 'required|string|max:500';
-                    // items is now managed separately
-                } elseif ($sectionKey === 'gallery_lp') {
-                    $sectionRules["{$sectionKey}.title"] = 'required|string|max:150';
-                    $sectionRules["{$sectionKey}.description"] = 'required|string|max:500';
-                    // images is now managed separately
-                } elseif ($sectionKey === 'cta_lp') {
-                    $sectionRules["{$sectionKey}.title"] = 'required|string|max:200';
-                    $sectionRules["{$sectionKey}.description"] = 'required|string|max:500';
-                }
-                $rules = array_merge($rules, $sectionRules);
-
-                // Ambil HANYA field yang didefinisikan di $sectionFields[$sectionKey]
-                foreach ($fields as $field) {
-                    if (isset($currentSectionDataFromRequest[$field])) {
-                        if ($field === 'items' && $sectionKey === 'programs_lp') {
-                            // Filter item yang valid
-                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function ($item) {
-                                return ! empty(trim($item['title'] ?? ''));
-                            }));
-                            // Jika setelah filter hasilnya array kosong, pastikan tetap array kosong
-                            if (empty($dataForThisSection[$field])) {
-                                $dataForThisSection[$field] = [];
-                            }
-                        } elseif ($field === 'images' && $sectionKey === 'gallery_lp') {
-                            $dataForThisSection[$field] = array_values(array_filter($currentSectionDataFromRequest[$field], function ($url) {
-                                return ! empty(trim($url));
-                            }));
-                        } else {
-                            $dataForThisSection[$field] = $currentSectionDataFromRequest[$field];
-                        }
-                    } else {
-                        // Jika field tidak ada di request, ambil dari default untuk menjaga struktur
-                        // Ini penting jika field bisa dikosongkan total di form
-                        $defaultsForSection = LandingPageSetting::getDefaults($sectionKey);
-                        $dataForThisSection[$field] = $defaultsForSection[$field] ?? null;
-                    }
-                }
-                $finalDataToSave[$sectionKey] = HtmlSanitizer::sanitizeSection($sectionKey, $dataForThisSection);
-            }
-        }
-        // Log::info('Data to validate: ', $inputData);
-        // Log::info('Validation rules: ', $rules);
-
-        $validator = Validator::make($inputData, $rules);
-
-        if ($validator->fails()) {
-            Log::warning('Validasi gagal untuk update Landing Page:', $validator->errors()->toArray());
-
-            return back()->withErrors($validator)->withInput();
-        }
-
-        // Detect which section/tab is being updated based on input
-        $activeTab = 'hero'; // Default
-        if (isset($inputData['hero'])) $activeTab = 'hero';
-        elseif (isset($inputData['about_lp'])) $activeTab = 'about';
-        elseif (isset($inputData['kepsek_welcome_lp'])) $activeTab = 'kepsek';
-        elseif (isset($inputData['programs_lp'])) $activeTab = 'programs';
-        elseif (isset($inputData['gallery_lp'])) $activeTab = 'gallery';
-        elseif (isset($inputData['cta_lp'])) $activeTab = 'cta';
-
-        // $validatedData = $validator->validated(); // Ini akan mengambil semua data yang tervalidasi
-        // Kita akan menggunakan $finalDataToSave yang sudah difilter fieldnya
-
         try {
-            foreach ($finalDataToSave as $sectionKey => $content) {
-                // Find or create setting first to attach media
-                $setting = LandingPageSetting::firstOrNew(['section_key' => $sectionKey]);
-                
-                // Merge content with existing to preserve fields not in request
-                $existingContent = $setting->content ?? [];
-                if (!is_array($existingContent)) {
-                    $existingContent = [];
-                }
-                
-                // Merge: new content overwrites old
-                $mergedContent = array_merge($existingContent, $content);
-                
-                // Save the setting first to ensure it has an ID for media library
-                if (!$setting->exists) {
-                    $setting->content = $mergedContent;
-                    $setting->save();
-                }
-                
-                // Handle file uploads for each section
-                if ($sectionKey === 'hero') {
-                    if ($request->hasFile('hero.background_image')) {
-                        $setting->clearMediaCollection('hero_background');
-                        $setting->addMediaFromRequest('hero.background_image')
-                                        ->toMediaCollection('hero_background');
-                        $media = $setting->getFirstMedia('hero_background');
-                        if ($media) {
-                            $mergedContent['background_image_url'] = $media->getUrl();
-                        }
-                    }
+            DB::beginTransaction();
 
-                    if ($request->hasFile('hero.student_image')) {
-                        $setting->clearMediaCollection('hero_student');
-                        $setting->addMediaFromRequest('hero.student_image')
-                                        ->toMediaCollection('hero_student');
-                        $media = $setting->getFirstMedia('hero_student');
-                        if ($media) {
-                            $mergedContent['student_image_url'] = $media->getUrl();
-                        }
-                    }
-                } elseif ($sectionKey === 'about_lp' && $request->hasFile('about_lp.image')) {
-                    $setting->clearMediaCollection('about_image');
-                    $setting->addMediaFromRequest('about_lp.image')
-                                    ->toMediaCollection('about_image');
-                    $media = $setting->getFirstMedia('about_image');
-                    if ($media) {
-                        $mergedContent['image_url'] = $media->getUrl();
-                    }
-                } elseif ($sectionKey === 'kepsek_welcome_lp' && $request->hasFile('kepsek_welcome_lp.kepsek_image')) {
-                    $setting->clearMediaCollection('kepsek_image');
-                    $setting->addMediaFromRequest('kepsek_welcome_lp.kepsek_image')
-                                    ->toMediaCollection('kepsek_image');
-                    $media = $setting->getFirstMedia('kepsek_image');
-                    if ($media) {
-                        $mergedContent['kepsek_image_url'] = $media->getUrl();
-                    }
-                }
+            $inputData = $request->validated();
+            $sectionKey = $inputData['section'];
+            $content = $inputData['content'];
 
-                // Save final merged content with updated URLs
-                $setting->content = $mergedContent;
-                $setting->save();
-                
-                Log::info("Landing page section saved", [
-                    'section' => $sectionKey,
-                    'has_background_url' => isset($mergedContent['background_image_url']),
-                    'has_student_url' => isset($mergedContent['student_image_url']),
-                ]);
+            // Sanitization
+            $content = $this->sanitizeSection($sectionKey, $content);
+
+            $setting = LandingPageSetting::firstOrCreate(['section_key' => $sectionKey]);
+            $existingContent = $setting->content ?? [];
+            $mergedContent = array_merge($existingContent, $content);
+
+            // Handle Media
+            if ($sectionKey === 'hero') {
+                if ($request->hasFile('hero.background_image')) {
+                    $setting->clearMediaCollection('hero_background');
+                    $media = $setting->addMediaFromRequest('hero.background_image')->toMediaCollection('hero_background');
+                    $mergedContent['background_image_url'] = $media->getUrl();
+                }
+                if ($request->hasFile('hero.student_image')) {
+                    $setting->clearMediaCollection('hero_student');
+                    $media = $setting->addMediaFromRequest('hero.student_image')->toMediaCollection('hero_student');
+                    $mergedContent['student_image_url'] = $media->getUrl();
+                }
+            } elseif ($sectionKey === 'about_lp' && $request->hasFile('about_lp.image')) {
+                $setting->clearMediaCollection('about_image');
+                $media = $setting->addMediaFromRequest('about_lp.image')->toMediaCollection('about_image');
+                $mergedContent['image_url'] = $media->getUrl();
+            } elseif ($sectionKey === 'kepsek_welcome_lp' && $request->hasFile('kepsek_welcome_lp.kepsek_image')) {
+                $setting->clearMediaCollection('kepsek_image');
+                $media = $setting->addMediaFromRequest('kepsek_welcome_lp.kepsek_image')->toMediaCollection('kepsek_image');
+                $mergedContent['kepsek_image_url'] = $media->getUrl();
             }
 
-            ActivityLogger::log('Update Konten Landing Page', 'Semua section Landing Page telah diperbarui.', $request);
+            $setting->content = $mergedContent;
+            $setting->save();
 
-            return redirect()->route('admin.landingpage.content.index', ['tab' => $activeTab])
-                ->with('success', 'Konten Landing Page berhasil diperbarui!');
+            DB::commit();
+            ActivityLogger::log('Update Konten Landing Page', 'Bagian ' . $sectionKey . ' telah diperbarui.', $request);
 
+            return back()->with('success', 'Konten berhasil diperbarui!');
         } catch (\Exception $e) {
-            Log::error('Error updating landing page content: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
-
-            return back()->withErrors(['general' => 'Gagal memperbarui konten: '.$e->getMessage()])->withInput();
+            DB::rollBack();
+            Log::error('Error updating Landing Page: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal memperbarui konten.']);
         }
+    }
+
+    private function sanitizeSection(string $key, array $content): array
+    {
+        $htmlFields = ['description_html', 'welcome_text_html'];
+        $sanitized = [];
+        foreach ($content as $field => $value) {
+            if (in_array($field, $htmlFields)) {
+                $sanitized[$field] = HtmlSanitizer::sanitize($value);
+            } else {
+                $sanitized[$field] = is_string($value) ? strip_tags($value) : $value;
+            }
+        }
+        return $sanitized;
     }
 }

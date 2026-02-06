@@ -283,8 +283,9 @@ export default function DashboardPage() {
         if (activitySearchTermModal) {
             const search = activitySearchTermModal.toLowerCase();
             logs = logs.filter(log =>
-                (log.admin?.username?.toLowerCase() || '').includes(search) ||
-                log.action.toLowerCase().includes(search)
+                (log.causer?.username?.toLowerCase() || log.causer?.name?.toLowerCase() || '').includes(search) ||
+                log.action?.toLowerCase().includes(search) ||
+                log.description?.toLowerCase().includes(search)
             );
         }
         const now = new Date();
@@ -448,10 +449,10 @@ export default function DashboardPage() {
                                             <td className="px-4 py-3 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                                        <span className="text-xs font-semibold text-primary">{(log.admin?.username || 'S')[0].toUpperCase()}</span>
+                                                        <span className="text-xs font-semibold text-primary">{(log.causer?.username || log.causer?.name || 'S')[0].toUpperCase()}</span>
                                                     </div>
                                                     <span className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">
-                                                        {log.admin?.username || 'Sistem'}
+                                                        {log.causer?.username || log.causer?.name || 'Sistem'}
                                                     </span>
                                                 </div>
                                             </td>
@@ -549,7 +550,7 @@ export default function DashboardPage() {
                                                         {(currentActivityPageModal - 1) * ITEMS_PER_LOG_PAGE_MODAL + index + 1}
                                                     </td>
                                                     <td className="px-4 py-3">
-                                                        <span className="text-xs sm:text-sm font-medium text-gray-900">{log.admin?.username || <span className="italic text-gray-400">Sistem</span>}</span>
+                                                        <span className="text-xs sm:text-sm font-medium text-gray-900">{log.causer?.username || log.causer?.name || <span className="italic text-gray-400">Sistem</span>}</span>
                                                     </td>
                                                     <td className="px-4 py-3">
                                                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronRight, X, ChevronDown } from 'lucide-react';
-import '../../css/scrollbar.css';
+import '../../../../resources/css/scrollbar.css';
 
 export default function ContentEditorSidebar({ tabs, activeTab, setActiveTab }) {
     const [isExpanded, setIsExpanded] = useState(false);

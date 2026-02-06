@@ -217,7 +217,7 @@ class GalleriesCrudTest extends TestCase
 
     public function test_file_max_size_validation(): void
     {
-        $file = \Illuminate\Http\UploadedFile::fake()->create('large-file.mp4', 10241); // 10MB + 1KB
+        $file = \Illuminate\Http\UploadedFile::fake()->create('large-file.mp4', 25000); // 25MB, exceeds 20MB limit
         $data = [
             'title' => 'Test Gallery',
             'type' => 'video',

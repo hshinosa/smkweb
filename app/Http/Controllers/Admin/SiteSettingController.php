@@ -9,6 +9,9 @@ use App\Services\ImageService;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\ActivityLogger;
+use App\Http\Requests\SiteSettingRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SiteSettingController extends Controller
 {
@@ -29,9 +32,7 @@ class SiteSettingController extends Controller
             $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
             $content = SiteSetting::getContent($key, $dbContent);
             
-            // Append responsive image data if exists
             if ($dbRow) {
-                // For hero sections with 'image'
                 if (str_starts_with($key, 'hero_')) {
                     $media = $this->imageService->getFirstMediaData($dbRow, $key);
                     if ($media) {
@@ -39,7 +40,6 @@ class SiteSettingController extends Controller
                     }
                 }
                 
-                // For general settings with logo/favicon
                 if ($key === 'general') {
                     $logoMedia = $this->imageService->getFirstMediaData($dbRow, 'site_logo');
                     if ($logoMedia) $content['siteLogoMedia'] = $logoMedia;
@@ -61,89 +61,66 @@ class SiteSettingController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function update(SiteSettingRequest $request)
     {
-        $section = $request->input('section');
-        
-        // Validation
-        $rules = [
-            'section' => 'required|string',
-            'content' => 'required|array',
-        ];
+        try {
+            DB::beginTransaction();
 
-        if ($section === 'general') {
-            $rules['content.site_name'] = 'required|string|max:255';
-            $rules['content.email'] = 'nullable|email|max:255';
+            $section = $request->input('section');
+            $content = $request->input('content');
             
-            // Only validate file fields if they are actually files (not strings/URLs)
-            if ($request->hasFile('content.site_logo')) {
-                $rules['content.site_logo'] = 'image|mimes:jpeg,png,jpg,gif,svg|max:10240';
+            foreach ($content as $key => &$value) {
+                if (is_string($value)) {
+                    $value = strip_tags($value, '<b><i><u><p><br>');
+                }
             }
-            if ($request->hasFile('content.hero_image')) {
-                $rules['content.hero_image'] = 'image|mimes:jpeg,png,jpg,gif,webp|max:10240';
+
+            $setting = SiteSetting::firstOrCreate(['section_key' => $section]);
+            $existingContent = $setting->content ?? [];
+
+            if ($section === 'general') {
+                if ($request->hasFile("content.site_logo")) {
+                    $setting->clearMediaCollection('site_logo');
+                    $media = $setting->addMediaFromRequest("content.site_logo")->toMediaCollection('site_logo');
+                    $content['site_logo'] = $media->getUrl();
+                } elseif (isset($existingContent['site_logo'])) {
+                    $content['site_logo'] = $existingContent['site_logo'];
+                }
+
+                if ($request->hasFile("content.hero_image")) {
+                    $setting->clearMediaCollection('hero_image');
+                    $media = $setting->addMediaFromRequest("content.hero_image")->toMediaCollection('hero_image');
+                    $content['hero_image'] = $media->getUrl();
+                } elseif (isset($existingContent['hero_image'])) {
+                    $content['hero_image'] = $existingContent['hero_image'];
+                }
             }
-        }
 
-        $request->validate($rules);
+            if (str_starts_with($section, 'hero_')) {
+                if ($request->hasFile("content.image_file")) {
+                    $setting->clearMediaCollection($section);
+                    $media = $setting->addMediaFromRequest("content.image_file")->toMediaCollection($section);
+                    $content['image'] = $media->getUrl();
+                } else {
+                    $content['image'] = $existingContent['image'] ?? ($content['image'] ?? null);
+                }
+                unset($content['image_file']);
+            }
 
-        $content = $request->input('content');
-        
-        // Find or create setting
-        $setting = SiteSetting::firstOrNew(['section_key' => $section]);
-        $existingContent = $setting->content ?? [];
-
-        // Save first if new to ensure it has an ID for media library
-        if (!$setting->exists) {
             $setting->content = $content;
             $setting->save();
+
+            SiteSetting::forgetCache();
+            DB::commit();
+            
+            ActivityLogger::log("Update Pengaturan Situs", "Memperbarui bagian: " . $section, $request);
+
+            return redirect()->route('admin.site-settings.index', ['section' => $section])
+                ->with('success', 'Pengaturan situs berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update site settings: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal memperbarui pengaturan situs.']);
         }
-
-        // Handle file uploads with Media Library
-        if ($section === 'general') {
-            // Handle site_logo
-            if ($request->hasFile("content.site_logo")) {
-                $setting->clearMediaCollection('site_logo');
-                $media = $setting->addMediaFromRequest("content.site_logo")
-                                ->toMediaCollection('site_logo');
-                $content['site_logo'] = $media->getUrl();
-            } elseif (isset($existingContent['site_logo'])) {
-                // Preserve existing logo URL
-                $content['site_logo'] = $existingContent['site_logo'];
-            }
-
-            // Handle hero_image
-            if ($request->hasFile("content.hero_image")) {
-                $setting->clearMediaCollection('hero_image');
-                $media = $setting->addMediaFromRequest("content.hero_image")
-                                ->toMediaCollection('hero_image');
-                $content['hero_image'] = $media->getUrl();
-            } elseif (isset($existingContent['hero_image'])) {
-                // Preserve existing hero_image URL
-                $content['hero_image'] = $existingContent['hero_image'];
-            }
-        }
-
-        // Handle file uploads for hero sections in SiteSetting
-        if (str_starts_with($section, 'hero_')) {
-            if ($request->hasFile("content.image_file")) {
-                $setting->clearMediaCollection($section);
-                $media = $setting->addMediaFromRequest("content.image_file")
-                                ->toMediaCollection($section);
-                $content['image'] = $media->getUrl();
-            } else {
-                $content['image'] = $existingContent['image'] ?? ($content['image'] ?? null);
-            }
-            unset($content['image_file']);
-        }
-
-        $setting->content = $content;
-        $setting->save();
-
-        SiteSetting::forgetCache();
-
-        ActivityLogger::log("Update Pengaturan Situs", "Memperbarui bagian: " . $section, $request);
-
-        return redirect()->route('admin.site-settings.index', ['section' => $section])
-            ->with('success', 'Pengaturan situs berhasil diperbarui.');
     }
 }

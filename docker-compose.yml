@@ -59,9 +59,6 @@ services:
         condition: service_healthy
 
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: hshinosa/smkweb:latest
     container_name: sman1-baleendah-app
     restart: unless-stopped
@@ -211,23 +208,21 @@ services:
     networks:
       - sman1-network
 
-  # CLI Proxy API - OpenAI-compatible proxy for Claude/Gemini
+  # CLI Proxy API - Build from local source
   cliproxyapi:
-    image: eceasy/cli-proxy-api:latest
+    image: hshinosa/cliproxyapi:latest
     container_name: sman1-baleendah-cliproxy
     restart: unless-stopped
+    ports:
+      - "8317:8317"
     volumes:
       - ./cliproxyapi/config.yaml:/CLIProxyAPI/config.yaml
       - ./cliproxyapi/auths:/root/.cli-proxy-api
       - ./cliproxyapi/logs:/CLIProxyAPI/logs
     networks:
       - sman1-network
-    # Internal network only - accessed by app container via http://cliproxyapi:8317
-    # Uncomment below to expose for external access if needed
-    # ports:
-    #   - "8317:8317"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8317/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8317/ping"]
       interval: 30s
       timeout: 10s
       retries: 3

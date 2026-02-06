@@ -16,9 +16,6 @@ class Alumni extends Model implements HasMedia
         'name',
         'graduation_year',
         'testimonial',
-        'image_url',
-        'video_url',
-        'video_thumbnail_url',
         'video_source',
         'content_type',
         'is_featured',
@@ -32,6 +29,26 @@ class Alumni extends Model implements HasMedia
         'sort_order' => 'integer',
         'graduation_year' => 'integer',
     ];
+
+    protected $appends = ['image_url', 'video_url', 'video_thumbnail_url'];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->getFirstMediaUrl('avatars') ?: '/images/avatar-alumni-default.png';
+    }
+
+    public function getVideoUrlAttribute(): ?string
+    {
+        if ($this->content_type === 'video' && $this->video_source === 'upload') {
+            return $this->getFirstMediaUrl('videos');
+        }
+        return $this->attributes['video_url'] ?? null;
+    }
+
+    public function getVideoThumbnailUrlAttribute(): ?string
+    {
+        return $this->getFirstMediaUrl('video_thumbnails') ?: $this->image_url;
+    }
 
     public function registerMediaConversions(?Media $media = null): void
     {

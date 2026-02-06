@@ -17,7 +17,6 @@ class Teacher extends Model implements HasMedia
         'type',
         'position',
         'department',
-        'image_url',
         'nip',
         'email',
         'phone',
@@ -31,30 +30,14 @@ class Teacher extends Model implements HasMedia
         'sort_order' => 'integer',
     ];
 
+    protected $appends = ['image_url'];
+
     /**
      * Get the teacher's profile photo URL.
-     * Fallback to image_url column, then media library, then default image.
      */
-    public function getImageUrlAttribute($value)
+    public function getImageUrlAttribute()
     {
-        // 1. If absolute URL or manually set path in DB exists, use it
-        if ($value && (str_starts_with($value, 'http') || str_starts_with($value, '/'))) {
-            return $value;
-        }
-
-        // 2. Try to get from Spatie Media Library
-        $media = $this->getFirstMediaUrl('photos', 'webp');
-        if ($media) {
-            return $media;
-        }
-
-        // 3. Last fallback to image_url value if it was a relative path
-        if ($value) {
-            return "/storage/{$value}";
-        }
-
-        // 4. Default placeholder
-        return '/images/keluarga-besar-sman1-baleendah.png';
+        return $this->getFirstMediaUrl('photos', 'webp') ?: '/images/keluarga-besar-sman1-baleendah.png';
     }
 
     /**

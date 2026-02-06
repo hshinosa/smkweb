@@ -7,9 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicCalendarContent;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
+use App\Http\Requests\AcademicCalendarRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AcademicCalendarController extends Controller
 {
@@ -24,7 +25,6 @@ class AcademicCalendarController extends Controller
     {
         $query = AcademicCalendarContent::query()->with('media');
 
-        // Search functionality
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -35,7 +35,6 @@ class AcademicCalendarController extends Controller
 
         $contents = $query->ordered()->paginate(10)->withQueryString();
         
-        // Transform items in pagination
         $contents->through(function ($item) {
             return $this->imageService->transformModelWithMedia($item, ['calendar_images']);
         });
@@ -48,83 +47,69 @@ class AcademicCalendarController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(AcademicCalendarRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'calendar_image' => 'required|file|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
-            'semester' => 'required|integer|in:1,2',
-            'academic_year_start' => 'required|integer|min:2000|max:2100',
-            'sort_order' => 'integer|min:0',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
+            $validated = $request->validated();
+            $validated['title'] = strip_tags($validated['title']);
 
-        $data = $request->only(['title', 'semester', 'academic_year_start', 'sort_order']);
+            $content = AcademicCalendarContent::create($validated);
 
-        $content = AcademicCalendarContent::create($data);
-
-        // Handle file upload
-        if ($request->hasFile('calendar_image')) {
-            $content->addMediaFromRequest('calendar_image')->toMediaCollection('calendar_images');
-            
-            $media = $content->getMedia('calendar_images')->last();
-            if ($media) {
-                // Backward compatibility
-                $content->update(['calendar_image_url' => '/storage/' . $media->id . '/' . $media->file_name]);
+            if ($request->hasFile('calendar_image')) {
+                $content->addMediaFromRequest('calendar_image')->toMediaCollection('calendar_images');
+                $media = $content->getFirstMedia('calendar_images');
+                if ($media) {
+                    $content->update(['calendar_image_url' => $media->getUrl()]);
+                }
             }
+
+            DB::commit();
+            ActivityLogger::log('create', "Menambahkan konten kalender akademik: {$content->title}");
+
+            return redirect()->route('admin.academic-calendar.index')->with('success', 'Konten kalender akademik berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to store academic calendar: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal menambah kalender akademik.']);
         }
-
-        ActivityLogger::log('create', "Menambahkan konten kalender akademik: {$content->title}");
-
-        return redirect()->route('admin.academic-calendar.index')->with('success', 'Konten kalender akademik berhasil ditambahkan.');
     }
 
-    public function update(Request $request, AcademicCalendarContent $academic_calendar)
+    public function update(AcademicCalendarRequest $request, AcademicCalendarContent $academic_calendar)
     {
-        $content = $academic_calendar; // Alias for minimal refactoring
+        try {
+            DB::beginTransaction();
 
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'calendar_image' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
-            'semester' => 'required|integer|in:1,2',
-            'academic_year_start' => 'required|integer|min:2000|max:2100',
-            'sort_order' => 'integer|min:0',
-        ]);
+            $validated = $request->validated();
+            $validated['title'] = strip_tags($validated['title']);
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
+            $academic_calendar->update($validated);
 
-        $data = $request->only(['title', 'semester', 'academic_year_start', 'sort_order']);
-
-        $content->update($data);
-
-        // Handle file upload if new file is provided
-        if ($request->hasFile('calendar_image')) {
-            $content->clearMediaCollection('calendar_images');
-            $content->addMediaFromRequest('calendar_image')->toMediaCollection('calendar_images');
-            
-            $media = $content->getMedia('calendar_images')->last();
-            if ($media) {
-                $content->update(['calendar_image_url' => '/storage/' . $media->id . '/' . $media->file_name]);
+            if ($request->hasFile('calendar_image')) {
+                $academic_calendar->clearMediaCollection('calendar_images');
+                $academic_calendar->addMediaFromRequest('calendar_image')->toMediaCollection('calendar_images');
+                $media = $academic_calendar->getFirstMedia('calendar_images');
+                if ($media) {
+                    $academic_calendar->update(['calendar_image_url' => $media->getUrl()]);
+                }
             }
+
+            DB::commit();
+            ActivityLogger::log('update', "Memperbarui konten kalender akademik: {$academic_calendar->title}");
+
+            return redirect()->route('admin.academic-calendar.index')->with('success', 'Konten kalender akademik berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update academic calendar: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal memperbarui kalender akademik.']);
         }
-
-        ActivityLogger::log('update', "Memperbarui konten kalender akademik: {$content->title}");
-
-        return redirect()->route('admin.academic-calendar.index')->with('success', 'Konten kalender akademik berhasil diperbarui.');
     }
 
     public function destroy(AcademicCalendarContent $academic_calendar)
     {
-        $content = $academic_calendar; // Alias
-        $title = $content->title;
-
-        // Media Library handles deletion automatically
-        $content->delete();
+        $title = $academic_calendar->title;
+        $academic_calendar->delete();
 
         ActivityLogger::log('delete', "Menghapus konten kalender akademik: {$title}");
 
@@ -134,7 +119,6 @@ class AcademicCalendarController extends Controller
     public function setActive(AcademicCalendarContent $content)
     {
         $content->update(['is_active' => !$content->is_active]);
-        
         $status = $content->is_active ? 'diaktifkan' : 'dinonaktifkan';
         ActivityLogger::log('update', "Mengubah status kalender akademik {$content->title} menjadi {$status}");
 

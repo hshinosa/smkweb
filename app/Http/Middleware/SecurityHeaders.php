@@ -31,16 +31,16 @@ class SecurityHeaders
         }
 
         $csp = [
-            "default-src 'self' http: https: data: blob: 'unsafe-inline'",
-            "img-src 'self' data: blob: https: http:",
+            "default-src 'self' http: https: data: blob: 'unsafe-inline' *.sman1baleendah.sch.id *.hshinoshowcase.site",
+            "img-src 'self' data: blob: https: http: *.sman1baleendah.sch.id *.hshinoshowcase.site",
             "font-src 'self' https://fonts.gstatic.com",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
-            "script-src-elem 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com *.sman1baleendah.sch.id *.hshinoshowcase.site",
+            "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com *.sman1baleendah.sch.id *.hshinoshowcase.site",
+            "script-src-elem 'self' 'unsafe-inline' https://static.cloudflareinsights.com *.sman1baleendah.sch.id *.hshinoshowcase.site",
             "script-src-attr 'self' 'unsafe-inline'",
-            "connect-src 'self' https://cloudflareinsights.com",
+            "connect-src 'self' https://cloudflareinsights.com *.sman1baleendah.sch.id *.hshinoshowcase.site",
             "frame-src 'self' https://www.google.com https://maps.google.com",
-            "frame-ancestors 'self'",
+            "frame-ancestors 'self' *.sman1baleendah.sch.id *.hshinoshowcase.site",
             'upgrade-insecure-requests',
         ];
 

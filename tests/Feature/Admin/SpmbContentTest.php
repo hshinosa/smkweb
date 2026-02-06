@@ -40,7 +40,7 @@ class SpmbContentTest extends TestCase
             'pengaturan_umum' => [
                 'title' => 'Pendaftaran 2025',
                 'description_html' => '<p>Deskripsi</p>',
-                'registration_open' => 1,
+                'is_registration_open' => 'true',
                 'registration_year' => '2025/2026',
                 'banner_image_file' => UploadedFile::fake()->image('banner.jpg')
             ]

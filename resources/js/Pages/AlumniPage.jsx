@@ -67,50 +67,9 @@ const FeaturedCard = ({ alumni }) => {
         return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : null;
     };
 
-    // Get the actual video URL - prioritize videoMedia.original_url from media library
-    const getVideoUrl = () => {
-        if (alumni.video_source === 'upload') {
-            // Priority: videoMedia > video_url (which now contains full URL from media library)
-            if (alumni.videoMedia?.original_url) {
-                return alumni.videoMedia.original_url;
-            }
-            return normalizeVideoUrl(alumni.video_url);
-        }
-        return alumni.video_url; // YouTube URL
-    };
-
-    // Get thumbnail URL
-    const getThumbnailUrl = () => {
-        if (alumni.content_type === 'video') {
-            // Check for video thumbnail from media library first
-            if (alumni.videoThumbnailImage?.original_url) {
-                return alumni.videoThumbnailImage.original_url;
-            }
-            if (alumni.video_thumbnail_url) {
-                return normalizeVideoUrl(alumni.video_thumbnail_url);
-            }
-            if (alumni.video_source === 'youtube') {
-                return getYouTubeThumbnail(alumni.video_url) || getProfileImageUrl();
-            }
-            // For uploaded video without thumbnail, use profile image
-            return getProfileImageUrl();
-        }
-        // For text content, use the profile image as background
-        return getProfileImageUrl();
-    };
-
-    const getProfileImageUrl = () => {
-        if (alumni.avatarsImage?.original_url) {
-            return alumni.avatarsImage.original_url;
-        }
-        if (alumni.image_url) {
-            return normalizeVideoUrl(alumni.image_url);
-        }
-        return null;
-    };
-
-    const thumbnailUrl = getThumbnailUrl();
-    const videoUrl = getVideoUrl();
+    // Get the actual video URL
+    const videoUrl = alumni.video_url;
+    const thumbnailUrl = alumni.video_thumbnail_url;
     const isVideo = alumni.content_type === 'video';
 
     const handleVideoError = (e) => {

@@ -42,49 +42,38 @@ try {
 
 # Create backup
 Write-Step "Creating backup of current deployment..."
-ssh $VpsHost @"
+ssh $VpsHost "
     if [ -d '$RemotePath' ]; then
         sudo mkdir -p $BackupPath
-        sudo cp -r $RemotePath $BackupPath/backup-`$(date +%Y%m%d-%H%M%S) 2>/dev/null || true
+        sudo cp -r $RemotePath $BackupPath/backup-\$(date +%Y%m%d-%H%M%S) 2>/dev/null || true
         echo 'Backup created successfully'
     else
         echo 'No existing deployment found, skipping backup'
     fi
-"@
+"
 
 # Create project directory
 Write-Step "Creating project directory..."
-ssh $VpsHost "sudo mkdir -p $RemotePath && sudo chown `$USER:`$USER $RemotePath"
+ssh $VpsHost "sudo mkdir -p $RemotePath && sudo chown \`$USER:\`$USER $RemotePath"
 
 # Sync files
-Write-Step "Syncing files to VPS..."
-Write-Status "This may take several minutes depending on file size and connection speed..."
+Write-Step "Syncing configuration files to VPS..."
+Write-Status "Syncing environment and docker configurations..."
 
-# Use rsync if available, otherwise scp
-if (Get-Command rsync -ErrorAction SilentlyContinue) {
-    rsync -avz --progress `
-        --exclude 'node_modules' `
-        --exclude 'vendor' `
-        --exclude '.git' `
-        --exclude 'storage/logs/*' `
-        --exclude 'storage/framework/cache/*' `
-        --exclude 'storage/framework/sessions/*' `
-        --exclude 'storage/framework/views/*' `
-        --exclude '.env' `
-        --exclude '.env.local' `
-        --exclude 'database/database.sqlite' `
-        ./ "${VpsHost}:${RemotePath}/"
-} else {
-    Write-Warning "rsync not found, using scp (slower)"
-    scp -r . "${VpsHost}:${RemotePath}/"
-}
+# Define file list explicitly for scp to avoid tar issues
+Write-Status "Transferring files..."
+scp docker-compose.yml "${VpsHost}:${RemotePath}/"
+scp .env.vm "${VpsHost}:${RemotePath}/"
+scp -r docker "${VpsHost}:${RemotePath}/"
+ssh $VpsHost "mkdir -p ${RemotePath}/cliproxyapi"
+scp cliproxyapi/config.yaml "${VpsHost}:${RemotePath}/cliproxyapi/"
 
 if ($LASTEXITCODE -ne 0) {
-    Write-ErrorMsg "File sync failed"
+    Write-ErrorMsg "Config sync failed"
     exit 1
 }
 
-Write-Status "Files synced successfully"
+Write-Status "Configurations synced successfully"
 
 # Remote deployment script
 Write-Step "Executing remote deployment..."
@@ -154,11 +143,10 @@ sudo docker pull pgvector/pgvector:pg16
 sudo docker pull redis:7-alpine
 sudo docker pull nginx:alpine
 sudo docker pull ollama/ollama:latest
+sudo docker pull hshinosa/smkweb:latest
+sudo docker pull hshinosa/cliproxyapi:latest
 
-echo "=== Step 7: Building application Docker image ==="
-sudo docker compose build --no-cache app
-
-echo "=== Step 8: Starting services ==="
+echo "=== Step 7: Starting services ==="
 sudo docker compose up -d
 
 echo "=== Step 9: Waiting for services to be healthy ==="

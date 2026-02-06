@@ -171,8 +171,19 @@ echo "=== Step 14: Optimizing application ==="
 docker compose exec -T app php artisan config:cache
 docker compose exec -T app php artisan route:cache
 docker compose exec -T app php artisan view:cache
+docker compose exec -T app php artisan cache:clear
 
-echo "=== Step 15: Pulling Ollama models ==="
+echo "=== Step 15: Initializing Core Content (One-time) ==="
+# Only run if certain settings are missing to avoid overwriting existing production data
+if docker compose exec -T app php artisan tinker --execute="echo \App\Models\AiSetting::count();" | grep -q "^0$"; then
+    echo "AI Settings not found, running InitialContentSeeder..."
+    docker compose exec -T app php artisan db:seed --class=InitialContentSeeder
+else
+    echo "System already initialized, running AI Settings sync..."
+    docker compose exec -T app php artisan db:seed --class=PopulateAiSettingsSeeder
+fi
+
+echo "=== Step 16: Pulling Ollama models ==="
 docker compose exec -T ollama ollama pull llama3.2:1b &
 docker compose exec -T ollama ollama pull nomic-embed-text:v1.5 &
 wait

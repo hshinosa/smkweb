@@ -7,6 +7,8 @@ use App\Models\Faq;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+use App\Http\Requests\FaqRequest;
+
 class FaqController extends Controller
 {
     public function index()
@@ -17,30 +19,22 @@ class FaqController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(FaqRequest $request)
     {
-        $validated = $request->validate([
-            'question' => 'required|string|max:255',
-            'answer' => 'required|string',
-            'category' => 'nullable|string|max:255',
-            'is_published' => 'boolean',
-            'sort_order' => 'integer',
-        ]);
+        $validated = $request->validated();
+        $validated['question'] = strip_tags($validated['question']);
+        $validated['answer'] = strip_tags($validated['answer'], '<b><i><u><p><br>');
 
         Faq::create($validated);
 
         return redirect()->route('admin.faqs.index')->with('success', 'FAQ berhasil ditambahkan.');
     }
 
-    public function update(Request $request, Faq $faq)
+    public function update(FaqRequest $request, Faq $faq)
     {
-        $validated = $request->validate([
-            'question' => 'required|string|max:255',
-            'answer' => 'required|string',
-            'category' => 'nullable|string|max:255',
-            'is_published' => 'boolean',
-            'sort_order' => 'integer',
-        ]);
+        $validated = $request->validated();
+        $validated['question'] = strip_tags($validated['question']);
+        $validated['answer'] = strip_tags($validated['answer'], '<b><i><u><p><br>');
 
         $faq->update($validated);
 

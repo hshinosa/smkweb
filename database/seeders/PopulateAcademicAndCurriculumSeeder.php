@@ -54,25 +54,12 @@ class PopulateAcademicAndCurriculumSeeder extends Seeder
 
     private function seedCurriculum()
     {
-        $fotoGuruPath = base_path('foto-guru');
-        $upacaraPath = $fotoGuruPath . DIRECTORY_SEPARATOR . 'UPACARA.jpeg';
+        $smansaPath = base_path('smansa-dokumen');
+        $infographicDeepLearning = $smansaPath . DIRECTORY_SEPARATOR . 'Kurikulum.jpeg';
+        $infographicEducation2045 = $smansaPath . DIRECTORY_SEPARATOR . 'Kurikulum.png';
 
-        // Jangan truncate jika ingin mempertahankan data lama, tapi untuk populate awal, truncate lebih bersih.
-        // Tapi CurriculumSetting pakai key, jadi updateOrCreate lebih aman.
-        
         $sections = CurriculumSetting::getSectionFields();
-        
-        // Customize Hero Content
-        $sections['hero'] = [
-            'title' => 'Kurikulum Merdeka',
-            'subtitle' => 'Mewujudkan Profil Pelajar Pancasila melalui pembelajaran yang fleksibel, mendalam, dan berpusat pada peserta didik.',
-        ];
-
-        // Customize Intro
-        $sections['intro'] = [
-            'title' => 'Filosofi Pembelajaran',
-            'description' => 'SMA Negeri 1 Baleendah berkomitmen menerapkan Kurikulum Merdeka secara menyeluruh. Kami percaya bahwa setiap siswa memiliki potensi unik yang harus digali dan dikembangkan melalui proses pembelajaran yang bermakna dan menyenangkan.',
-        ];
+        $mediaCollections = CurriculumSetting::getMediaCollections();
 
         foreach ($sections as $key => $defaultContent) {
             $setting = CurriculumSetting::updateOrCreate(
@@ -80,19 +67,13 @@ class PopulateAcademicAndCurriculumSeeder extends Seeder
                 ['content' => $defaultContent]
             );
 
-            // Attach media for specific sections
             $path = null;
-            $collection = null;
+            $collection = $mediaCollections[$key] ?? null;
 
-            if ($key === 'hero') {
-                $path = $upacaraPath;
-                $collection = 'hero_bg';
-            } elseif ($key === 'fase_e') {
-                $path = $upacaraPath;
-                $collection = 'fase_e_image';
-            } elseif ($key === 'fase_f') {
-                $path = $upacaraPath;
-                $collection = 'fase_f_image';
+            if ($key === 'infographic_deep_learning') {
+                $path = $infographicDeepLearning;
+            } elseif ($key === 'infographic_education_2045') {
+                $path = $infographicEducation2045;
             }
 
             if ($path && $collection && File::exists($path)) {

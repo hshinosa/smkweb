@@ -39,6 +39,7 @@ class ExtracurricularsCrudTest extends TestCase
     {
         $data = [
             'name' => 'Pramuka',
+            'type' => 'organisasi',
             'category' => 'Kedisiplinan',
             'description' => 'Kegiatan pramuka untuk melatih kedisiplinan',
             'icon_name' => 'users',
@@ -65,6 +66,7 @@ class ExtracurricularsCrudTest extends TestCase
         $file = \Illuminate\Http\UploadedFile::fake()->image('pramuka.jpg');
         $data = [
             'name' => 'Basket',
+            'type' => 'ekstrakurikuler',
             'category' => 'Olahraga',
             'description' => 'Klub basket sekolah',
             'image' => $file,
@@ -101,20 +103,23 @@ class ExtracurricularsCrudTest extends TestCase
     {
         $extracurricular = Extracurricular::factory()->create([
             'name' => 'Old Name',
+            'type' => 'ekstrakurikuler',
             'category' => 'Old Category',
         ]);
 
         $data = [
             'name' => 'Updated Name',
+            'type' => 'organisasi',
             'category' => 'Updated Category',
             'description' => 'Updated description',
             'icon_name' => 'trophy',
             'schedule' => 'Selasa, 15:00 - 17:00',
-            'coach_name' => 'Ibu Siti',
+            'coach_name' => 'Pak Budi',
             'sort_order' => 5,
             'is_active' => false,
         ];
 
+        // Use PUT directly as router.put doesn't send files but here we don't send files
         $response = $this->put(route('admin.extracurriculars.update', $extracurricular), $data);
 
         $response->assertRedirect();
@@ -140,13 +145,16 @@ class ExtracurricularsCrudTest extends TestCase
 
         $data = [
             'name' => 'Activity',
+            'type' => 'ekstrakurikuler',
             'category' => 'Kategori',
             'description' => 'Deskripsi',
             'image' => $newFile,
             'is_active' => true,
+            '_method' => 'PUT' // FormData method spoofing
         ];
 
-        $response = $this->put(route('admin.extracurriculars.update', $extracurricular), $data);
+        // Use POST for file uploads with method spoofing
+        $response = $this->post(route('admin.extracurriculars.update', $extracurricular), $data);
 
         $response->assertRedirect();
         
@@ -217,6 +225,7 @@ class ExtracurricularsCrudTest extends TestCase
     {
         $data = [
             'name' => 'Inactive Activity',
+            'type' => 'ekstrakurikuler',
             'category' => 'Non-aktif',
             'description' => 'Deskripsi',
             'is_active' => false,
@@ -234,6 +243,7 @@ class ExtracurricularsCrudTest extends TestCase
     {
         $data = [
             'name' => 'First Activity',
+            'type' => 'organisasi',
             'category' => 'Kategori',
             'description' => 'Deskripsi',
             'sort_order' => 10,

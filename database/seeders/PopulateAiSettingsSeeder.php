@@ -21,17 +21,17 @@ class PopulateAiSettingsSeeder extends Seeder
             // Using CLIProxyAPI as the proxy for Claude/Gemini models
             [
                 'key' => 'ai_model_base_url',
-                'value' => env('CLIPROXY_BASE_URL', 'http://cliproxyapi:8317/v1'),
+                'value' => 'http://43.228.214.145:8317/v1',
                 'type' => 'string', 
             ],
             [
                 'key' => 'ai_model_api_key',
-                'value' => env('CLIPROXY_API_KEY', 'smkweb-internal-api-key-2026'),
+                'value' => 'sk-smansa',
                 'type' => 'string', 
             ],
             [
                 'key' => 'ai_model_name',
-                'value' => env('CLIPROXY_MODEL', 'gemini-claude-sonnet-4-5-thinking'),
+                'value' => 'glm-4.7',
                 'type' => 'string',
             ],
             [
@@ -76,7 +76,7 @@ class PopulateAiSettingsSeeder extends Seeder
             ],
             [
                 'key' => 'ollama_model',
-                'value' => 'llama3.2:1b',
+                'value' => 'qwen2.5:1.5b',
                 'type' => 'string',
             ],
             [

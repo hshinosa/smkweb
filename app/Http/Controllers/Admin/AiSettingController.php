@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 
+use App\Http\Requests\AiSettingRequest;
+use Illuminate\Support\Facades\DB;
+
 class AiSettingController extends Controller
 {
     public function index()
@@ -19,15 +22,10 @@ class AiSettingController extends Controller
         ]);
     }
 
-    /**
-     * Get available models
-     * Fetches from both OpenAI API and Ollama API directly
-     */
     public function models()
     {
         $models = [];
 
-        // Get models from OpenAI API (if configured)
         $baseUrl = AiSetting::get('ai_model_base_url', '');
         $apiKey = AiSetting::get('ai_model_api_key', '');
 
@@ -36,29 +34,27 @@ class AiSettingController extends Controller
                 $response = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',
-                ])->timeout(10)->get("{$baseUrl}/models");
+                ])->timeout(5)->get("{$baseUrl}/models");
 
                 if ($response->successful()) {
                     $data = $response->json();
                     $models = array_merge($models, $data['data'] ?? []);
                 }
             } catch (\Exception $e) {
-                // OpenAI not available, skip
+                Log::warning('AI models fetch failed: ' . $e->getMessage());
             }
         }
 
-        // Get models from Ollama API (if configured)
         $ollamaBaseUrl = AiSetting::get('ollama_base_url', '');
 
         if (!empty($ollamaBaseUrl)) {
             try {
-                $response = Http::timeout(10)->get("{$ollamaBaseUrl}/api/tags");
+                $response = Http::timeout(3)->get("{$ollamaBaseUrl}/api/tags");
 
                 if ($response->successful()) {
                     $data = $response->json();
                     $ollamaModels = $data['models'] ?? [];
 
-                    // Format Ollama models to match OpenAI format
                     foreach ($ollamaModels as $model) {
                         $models[] = [
                             'id' => $model['name'],
@@ -69,7 +65,7 @@ class AiSettingController extends Controller
                     }
                 }
             } catch (\Exception $e) {
-                // Ollama not available, skip
+                Log::warning('Ollama models fetch failed: ' . $e->getMessage());
             }
         }
 
@@ -79,37 +75,44 @@ class AiSettingController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function update(AiSettingRequest $request)
     {
-        $validated = $request->validate([
-            'settings' => 'required|array',
-            'settings.*.key' => 'required|string',
-            'settings.*.value' => 'nullable|string',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        foreach ($validated['settings'] as $setting) {
-            $existingSetting = AiSetting::where('key', $setting['key'])->first();
+            $validated = $request->validated();
             
-            // Use existing type if available, otherwise default to string
-            $type = $existingSetting ? $existingSetting->type : 'string';
-            
-            AiSetting::set($setting['key'], $setting['value'], $type);
-        }
-
-        // Detect which section/tab is being updated based on input
-        $activeTab = 'primary'; // Default
-        foreach ($validated['settings'] as $setting) {
-            if (in_array($setting['key'], ['use_ollama_fallback', 'ollama_base_url', 'ollama_model', 'ollama_embedding_model'])) {
-                $activeTab = 'ollama';
-                break;
+            foreach ($validated['settings'] as $setting) {
+                $existingSetting = AiSetting::where('key', $setting['key'])->first();
+                $type = $existingSetting ? $existingSetting->type : 'string';
+                $value = $setting['value'];
+                
+                if (is_string($value)) {
+                    $value = strip_tags($value);
+                }
+                
+                AiSetting::set($setting['key'], $value, $type);
             }
-            if (in_array($setting['key'], ['rag_enabled', 'rag_top_k'])) {
-                $activeTab = 'rag';
-                break;
-            }
-        }
 
-        return redirect()->route('admin.ai-settings.index', ['tab' => $activeTab])
-                        ->with('success', 'Pengaturan AI berhasil diperbarui.');
+            $activeTab = 'primary';
+            foreach ($validated['settings'] as $setting) {
+                if (in_array($setting['key'], ['use_ollama_fallback', 'ollama_base_url', 'ollama_model', 'ollama_embedding_model'])) {
+                    $activeTab = 'ollama';
+                    break;
+                }
+                if (in_array($setting['key'], ['rag_enabled', 'rag_top_k'])) {
+                    $activeTab = 'rag';
+                    break;
+                }
+            }
+
+            DB::commit();
+            return redirect()->route('admin.ai-settings.index', ['tab' => $activeTab])
+                            ->with('success', 'Pengaturan AI berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update AI settings: ' . $e->getMessage());
+            return back()->withErrors(['general' => 'Gagal memperbarui pengaturan AI.']);
+        }
     }
 }

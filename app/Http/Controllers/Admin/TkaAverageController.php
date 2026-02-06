@@ -8,11 +8,12 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 
+use App\Http\Requests\TkaAverageRequest;
+
 class TkaAverageController extends Controller
 {
     public function index()
     {
-        // Group by Year and Exam Type for List View
         $groups = TkaAverage::select('academic_year', 'exam_type')
             ->selectRaw('count(*) as subject_count')
             ->selectRaw('avg(average_score) as overall_average')
@@ -27,7 +28,6 @@ class TkaAverageController extends Controller
 
     public function show($academic_year, $exam_type)
     {
-        // Detail view to edit subjects for a specific exam
         $subjects = TkaAverage::where('academic_year', $academic_year)
             ->where('exam_type', $exam_type)
             ->orderBy('subject_name')
@@ -40,14 +40,10 @@ class TkaAverageController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(TkaAverageRequest $request)
     {
-        $validated = $request->validate([
-            'academic_year' => 'required|string',
-            'exam_type' => 'required|string',
-            'subject_name' => 'required|string',
-            'average_score' => 'required|numeric|min:0',
-        ]);
+        $validated = $request->validated();
+        $validated['subject_name'] = strip_tags($validated['subject_name']);
 
         TkaAverage::updateOrCreate(
             [
@@ -61,12 +57,10 @@ class TkaAverageController extends Controller
         return back()->with('success', 'Data berhasil disimpan.');
     }
 
-    public function update(Request $request, $id)
+    public function update(TkaAverageRequest $request, $id)
     {
-        $validated = $request->validate([
-            'subject_name' => 'required|string',
-            'average_score' => 'required|numeric|min:0',
-        ]);
+        $validated = $request->validated();
+        $validated['subject_name'] = strip_tags($validated['subject_name']);
 
         $item = TkaAverage::findOrFail($id);
         $item->update([

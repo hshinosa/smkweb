@@ -110,7 +110,7 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
     // Auto-expand menu based on current route
     const getDefaultOpenMenus = () => {
         const currentRoute = route().current() || '';
-        const masterDataRoutes = ['admin.posts.*', 'admin.teachers.*', 'admin.extracurriculars.*', 'admin.alumni.*', 'admin.galleries.*', 'admin.faqs.*'];
+        const masterDataRoutes = ['admin.posts.*', 'admin.teachers.*', 'admin.extracurriculars.*', 'admin.alumni.*', 'admin.ptn-admissions.*', 'admin.tka-averages.*', 'admin.galleries.*', 'admin.faqs.*'];
         const kontenUtamaRoutes = ['admin.landingpage.content.*', 'admin.spmb.*', 'admin.program-studi.*', 'admin.school-profile.*', 'admin.curriculum.*', 'admin.academic-calendar.*'];
         const aiRagRoutes = ['admin.rag-documents.*', 'admin.ai-settings.*'];
 
@@ -164,6 +164,8 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                 { title: "Guru & Staff", href: route('admin.teachers.index'), routeName: 'admin.teachers.*' },
                 { title: "Ekstrakurikuler", href: route('admin.extracurriculars.index'), routeName: 'admin.extracurriculars.*' },
                 { title: "Jejak Alumni", href: route('admin.alumni.index'), routeName: 'admin.alumni.*' },
+                { title: "Serapan PTN", href: route('admin.ptn-admissions.index'), routeName: 'admin.ptn-admissions.*' },
+                { title: "Hasil TKA", href: route('admin.tka-averages.index'), routeName: 'admin.tka-averages.*' },
                 { title: "Galeri Sekolah", href: route('admin.galleries.index'), routeName: 'admin.galleries.*' },
                 { title: "FAQ", href: route('admin.faqs.index'), routeName: 'admin.faqs.*' },
             ]

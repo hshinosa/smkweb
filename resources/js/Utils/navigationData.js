@@ -30,6 +30,8 @@ export function getNavigationData(siteSettings = {}) {
             { title: "Kalender Akademik", href: "/kalender-akademik" },
             { title: "Kurikulum", href: "/akademik/kurikulum" },
             { title: "Organisasi & Ekstrakurikuler", href: "/akademik/organisasi-ekstrakurikuler" },
+            { title: "Data Serapan PTN", href: "/prestasi-akademik" },
+            { title: "Hasil TKA", href: "/hasil-tka" },
         ],
 
         programStudiLinks: [

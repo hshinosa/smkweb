@@ -381,6 +381,114 @@ Route::get('/visi-misi', function () {
     ]);
 })->name('visi.misi');
 
+Route::get('/prestasi-akademik', function () {
+    $batches = \App\Models\PtnAdmissionBatch::with(['admissions.university'])
+        ->published()
+        ->ordered()
+        ->get()
+        ->map(function ($batch) {
+            // Group by University for Pie Chart & Details
+            $byPTN = $batch->admissions
+                ->groupBy('university_id')
+                ->map(function ($items) {
+                    $first = $items->first();
+                    
+                    // Group majors within this university
+                    $majors = $items->map(function ($item) {
+                        return [
+                            'name' => $item->program_studi,
+                            'count' => $item->count
+                        ];
+                    })->sortByDesc('count')->values();
+
+                    return [
+                        'id' => $first->university_id,
+                        'name' => $first->university->short_name ?? $first->university->name,
+                        'fullName' => $first->university->name,
+                        'count' => $items->sum('count'),
+                        'color' => $first->university->color ?? '#6B7280',
+                        'majors' => $majors
+                    ];
+                })
+                ->sortByDesc('count')
+                ->values();
+
+            return [
+                'id' => $batch->id,
+                'name' => $batch->name,
+                'type' => $batch->type,
+                'year' => $batch->year,
+                'total' => $batch->total_students,
+                'byPTN' => $byPTN,
+            ];
+        });
+
+    $universities = \App\Models\PtnUniversity::active()
+        ->ordered()
+        ->get()
+        ->map(function ($uni) {
+            return [
+                'id' => $uni->id,
+                'name' => $uni->name,
+                'shortName' => $uni->short_name,
+                'color' => $uni->color,
+            ];
+        });
+
+    $totalAdmissions = \App\Models\PtnAdmission::sum('count');
+    
+    // Count unique universities that have admissions
+    $totalPtn = \App\Models\PtnAdmission::distinct('university_id')->count('university_id');
+
+    // Top 4 Favorite PTNs across all batches
+    $ptnFavorites = \App\Models\PtnAdmission::with('university')
+        ->selectRaw('university_id, SUM(count) as total')
+        ->groupBy('university_id')
+        ->orderByDesc('total')
+        ->take(4)
+        ->get()
+        ->map(function ($item) {
+            return [
+                'name' => $item->university->short_name ?? $item->university->name,
+                'fullName' => $item->university->name,
+                'total' => (int) $item->total,
+                'color' => $item->university->color,
+            ];
+        });
+
+    return Inertia::render('PrestasiAkademikPage', [
+        'batches' => $batches,
+        'universities' => $universities,
+        'stats' => [
+            'totalAdmissions' => (int) $totalAdmissions,
+            'totalPtn' => $totalPtn,
+        ],
+        'ptnFavorites' => $ptnFavorites,
+    ]);
+})->name('prestasi.akademik');
+
+Route::get('/hasil-tka', function () {
+    $tkaGroups = \App\Models\TkaAverage::select('academic_year', 'exam_type')
+        ->groupBy('academic_year', 'exam_type')
+        ->orderByDesc('academic_year')
+        ->get()
+        ->map(function ($group) {
+            $subjects = \App\Models\TkaAverage::where('academic_year', $group->academic_year)
+                ->where('exam_type', $group->exam_type)
+                ->get();
+            
+            return [
+                'academic_year' => $group->academic_year,
+                'exam_type' => $group->exam_type,
+                'subjects' => $subjects
+            ];
+        });
+
+    return Inertia::render('HasilTkaPage', [
+        'tkaGroups' => $tkaGroups
+    ]);
+})->name('hasil.tka');
+
 Route::get('/struktur-organisasi', function () {
     $imageService = new \App\Services\ImageService();
     $settings = \App\Models\SchoolProfileSetting::with('media')->get()->keyBy('section_key');
@@ -559,34 +667,21 @@ Route::get('/akademik/kurikulum', function () {
         });
 
     $settings = \App\Models\CurriculumSetting::with('media')->get()->keyBy('section_key');
+    $mediaCollections = \App\Models\CurriculumSetting::getMediaCollections();
     
     $curriculumData = [];
     foreach (array_keys(\App\Models\CurriculumSetting::getSectionFields()) as $key) {
         $dbRow = $settings->get($key);
         $dbContent = ($dbRow && isset($dbRow['content'])) ? $dbRow['content'] : null;
         $content = \App\Models\CurriculumSetting::getContent($key, $dbContent);
-        
-        // Inject Media Data
-        if ($dbRow) {
-            if ($key === 'hero') {
-                 $bgMedia = $imageService->getFirstMediaData($dbRow, 'hero_bg');
-                 if ($bgMedia) $content['backgroundImage'] = $bgMedia;
-            }
-            if ($key === 'fase_e') {
-                 $media = $imageService->getFirstMediaData($dbRow, 'fase_e_image');
-                 // Only override if media exists (otherwise use default string)
-                 if ($media) {
-                     $content['image'] = $media; 
-                 }
-            }
-            if ($key === 'fase_f') {
-                 $media = $imageService->getFirstMediaData($dbRow, 'fase_f_image');
-                 if ($media) {
-                     $content['image'] = $media;
-                 }
+
+        if ($dbRow && isset($mediaCollections[$key])) {
+            $media = $imageService->getFirstMediaData($dbRow, $mediaCollections[$key]);
+            if ($media) {
+                $content['image'] = $media;
             }
         }
-        
+
         $curriculumData[$key] = $content;
     }
 
@@ -965,6 +1060,26 @@ Route::delete('/extracurriculars/{extracurricular}', [\App\Http\Controllers\Admi
         Route::delete('/instagram-posts/{id}/reject', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'rejectPost'])->name('instagram-posts.reject');
         Route::post('/instagram-posts/bulk-approve', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'bulkApprove'])->name('instagram-posts.bulk-approve');
         Route::post('/instagram-posts/cleanup-stuck', [\App\Http\Controllers\Admin\InstagramBotAccountController::class, 'cleanupStuckPosts'])->name('instagram-posts.cleanup-stuck');
+
+        // PTN Admissions Management
+        Route::get('/ptn-admissions', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'index'])->name('ptn-admissions.index');
+        Route::post('/ptn-admissions/batches', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'storeBatch'])->name('ptn-admissions.batches.store');
+        Route::put('/ptn-admissions/batches/{batch}', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'updateBatch'])->name('ptn-admissions.batches.update');
+        Route::delete('/ptn-admissions/batches/{batch}', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'destroyBatch'])->name('ptn-admissions.batches.destroy');
+        Route::get('/ptn-admissions/batches/{batch}', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'showBatch'])->name('ptn-admissions.batches.show');
+        Route::post('/ptn-admissions/batches/{batch}/admissions', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'storeAdmission'])->name('ptn-admissions.batches.admissions.store');
+        Route::post('/ptn-admissions/batches/{batch}/bulk-import', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'bulkImport'])->name('ptn-admissions.batches.bulk-import');
+        Route::post('/ptn-admissions/batches/{batch}/import-excel', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'importExcel'])->name('ptn-admissions.batches.import-excel');
+        Route::get('/ptn-admissions/download-template', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'downloadTemplate'])->name('ptn-admissions.download-template');
+        Route::put('/ptn-admissions/admissions/{admission}', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'updateAdmission'])->name('ptn-admissions.admissions.update');
+        Route::delete('/ptn-admissions/admissions/{admission}', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'destroyAdmission'])->name('ptn-admissions.admissions.destroy');
+        Route::post('/ptn-admissions/universities', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'storeUniversity'])->name('ptn-admissions.universities.store');
+        Route::put('/ptn-admissions/universities/{university}', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'updateUniversity'])->name('ptn-admissions.universities.update');
+        Route::delete('/ptn-admissions/universities/{university}', [\App\Http\Controllers\Admin\PtnAdmissionController::class, 'destroyUniversity'])->name('ptn-admissions.universities.destroy');
+
+        // TKA Averages Management
+        Route::delete('/tka-averages/group', [\App\Http\Controllers\Admin\TkaAverageController::class, 'destroyGroup'])->name('tka-averages.group.destroy');
+        Route::resource('tka-averages', \App\Http\Controllers\Admin\TkaAverageController::class);
     });
 });
 // --- AKHIR RUTE ADMIN ---

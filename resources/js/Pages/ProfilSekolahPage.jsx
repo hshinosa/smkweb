@@ -6,6 +6,7 @@ import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import SEOHead from '@/Components/SEOHead';
 import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
+import SanitizedContent from '@/Components/SanitizedContent';
 import { Building } from 'lucide-react';
 // Import typography constants
 import { TYPOGRAPHY } from '@/Utils/typography';
@@ -97,12 +98,15 @@ export default function ProfilSekolahPage({ auth, hero, history, facilities }) {
             <section className="py-20 bg-gray-50 relative overflow-hidden">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="text-center mb-16">
-                        <h2 className={`${TYPOGRAPHY.sectionHeading} mb-4`} dangerouslySetInnerHTML={{ __html: historyTitle.replace('Kami', '<span class="text-primary">Kami</span>') }}>
-                        </h2>
+                        <SanitizedContent 
+                            as="h2"
+                            className={`${TYPOGRAPHY.sectionHeading} mb-4`}
+                            html={historyTitle.replace('Kami', '<span class="text-primary">Kami</span>')}
+                        />
                         {historyDescription && (
-                            <div 
+                            <SanitizedContent 
                                 className={`${TYPOGRAPHY.bodyText} max-w-3xl mx-auto prose prose-blue`}
-                                dangerouslySetInnerHTML={{ __html: historyDescription }}
+                                html={historyDescription}
                             />
                         )}
                     </div>

@@ -23,6 +23,7 @@ export default function Navbar({
     const [openSubMenu, setOpenSubMenu] = useState(null);
     const [mobileProfilOpen, setMobileProfilOpen] = useState(false);
     const [mobileAkademikOpen, setMobileAkademikOpen] = useState(false);
+    const [mobilePrestasiOpen, setMobilePrestasiOpen] = useState(false);
 
     const toggleMenu = (key) => setOpenMenu((prev) => (prev === key ? null : key));
     const closeMenu = () => {
@@ -134,9 +135,38 @@ export default function Navbar({
                             >
                                 <div className="py-2">
                                     {finalAkademikLinks.map(link => (
-                                        <Link key={link.title} href={link.href} className="block px-6 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-primary transition-colors font-medium" role="menuitem">
-                                            {link.title}
-                                        </Link>
+                                        link.subItems ? (
+                                            <div 
+                                                key={link.title}
+                                                className="relative"
+                                                onMouseEnter={() => setOpenSubMenu(link.title)}
+                                                onMouseLeave={() => setOpenSubMenu(null)}
+                                            >
+                                                <div 
+                                                    className="flex justify-between items-center px-6 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-primary cursor-pointer font-medium" 
+                                                    role="menuitem" 
+                                                    aria-haspopup="true"
+                                                    aria-expanded={openSubMenu === link.title}
+                                                    onClick={() => toggleSubMenu(link.title)}
+                                                >
+                                                    <span>{link.title}</span>
+                                                    <ChevronRight size={18} className="text-gray-400" />
+                                                </div>
+                                                <div className={`absolute left-full top-0 ml-1 w-64 rounded-xl shadow-xl bg-white ring-1 ring-black ring-opacity-5 transition-all duration-200 ease-out z-30 transform origin-top-left ${openSubMenu === link.title ? 'opacity-100 visible translate-x-0' : 'opacity-0 invisible -translate-x-1'}`}>
+                                                    <div className="py-2" role="menu" aria-orientation="vertical">
+                                                        {link.subItems.map(sub => (
+                                                            <Link key={sub.title} href={sub.href} className="block px-6 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-primary transition-colors font-medium" role="menuitem">
+                                                                {sub.title}
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <Link key={link.title} href={link.href} className="block px-6 py-3 text-base text-gray-700 hover:bg-blue-50 hover:text-primary transition-colors font-medium" role="menuitem">
+                                                {link.title}
+                                            </Link>
+                                        )
                                     ))}
                                     <div 
                                         className="relative border-t border-gray-100 mt-1 pt-1"
@@ -251,9 +281,27 @@ export default function Navbar({
                                 className={`${mobileAkademikOpen ? 'block' : 'hidden'} pl-4 space-y-1 bg-gray-50/50 rounded-b-lg mb-2`}
                             >
                                 {finalAkademikLinks.map(link => (
-                                    <Link key={`mobile-${link.title}`} href={link.href} className="block px-4 py-3 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-blue-50 transition-colors">
-                                        {link.title}
-                                    </Link>
+                                    link.subItems ? (
+                                        <div key={`mobile-${link.title}`} className="py-1">
+                                            <button
+                                                className="w-full text-left px-4 py-3 rounded-md text-base font-medium text-gray-600 hover:text-primary flex justify-between items-center transition-colors"
+                                                onClick={() => setMobilePrestasiOpen(!mobilePrestasiOpen)}
+                                            >
+                                                {link.title} <ChevronDown size={18} className={`transition-transform ${mobilePrestasiOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+                                            <div className={`${mobilePrestasiOpen ? 'block' : 'hidden'} pl-4 space-y-1 bg-white/50 rounded-lg`}>
+                                                {link.subItems.map(sub => (
+                                                    <Link key={`mobile-sub-${sub.title}`} href={sub.href} className="block px-4 py-3 rounded-md text-sm font-medium text-gray-500 hover:text-primary transition-colors">
+                                                        {sub.title}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <Link key={`mobile-${link.title}`} href={link.href} className="block px-4 py-3 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-blue-50 transition-colors">
+                                            {link.title}
+                                        </Link>
+                                    )
                                 ))}
                                 <div className="pt-2 border-t border-gray-200/50 mt-1">
                                     <p className="px-4 py-2 text-sm font-bold text-gray-400 uppercase tracking-wider">Program Studi</p>

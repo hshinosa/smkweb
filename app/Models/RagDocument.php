@@ -22,12 +22,14 @@ class RagDocument extends Model
         'category',
         'metadata',
         'is_active',
+        'is_processed',
         'uploaded_by',
     ];
 
     protected $casts = [
         'metadata' => 'array',
         'is_active' => 'boolean',
+        'is_processed' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',

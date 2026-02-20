@@ -25,7 +25,7 @@ const getIconComponent = (iconName) => {
     return icons[iconName] || LayoutGrid;
 };
 
-const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen, onToggle, level = 0, isMobile = false }) => {
+const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen, onToggle, level = 0, isMobile = false, showAlert = false }) => {
     const activeClass = isActive 
         ? 'bg-accent-yellow text-gray-900 font-bold shadow-sm' 
         : isMobile 
@@ -53,6 +53,9 @@ const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen,
                     <span className="flex items-center">
                         {IconComponent && <IconComponent size={20} className={`mr-3 flex-shrink-0 ${iconClass}`} />}
                         <span className="text-base">{children}</span>
+                        {showAlert && (
+                            <span className="ml-2 inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                        )}
                     </span>
                     <ChevronDown 
                         size={18} 
@@ -66,6 +69,9 @@ const SidebarItem = ({ href, icon: Icon, children, isActive, hasSubmenu, isOpen,
                 >
                     {IconComponent && <IconComponent size={20} className={`mr-3 flex-shrink-0 ${iconClass}`} />}
                     <span className="text-base">{children}</span>
+                    {showAlert && (
+                        <span className="ml-2 inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                    )}
                 </Link>
             )}
         </li>
@@ -92,7 +98,7 @@ const SubmenuItem = ({ href, children, isActive, level = 1, isMobile = false }) 
 };
 
 export default function AdminLayout({ children, headerTitle = "Dashboard Utama" }) {
-    const { auth, siteSettings } = usePage().props;
+    const { auth, siteSettings, queueHealthBadge } = usePage().props;
     const admin = auth?.admin;
     
     // Image URL handling with proper fallback
@@ -161,6 +167,7 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
             submenuKey: 'master_data',
             sublinks: [
                 { title: "Berita & Pengumuman", href: route('admin.posts.index'), routeName: 'admin.posts.*' },
+                { title: "Instagram Bots", href: route('admin.instagram-bots.index'), routeName: 'admin.instagram-bots.*' },
                 { title: "Guru & Staff", href: route('admin.teachers.index'), routeName: 'admin.teachers.*' },
                 { title: "Ekstrakurikuler", href: route('admin.extracurriculars.index'), routeName: 'admin.extracurriculars.*' },
                 { title: "Jejak Alumni", href: route('admin.alumni.index'), routeName: 'admin.alumni.*' },
@@ -182,8 +189,12 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
             submenuKey: 'ai_rag',
             sublinks: [
                 { title: "RAG Documents", href: route('admin.rag-documents.index'), routeName: 'admin.rag-documents.*' },
-                { title: "AI Settings", href: route('admin.ai-settings.index'), routeName: 'admin.ai-settings.*' },
-                { title: "Instagram Bots", href: route('admin.instagram-bots.index'), routeName: 'admin.instagram-bots.*' },
+                {
+                    title: "AI Settings",
+                    href: route('admin.ai-settings.index'),
+                    routeName: 'admin.ai-settings.*',
+                    alert: queueHealthBadge?.status === 'alert',
+                },
             ]
         },
         {
@@ -213,6 +224,7 @@ export default function AdminLayout({ children, headerTitle = "Dashboard Utama" 
                         onToggle={hasSubmenu ? () => toggleMenu(menuKey) : undefined}
                         level={currentLevel}
                         isMobile={isMobile}
+                        showAlert={!!item.alert}
                     >
                         {item.title}
                     </SidebarItem>

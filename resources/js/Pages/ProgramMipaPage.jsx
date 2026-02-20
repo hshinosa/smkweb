@@ -13,7 +13,6 @@ import {
     LineChart, 
     ArrowRight, 
     CheckCircle, 
-    Quote,
     BookOpen,
     Atom,
     Languages,
@@ -37,7 +36,7 @@ import {
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import SEOHead from '@/Components/SEOHead';
-import ResponsiveImage, { HeroImage, ThumbnailImage } from '@/Components/ResponsiveImage';
+import ResponsiveImage, { HeroImage } from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { programStudyData, getPageMetadata } from '@/Utils/academicData';
@@ -57,10 +56,7 @@ export default function ProgramMipaPage({ content }) {
     const navigationData = getNavigationData(siteSettings);
     const pageMetadata = getPageMetadata(siteName);
     const programData = programStudyData.mipa;
-    const { hero, core_subjects, facilities, career_paths, alumni_spotlight } = content || {};
-    
-    // Debug alumni
-    console.log('Alumni Spotlight Data:', alumni_spotlight);
+    const { hero, core_subjects, facilities, career_paths } = content || {};
 
     // Helper to format image path correctly
     const formatImagePath = (path) => {
@@ -264,12 +260,10 @@ export default function ProgramMipaPage({ content }) {
                 </div>
             </section>
 
-            {/* 4. ALUMNI & PROSPEK (Split View) */}
+            {/* 4. PROSPEK KARIR */}
             <section className="py-24 bg-slate-50">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                        
-                        {/* Left Column: Career Paths */}
+                    <div className="max-w-5xl mx-auto">
                         <div>
                             <h2 className={`${TYPOGRAPHY.sectionHeading} mb-6`}>
                                 {career_paths?.title || "Membuka Jalan Menuju Karir Masa Depan"}
@@ -308,50 +302,12 @@ export default function ProgramMipaPage({ content }) {
                                 )}
                             </div>
                         </div>
-
-                        {/* Right Column: Alumni Spotlight (Landing Page Style) */}
-                        <div className="relative mt-12 lg:mt-0">
-                            <div className="group relative flex flex-col h-full max-w-md mx-auto">
-                                {/* Image Area - Floating above */}
-                                <div className="h-80 w-full flex items-end justify-center overflow-visible z-0 pb-5">
-                                    {alumni_spotlight?.image && (
-                                        <img 
-                                            src={typeof alumni_spotlight.image === 'object' ? alumni_spotlight.image.original_url : alumni_spotlight.image}
-                                            alt={alumni_spotlight?.name || "Alumni Sukses"}
-                                            className="h-full w-auto object-contain drop-shadow-xl transition-transform duration-500" 
-                                        />
-                                    )}
-                                    {!alumni_spotlight?.image && (
-                                        <div className="h-full w-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                                            <p className="text-gray-400">Foto Alumni</p>
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                {/* Content Section */}
-                                <div className="bg-white rounded-3xl p-8 shadow-xl transition-all duration-300 border border-gray-100 relative -mt-12 pt-10 flex-1 flex flex-col z-10 w-full text-center">
-                                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-primary text-white rounded-full flex items-center justify-center shadow-lg border-4 border-white transition-transform duration-300">
-                                        <Quote size={20} fill="currentColor" />
-                                    </div>
-                                    
-                                    <blockquote className="text-gray-600 italic text-lg mb-6 leading-relaxed">
-                                        "{alumni_spotlight?.quote || `Berkat fondasi sains yang kuat dan bimbingan guru di ${siteName}, saya mampu bersaing di Fakultas Kedokteran UI dan kini mengabdi sebagai tenaga medis profesional.`}"
-                                    </blockquote>
-                                    
-                                    <div className="border-t border-gray-100 pt-6">
-                                        <h3 className="font-bold text-gray-900 text-xl font-serif">{alumni_spotlight?.name || "Dr. Aditya"}</h3>
-                                        <p className="text-primary font-medium text-sm">{alumni_spotlight?.description || "Alumni 2018 • Fakultas Kedokteran UI"}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </section>
 
-            {/* 5. CTA SECTION (Consistent with Landing Page) */}
-            <section className="py-20 bg-primary relative overflow-hidden">
+            {/* 5. CTA SECTION - Updated Style */}
+            <section className="py-20 bg-primary relative overflow-hidden rounded-3xl mx-4 mb-16">
                 {/* Decorative Circles */}
                 <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
                 <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
@@ -366,13 +322,13 @@ export default function ProgramMipaPage({ content }) {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link 
                             href="/informasi-spmb" 
-                            className="px-8 py-4 bg-accent-yellow text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-lg"
+                            className="px-8 py-4 bg-accent-yellow text-gray-900 font-bold rounded-xl hover:bg-yellow-400 transition-colors shadow-lg"
                         >
                             Daftar Sekarang
                         </Link>
                         <Link 
                             href="/kontak" 
-                            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary transition-colors"
+                            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-xl hover:bg-white hover:text-primary transition-colors"
                         >
                             Hubungi Kami
                         </Link>

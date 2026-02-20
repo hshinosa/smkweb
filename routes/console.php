@@ -99,6 +99,17 @@ Schedule::call(function () {
     }
 })->weeklyOn(0, '02:00'); // Sunday at 2 AM
 
+// Daily cleanup of old activity logs (every day at 3 AM)
+// Keeps only the last 30 days of logs to prevent DB bloat
+Schedule::call(function () {
+    try {
+        $deleted = \App\Models\ActivityLog::where('created_at', '<', now()->subDays(30))->delete();
+        \Illuminate\Support\Facades\Log::info('[Cron] Activity logs pruning completed', ['deleted' => $deleted]);
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('[Cron] Activity logs pruning failed', ['error' => $e->getMessage()]);
+    }
+})->dailyAt('03:00');
+
 // Cleanup stuck processing posts every 15 minutes
 // Posts stuck in processing_status for more than 10 minutes are reset
 Schedule::command('instagram:cleanup-stuck --minutes=10')
@@ -112,24 +123,3 @@ Schedule::command('instagram:cleanup-stuck --minutes=10')
         \Illuminate\Support\Facades\Log::warning('[Cron] Stuck post cleanup failed');
     });
 
-/*
-|--------------------------------------------------------------------------
-| Ollama Model Warm-up Schedule
-|--------------------------------------------------------------------------
-|
-| Keep Ollama model preloaded to prevent cold start delays.
-| The model is warmed up every 25 minutes (before the 30-min keep_alive expires).
-|
-*/
-
-// Warm up Ollama model every 25 minutes to prevent cold starts
-Schedule::command('ollama:warmup')
-    ->everyThirtyMinutes()
-    ->withoutOverlapping()
-    ->runInBackground()
-    ->onSuccess(function () {
-        \Illuminate\Support\Facades\Log::info('[Cron] Ollama model warm-up completed');
-    })
-    ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::warning('[Cron] Ollama model warm-up failed (non-critical)');
-    });

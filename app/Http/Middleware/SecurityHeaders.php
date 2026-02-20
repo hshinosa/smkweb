@@ -15,7 +15,7 @@ class SecurityHeaders
 
         $host = $request->getHost();
         $isDevHost = in_array($host, ['localhost', '127.0.0.1', '[::1]']);
-        $isLocal = app()->environment('local') || app()->environment('testing') || $isDevHost;
+        $isLocal = app()->environment('local');
 
         // SECURITY FIX: Remove/obfuscate Server header to prevent technology stack disclosure
         // This prevents attackers from easily identifying server infrastructure
@@ -42,6 +42,7 @@ class SecurityHeaders
             "frame-src 'self' https://www.google.com https://maps.google.com",
             "frame-ancestors 'self' *.sman1baleendah.sch.id *.hshinoshowcase.site",
             'upgrade-insecure-requests',
+            "report-uri /api/security/csp-report",
         ];
 
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');

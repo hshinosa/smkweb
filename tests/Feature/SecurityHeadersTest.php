@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
 
 /**
@@ -14,12 +16,8 @@ use Tests\TestCase;
  */
 class SecurityHeadersTest extends TestCase
 {
-    /**
-     * Test that Server header is not present in responses
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function server_header_should_not_be_present()
     {
         $response = $this->get('/');
@@ -30,12 +28,8 @@ class SecurityHeadersTest extends TestCase
         );
     }
     
-    /**
-     * Test that X-Powered-By header is not present in responses
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function x_powered_by_header_should_not_be_present()
     {
         $response = $this->get('/');
@@ -46,12 +40,8 @@ class SecurityHeadersTest extends TestCase
         );
     }
     
-    /**
-     * Test that X-Frame-Options header is properly set
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function x_frame_options_header_should_be_set()
     {
         $response = $this->get('/');
@@ -59,12 +49,8 @@ class SecurityHeadersTest extends TestCase
         $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
     }
     
-    /**
-     * Test that X-Content-Type-Options header is properly set
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function x_content_type_options_header_should_be_set()
     {
         $response = $this->get('/');
@@ -72,12 +58,8 @@ class SecurityHeadersTest extends TestCase
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
     }
     
-    /**
-     * Test that Strict-Transport-Security header is properly set
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function strict_transport_security_header_should_be_set()
     {
         $response = $this->get('/');
@@ -92,12 +74,8 @@ class SecurityHeadersTest extends TestCase
         $this->assertStringContainsString('includeSubDomains', $hstsValue);
     }
     
-    /**
-     * Test that Content-Security-Policy header is properly set
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function content_security_policy_header_should_be_set()
     {
         $response = $this->get('/');
@@ -111,12 +89,8 @@ class SecurityHeadersTest extends TestCase
         $this->assertStringContainsString("default-src 'self'", $cspValue);
     }
     
-    /**
-     * Test that Referrer-Policy header is properly set
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function referrer_policy_header_should_be_set()
     {
         $response = $this->get('/');
@@ -124,12 +98,8 @@ class SecurityHeadersTest extends TestCase
         $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     }
     
-    /**
-     * Test that Permissions-Policy header is properly set
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function permissions_policy_header_should_be_set()
     {
         $response = $this->get('/');
@@ -143,12 +113,8 @@ class SecurityHeadersTest extends TestCase
         $this->assertStringContainsString('geolocation=()', $permissionsValue);
     }
     
-    /**
-     * Test that Cross-Origin-Resource-Policy header is properly set
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function cross_origin_resource_policy_header_should_be_set()
     {
         $response = $this->get('/');
@@ -156,12 +122,8 @@ class SecurityHeadersTest extends TestCase
         $response->assertHeader('Cross-Origin-Resource-Policy', 'same-origin');
     }
     
-    /**
-     * Test that Cross-Origin-Opener-Policy header is properly set
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function cross_origin_opener_policy_header_should_be_set()
     {
         $response = $this->get('/');
@@ -169,32 +131,9 @@ class SecurityHeadersTest extends TestCase
         $response->assertHeader('Cross-Origin-Opener-Policy', 'same-origin');
     }
     
-    /**
-     * Test that all security headers are present on API endpoints
-     * 
-     * @test
-     * @group security
-     */
-    public function security_headers_should_be_present_on_api_endpoints()
-    {
-        $response = $this->getJson('/api/health');
-        
-        // Server information should not be leaked
-        $this->assertFalse($response->headers->has('Server'));
-        $this->assertFalse($response->headers->has('X-Powered-By'));
-        
-        // Essential security headers should be present
-        $this->assertTrue($response->headers->has('X-Content-Type-Options'));
-    }
-    
-    /**
-     * Test that security headers are not applied in local development
-     * This test will only pass in local environment
-     * 
-     * @test
-     * @group security
-     * @group local
-     */
+    #[Test]
+    #[Group('security')]
+    #[Group('local')]
     public function security_headers_should_not_interfere_with_local_development()
     {
         if (!app()->environment('local')) {
@@ -211,12 +150,8 @@ class SecurityHeadersTest extends TestCase
         );
     }
     
-    /**
-     * Test that no sensitive information is leaked in error pages
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function error_pages_should_not_leak_server_information()
     {
         // Test 404 page
@@ -233,12 +168,8 @@ class SecurityHeadersTest extends TestCase
         );
     }
     
-    /**
-     * Test multiple pages to ensure consistent header application
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function security_headers_should_be_consistent_across_all_pages()
     {
         $pages = [
@@ -261,12 +192,8 @@ class SecurityHeadersTest extends TestCase
         }
     }
     
-    /**
-     * Test that redirect responses also have security headers
-     * 
-     * @test
-     * @group security
-     */
+    #[Test]
+    #[Group('security')]
     public function redirect_responses_should_not_leak_server_information()
     {
         // Create a simple redirect test

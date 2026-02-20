@@ -10,35 +10,28 @@ class PopulateAiSettingsSeeder extends Seeder
     public function run()
     {
         $settings = [
-            // Primary Provider: Ollama (default for chat)
+            // Groq API Keys (JSON array of keys for round-robin)
             [
-                'key' => 'ai_primary_provider',
-                'value' => 'ollama',
+                'key' => 'groq_api_keys',
+                'value' => json_encode([]),
+                'type' => 'json',
+            ],
+            
+            // Groq Chat Model (for chatbot/RAG)
+            [
+                'key' => 'groq_chat_model',
+                'value' => 'llama-3.3-70b-versatile',
+                'type' => 'string',
+            ],
+
+            // Groq Content Model (for news article generation)
+            [
+                'key' => 'groq_content_model',
+                'value' => 'llama-3.3-70b-versatile',
                 'type' => 'string',
             ],
             
-            // OpenAI Configuration (for content creation & fallback)
-            // Using CLIProxyAPI as the proxy for Claude/Gemini models
-            [
-                'key' => 'ai_model_base_url',
-                'value' => 'http://43.228.214.145:8317/v1',
-                'type' => 'string', 
-            ],
-            [
-                'key' => 'ai_model_api_key',
-                'value' => 'sk-smansa',
-                'type' => 'string', 
-            ],
-            [
-                'key' => 'ai_model_name',
-                'value' => 'glm-4.7',
-                'type' => 'string',
-            ],
-            [
-                'key' => 'ai_embedding_model',
-                'value' => 'text-embedding-3-small',
-                'type' => 'string',
-            ],
+            // General AI Settings
             [
                 'key' => 'ai_max_tokens',
                 'value' => '2000',
@@ -61,29 +54,39 @@ class PopulateAiSettingsSeeder extends Seeder
                 'value' => '5',
                 'type' => 'integer',
             ],
-            
-            // Ollama Configuration (Primary for chat, fallback for content)
             [
-                'key' => 'use_ollama_fallback',
+                'key' => 'queue_alert_pending_threshold',
+                'value' => '100',
+                'type' => 'integer',
+            ],
+            [
+                'key' => 'queue_alert_failed_threshold',
                 'value' => '1',
-                'type' => 'boolean',
+                'type' => 'integer',
             ],
+
+            // Self-hosted Embedding Configuration (Docker TEI)
             [
-                'key' => 'ollama_base_url',
-                // Use 'ollama' hostname for Docker, 'localhost' for local dev
-                'value' => env('OLLAMA_BASE_URL', 'http://ollama:11434'),
+                'key' => 'embedding_provider',
+                'value' => 'tei',
                 'type' => 'string',
             ],
             [
-                'key' => 'ollama_model',
-                'value' => 'qwen2.5:1.5b',
+                'key' => 'embedding_base_url',
+                'value' => env('EMBEDDING_BASE_URL', 'http://embedding:8080'),
                 'type' => 'string',
             ],
             [
-                'key' => 'ollama_embedding_model',
-                'value' => 'nomic-embed-text:v1.5',
+                'key' => 'embedding_model',
+                'value' => env('EMBEDDING_MODEL', 'intfloat/multilingual-e5-small'),
                 'type' => 'string',
             ],
+            [
+                'key' => 'embedding_dimensions',
+                'value' => env('EMBEDDING_DIMENSIONS', '384'),
+                'type' => 'integer',
+            ],
+
             
             // System Prompt
             [
@@ -99,7 +102,20 @@ class PopulateAiSettingsSeeder extends Seeder
                 $setting
             );
         }
+
+        // Clean up old settings that are no longer needed
+        AiSetting::whereIn('key', [
+            'ai_primary_provider',
+            'ai_model_base_url',
+            'ai_model_api_key',
+            'ai_model_name',
+            'ai_embedding_model',
+            'use_ollama_fallback',
+            'ollama_base_url',
+            'ollama_model',
+            'ollama_embedding_model',
+        ])->delete();
         
-        $this->command->info('AI Settings populated.');
+        $this->command->info('AI Settings populated (Groq configuration).');
     }
 }

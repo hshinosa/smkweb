@@ -45,11 +45,6 @@ class ProgramStudiController extends Controller
                         $mediaUrl = $dbRow->getFirstMediaUrl('facilities_main_image');
                         if ($mediaUrl) $pageData[$key]['main_image'] = $mediaUrl;
                     }
-                    if ($key === 'alumni_spotlight') {
-                        $mediaUrl = $dbRow->getFirstMediaUrl('alumni_spotlight_image');
-                        if ($mediaUrl) $pageData[$key]['image'] = $mediaUrl;
-                    }
-
                     if (isset($pageData[$key]['items']) && is_array($pageData[$key]['items'])) {
                         foreach ($pageData[$key]['items'] as $index => &$item) {
                             if ($key === 'core_subjects') {

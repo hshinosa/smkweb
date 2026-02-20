@@ -70,6 +70,7 @@ export default function Index({ documents }) {
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Kategori</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Source</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Chunks</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Progress</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Aksi</th>
                                 </tr>
@@ -100,6 +101,17 @@ export default function Index({ documents }) {
                                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
                                                 {doc.chunks_count || 0}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {doc.is_processed ? (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                                    Selesai
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 animate-pulse">
+                                                    Memproses...
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${

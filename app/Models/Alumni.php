@@ -34,7 +34,11 @@ class Alumni extends Model implements HasMedia
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->getFirstMediaUrl('avatars') ?: '/images/avatar-alumni-default.png';
+        $firstGalleryImage = $this->getMedia('testimonial_images')
+            ->sortBy('order_column')
+            ->first();
+
+        return $firstGalleryImage?->getUrl() ?: '/images/avatar-alumni-default.png';
     }
 
     public function getVideoUrlAttribute(): ?string
@@ -71,8 +75,7 @@ class Alumni extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this
-            ->addMediaCollection('avatars')
-            ->singleFile()
+            ->addMediaCollection('testimonial_images')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
 
         $this

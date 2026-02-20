@@ -7,20 +7,20 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Service for AI-powered content creation (news articles, social media posts, etc.)
- * This service uses OpenAI as primary provider for better content quality
+ * This service uses Groq with the content model for better content quality
  */
 class ContentCreationService
 {
-    protected OpenAIService $openAI;
+    protected GroqService $groq;
 
-    public function __construct(OpenAIService $openAI)
+    public function __construct(GroqService $groq)
     {
-        $this->openAI = $openAI;
+        $this->groq = $groq;
     }
 
     /**
      * Generate news article from Instagram post or other source
-     * Uses OpenAI with force_provider flag for better quality
+     * Uses Groq content model for better quality
      * 
      * @param string $caption Instagram caption or source content
      * @param array $metadata Additional metadata (hashtags, images, date, etc.)
@@ -39,10 +39,14 @@ class ContentCreationService
             . "- Menghindari kata-kata klise seperti 'luar biasa', 'menggemparkan', 'memukau'\n"
             . "- Menggunakan kalimat aktif dan efektif\n\n"
             . "**STRUKTUR ARTIKEL:**\n"
-            . "- Judul: Singkat, jelas, to-the-point (maks 100 karakter)\n"
+            . "- Judul: Singkat, jelas, to-the-point (maks 100 karakter). Judul HARUS merepresentasikan inti berita DAN konteks visual jika tersedia.\n"
             . "- Lead paragraph: 5W+1H (What, When, Where, Who, Why, How)\n"
             . "- Isi: Elaborasi detail dengan kutipan jika ada\n"
             . "- Penutup: Kesimpulan atau harapan/call-to-action\n\n"
+            . "**PEMANFAATAN KONTEKS VISUAL (SANGAT PENTING):**\n"
+            . "- Jika ada keterangan 'KONTEKS VISUAL', gunakan informasi tersebut untuk memperkaya narasi.\n"
+            . "- Jika gambar menampilkan 'penyerahan piala', pastikan judul dan isi menyebutkan momen seremoni tersebut.\n"
+            . "- Jika gambar menampilkan 'upacara', 'rapat', atau 'lomba', sesuaikan diksi berita dengan suasana tersebut.\n\n"
             . "**SEO OPTIMIZATION:**\n"
             . "- Judul mengandung keyword utama di awal\n"
             . "- Gunakan variasi kata kunci secara natural\n"
@@ -95,21 +99,20 @@ class ContentCreationService
             ['role' => 'user', 'content' => $userPrompt],
         ];
 
-        // Force OpenAI for content creation (better quality)
+        // Use Groq content model for article generation
         $completionOptions = array_merge($options, [
-            'force_provider' => 'openai',
-            'max_tokens' => 2000, // Increased for full article generation
-            'temperature' => 0.6, // Slightly lower for more consistent output
+            'context' => 'content',
+            'max_tokens' => 2000,
+            'temperature' => 0.6,
         ]);
 
         Log::info('[ContentCreationService] Generating news article', [
             'source' => 'instagram',
             'caption_length' => strlen($caption),
             'has_images' => !empty($metadata['image_count']),
-            'forced_provider' => 'openai',
         ]);
 
-        $result = $this->openAI->chatCompletion($messages, $completionOptions);
+        $result = $this->groq->contentCompletion($messages, $completionOptions);
 
         if (!$result['success']) {
             Log::error('[ContentCreationService] Failed to generate article');
@@ -122,18 +125,52 @@ class ContentCreationService
         // Try to parse JSON response
         $content = $result['message'];
         
-        // Extract JSON from markdown code blocks if present
+        // 1. Extract JSON from markdown code blocks if present
         if (preg_match('/```json\s*(.*?)\s*```/s', $content, $matches)) {
             $content = $matches[1];
         } elseif (preg_match('/```\s*(.*?)\s*```/s', $content, $matches)) {
             $content = $matches[1];
         }
 
+        // 2. Clean up common JSON issues
+        $content = trim($content);
+        
+        // 3. Attempt decoding
         $articleData = json_decode($content, true);
+
+        // 4. If failed, try more aggressive fixes
+        if (!$articleData) {
+            // Fix: Replace physical newlines inside JSON string values with \n
+            // This is common in LLM outputs
+            $fixedContent = preg_replace_callback('/"(.*?)":\s*"(.*?)"/s', function($m) {
+                return '"' . $m[1] . '": "' . str_replace(["\n", "\r"], ["\\n", ""], $m[2]) . '"';
+            }, $content);
+            
+            $articleData = json_decode($fixedContent, true);
+        }
+
+        // 5. If still failed, try to find JSON object structure manually
+        if (!$articleData) {
+            // Find first { and last }
+            $start = strpos($content, '{');
+            $end = strrpos($content, '}');
+            
+            if ($start !== false && $end !== false) {
+                $jsonCandidate = substr($content, $start, $end - $start + 1);
+                // Apply the same newline fix
+                $jsonCandidate = preg_replace_callback('/"(.*?)":\s*"(.*?)"/s', function($m) {
+                    return '"' . $m[1] . '": "' . str_replace(["\n", "\r"], ["\\n", ""], $m[2]) . '"';
+                }, $jsonCandidate);
+                
+                $articleData = json_decode($jsonCandidate, true);
+            }
+        }
 
         if (!$articleData) {
             // Fallback: return raw content but with better title
-            Log::warning('[ContentCreationService] Could not parse JSON, returning raw content');
+            Log::warning('[ContentCreationService] Could not parse JSON, returning raw content', [
+                'content_preview' => substr($content, 0, 100)
+            ]);
             
             // Generate title from original caption if possible, or from content
             $sourceText = !empty($caption) ? $caption : strip_tags($content);
@@ -443,11 +480,11 @@ class ContentCreationService
         ];
 
         $completionOptions = array_merge($options, [
-            'force_provider' => 'openai', // Force OpenAI for content quality
+            'context' => 'content',
             'max_tokens' => 2500,
         ]);
 
-        return $this->openAI->chatCompletion($messages, $completionOptions);
+        return $this->groq->contentCompletion($messages, $completionOptions);
     }
 
     /**
@@ -476,11 +513,9 @@ class ContentCreationService
             ['role' => 'user', 'content' => $userPrompt],
         ];
 
-        // Can use Ollama for simple caption generation (faster, cheaper)
-        return $this->openAI->chatCompletion($messages, [
+        return $this->groq->contentCompletion($messages, [
             'max_tokens' => 500,
             'temperature' => 0.8,
-            // Don't force provider - let it use Ollama if available
         ]);
     }
 }

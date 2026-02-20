@@ -6,6 +6,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Cache;
+use App\Models\AiSetting;
+use Illuminate\Support\Facades\Http;
 
 class HealthController extends Controller
 {
@@ -20,9 +22,13 @@ class HealthController extends Controller
             'cache' => $this->checkCache(),
             'redis' => $this->checkRedis(),
             'storage' => $this->checkStorage(),
+            'queue' => $this->checkQueue(),
+            'ai_service' => $this->checkAiService(),
         ];
         
-        $overallStatus = collect($checks)->every(fn($check) => $check['status'] === 'healthy');
+        $overallStatus = collect($checks)
+            ->reject(fn($check) => $check['status'] === 'skipped')
+            ->every(fn($check) => $check['status'] === 'healthy' || $check['status'] === 'configured');
         
         $response = [
             'status' => $overallStatus ? 'healthy' : 'unhealthy',
@@ -35,6 +41,57 @@ class HealthController extends Controller
         $statusCode = $overallStatus ? 200 : 503;
         
         return response()->json($response, $statusCode);
+    }
+
+    /**
+     * Check queue status
+     */
+    protected function checkQueue(): array
+    {
+        try {
+            $pendingJobs = DB::table('jobs')->count();
+            $failedJobs = DB::table('failed_jobs')->count();
+            
+            return [
+                'status' => 'healthy',
+                'pending_jobs' => $pendingJobs,
+                'failed_jobs' => $failedJobs,
+                'connection' => config('queue.default'),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 'unhealthy',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Check AI service status
+     */
+    protected function checkAiService(): array
+    {
+        try {
+            $keysJson = AiSetting::get('groq_api_keys', '[]');
+            $keys = is_array($keysJson) ? $keysJson : json_decode($keysJson, true) ?? [];
+            $chatModel = AiSetting::get('groq_chat_model', 'not set');
+            $contentModel = AiSetting::get('groq_content_model', 'not set');
+            
+            $hasKeys = count(array_filter($keys)) > 0;
+            
+            return [
+                'status' => $hasKeys ? 'configured' : 'unhealthy',
+                'provider' => 'groq',
+                'chat_model' => $chatModel,
+                'content_model' => $contentModel,
+                'api_keys_count' => count(array_filter($keys)),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status' => 'unhealthy',
+                'message' => $e->getMessage(),
+            ];
+        }
     }
     
     /**

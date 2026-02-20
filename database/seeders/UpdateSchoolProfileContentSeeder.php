@@ -72,21 +72,28 @@ class UpdateSchoolProfileContentSeeder extends Seeder
                 'title' => 'Lingkungan Belajar Modern',
                 'description' => 'Fasilitas lengkap yang mendukung pengembangan akademik dan karakter siswa.',
                 'items' => [
-                    ['name' => "Lab Komputer", 'image' => "/images/panen-karya-sman1-baleendah.jpg"],
-                    ['name' => "Perpustakaan", 'image' => "/images/hero-bg-sman1baleendah.jpeg"],
-                    ['name' => "Masjid Sekolah", 'image' => "/images/keluarga-besar-sman1baleendah.png"],
-                    ['name' => "Lapangan Olahraga", 'image' => "/images/hero-bg-sman1baleendah.jpeg"],
-                    ['name' => "Ruang Kelas Modern", 'image' => "/images/panen-karya-sman1-baleendah.jpg"]
+                    ['name' => "Lab Komputer", 'image' => "temp"],
+                    ['name' => "Perpustakaan", 'image' => "temp"],
+                    ['name' => "Masjid Sekolah", 'image' => "temp"],
+                    ['name' => "Lapangan Olahraga", 'image' => "temp"],
+                    ['name' => "Ruang Kelas Modern", 'image' => "temp"]
                 ]
             ])]
         );
 
-        // User requested: profil & sejarah bagian lingkungan pakai SMANSA.jpeg
-        if (File::exists($heroBgPath)) {
+        // User requested: all facility items use SMANSA.jpeg
+        $smansaPath = base_path('foto-guru/SMANSA.jpeg');
+        if (File::exists($smansaPath)) {
+            // Main Collection
             $facilities->clearMediaCollection('facilities_images');
-            $facilities->addMedia($heroBgPath)
-                ->preservingOriginal()
-                ->toMediaCollection('facilities_images');
+            $facilities->addMedia($smansaPath)->preservingOriginal()->toMediaCollection('facilities_images');
+
+            // Item-specific collections as per frontend mapping
+            foreach (range(0, 4) as $index) {
+                $collectionName = "facilities_item_{$index}";
+                $facilities->clearMediaCollection($collectionName);
+                $facilities->addMedia($smansaPath)->preservingOriginal()->toMediaCollection($collectionName);
+            }
         }
     }
 }

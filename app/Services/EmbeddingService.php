@@ -2,174 +2,282 @@
 
 namespace App\Services;
 
+use App\Models\AiSetting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Models\AiSetting;
 
 /**
- * Dedicated Embedding Service
- * Uses Ollama for embeddings (OpenAI embedding endpoint not configured)
+ * Embedding Service (self-hosted via Docker)
+ * Default engine: HuggingFace Text Embeddings Inference (TEI)
  */
 class EmbeddingService
 {
-    protected string $provider; // 'ollama'
+    protected string $provider;
     protected string $baseUrl;
     protected string $model;
     protected int $dimensions;
+    protected array $candidateBaseUrls = [];
 
     public function __construct()
     {
-        // Use OLLAMA ONLY for embeddings
-        // Note: OpenAI embedding endpoint is not configured, so we skip it entirely
-        $this->provider = 'ollama';
+        $this->provider = (string) AiSetting::get('embedding_provider', env('EMBEDDING_PROVIDER', 'tei'));
 
-        // Get Ollama settings
-        $this->baseUrl = AiSetting::get('ollama_base_url', 'http://localhost:32771');
-        $this->model = AiSetting::get('ollama_embedding_model', 'nomic-embed-text:v1.5');
-        $this->dimensions = 768; // nomic-embed-text:v1.5 standard
+        $configuredBaseUrl = rtrim((string) AiSetting::get('embedding_base_url', env('EMBEDDING_BASE_URL', 'http://embedding:8080')), '/');
+        $envBaseUrl = rtrim((string) env('EMBEDDING_BASE_URL', ''), '/');
 
-        Log::info('EmbeddingService initialized', [
+        $this->candidateBaseUrls = array_values(array_unique(array_filter([
+            $configuredBaseUrl,
+            $envBaseUrl,
+            'http://embedding:8080',
+            'http://localhost:8090',
+        ])));
+
+        $this->baseUrl = $this->resolveWorkingBaseUrl();
+        $this->model = (string) AiSetting::get('embedding_model', env('EMBEDDING_MODEL', 'intfloat/multilingual-e5-small'));
+        $this->dimensions = (int) AiSetting::get('embedding_dimensions', 384);
+    }
+
+    protected function resolveWorkingBaseUrl(): string
+    {
+        foreach ($this->candidateBaseUrls as $candidate) {
+            if ($this->probeBaseUrl($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $this->candidateBaseUrls[0] ?? '';
+    }
+
+    protected function probeBaseUrl(string $baseUrl): bool
+    {
+        if (empty($baseUrl)) {
+            return false;
+        }
+
+        try {
+            $health = Http::timeout(2)->get("{$baseUrl}/health");
+            if ($health->successful()) {
+                return true;
+            }
+        } catch (\Exception $e) {
+        }
+
+        try {
+            $root = Http::timeout(2)->get($baseUrl);
+            return $root->successful();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Create embedding vector.
+     * $inputType for E5-style models: query | passage
+     */
+    public function createEmbedding(string $text, string $inputType = 'passage'): array
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return [
+                'success' => false,
+                'error' => 'Empty text input',
+                'embedding' => [],
+            ];
+        }
+
+        if (!$this->isAvailable()) {
+            return [
+                'success' => false,
+                'error' => 'Embedding service unavailable',
+                'embedding' => [],
+            ];
+        }
+
+        // E5 performs better with explicit prefixes
+        $prefixedText = match ($inputType) {
+            'query' => "query: {$text}",
+            default => "passage: {$text}",
+        };
+
+        // 1) Try OpenAI-compatible endpoint (/v1/embeddings)
+        $openAiCompat = $this->requestOpenAiCompatible($prefixedText);
+        if ($openAiCompat['success']) {
+            return $openAiCompat;
+        }
+
+        // 2) Fallback to TEI native endpoint (/embed)
+        $teiNative = $this->requestTeiNative($prefixedText);
+        if ($teiNative['success']) {
+            return $teiNative;
+        }
+
+        Log::error('[EmbeddingService] Failed to generate embedding', [
             'provider' => $this->provider,
             'base_url' => $this->baseUrl,
             'model' => $this->model,
-            'dimensions' => $this->dimensions,
+            'openai_error' => $openAiCompat['error'] ?? null,
+            'tei_error' => $teiNative['error'] ?? null,
         ]);
+
+        return [
+            'success' => false,
+            'error' => $teiNative['error'] ?? $openAiCompat['error'] ?? 'Embedding failed',
+            'embedding' => [],
+        ];
     }
 
-    /**
-     * Create embedding using Ollama (primary and only provider)
-     */
-    public function createEmbedding(string $text): array
+    protected function requestOpenAiCompatible(string $text): array
     {
-        $startTime = microtime(true);
-
-        Log::info('[EmbeddingService] Embedding requested', [
-            'provider' => $this->provider,
-            'text_length' => strlen($text),
-        ]);
-
-        // Use Ollama directly (no OpenAI fallback)
-        Log::info('[EmbeddingService] Using Ollama for embedding');
-        $result = $this->createOllamaEmbedding($text);
-        $elapsed = round((microtime(true) - $startTime) * 1000);
-        $result['elapsed_ms'] = $elapsed;
-
-        if ($result['success']) {
-            Log::info('[EmbeddingService] Ollama embedding successful', [
-                'elapsed_ms' => $elapsed,
-                'dimensions' => $result['dimensions'] ?? 0,
+        try {
+            $response = Http::timeout(30)->post("{$this->baseUrl}/v1/embeddings", [
+                'input' => $text,
+                'model' => $this->model,
             ]);
-        } else {
-            Log::error('[EmbeddingService] Ollama embedding failed', [
-                'elapsed_ms' => $elapsed,
-                'error' => $result['error'] ?? 'Unknown',
-            ]);
+
+            if (!$response->successful()) {
+                return [
+                    'success' => false,
+                    'error' => 'OpenAI-compatible endpoint failed: HTTP ' . $response->status(),
+                    'embedding' => [],
+                ];
+            }
+
+            $json = $response->json();
+            $embedding = $json['data'][0]['embedding'] ?? null;
+
+            if (!is_array($embedding) || empty($embedding)) {
+                return [
+                    'success' => false,
+                    'error' => 'OpenAI-compatible endpoint returned invalid embedding format',
+                    'embedding' => [],
+                ];
+            }
+
+            $normalized = $this->normalizeDimensions($embedding);
+
+            return [
+                'success' => true,
+                'embedding' => $normalized,
+                'provider' => $this->provider,
+                'dimensions' => count($normalized),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => 'OpenAI-compatible endpoint exception: ' . $e->getMessage(),
+                'embedding' => [],
+            ];
         }
-
-        return $result;
     }
 
-    /**
-     * Get embedding dimensions for current provider
-     */
+    protected function requestTeiNative(string $text): array
+    {
+        try {
+            $response = Http::timeout(30)->post("{$this->baseUrl}/embed", [
+                'inputs' => $text,
+                'truncate' => true,
+            ]);
+
+            if (!$response->successful()) {
+                return [
+                    'success' => false,
+                    'error' => 'TEI native endpoint failed: HTTP ' . $response->status(),
+                    'embedding' => [],
+                ];
+            }
+
+            $json = $response->json();
+
+            // TEI may return either [float...] or [[float...]] depending on endpoint/version
+            $embedding = [];
+            if (is_array($json) && !empty($json) && is_numeric($json[0] ?? null)) {
+                $embedding = $json;
+            } elseif (is_array($json) && isset($json[0]) && is_array($json[0])) {
+                $embedding = $json[0];
+            }
+
+            if (!is_array($embedding) || empty($embedding)) {
+                return [
+                    'success' => false,
+                    'error' => 'TEI native endpoint returned invalid embedding format',
+                    'embedding' => [],
+                ];
+            }
+
+            $normalized = $this->normalizeDimensions($embedding);
+
+            return [
+                'success' => true,
+                'embedding' => $normalized,
+                'provider' => $this->provider,
+                'dimensions' => count($normalized),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => 'TEI native endpoint exception: ' . $e->getMessage(),
+                'embedding' => [],
+            ];
+        }
+    }
+
     public function getDimensions(): int
     {
         return $this->dimensions;
     }
 
-    /**
-     * Get current provider name (primary provider)
-     */
     public function getProvider(): string
     {
         return $this->provider;
     }
 
-    /**
-     * Check if embedding service is available (Ollama only)
-     */
     public function isAvailable(): bool
     {
-        // Only check Ollama
-        if (empty($this->baseUrl)) {
-            Log::warning('[EmbeddingService] Ollama base URL not configured');
-            return false;
+        if ($this->probeBaseUrl($this->baseUrl)) {
+            return true;
         }
 
-        try {
-            $response = Http::timeout(2)->get("{$this->baseUrl}/api/tags");
-            if ($response->successful()) {
-                Log::info('[EmbeddingService] Ollama is available', ['base_url' => $this->baseUrl]);
+        foreach ($this->candidateBaseUrls as $candidate) {
+            if ($candidate === $this->baseUrl) {
+                continue;
+            }
+
+            if ($this->probeBaseUrl($candidate)) {
+                $this->baseUrl = $candidate;
+
+                Log::warning('[EmbeddingService] Switched embedding base URL', [
+                    'selected_base_url' => $this->baseUrl,
+                ]);
+
                 return true;
             }
-        } catch (\Exception $e) {
-            Log::warning('[EmbeddingService] Ollama not available', [
-                'base_url' => $this->baseUrl,
-                'error' => $e->getMessage(),
-            ]);
         }
+
+        Log::warning('[EmbeddingService] Health check failed for all embedding endpoints', [
+            'candidates' => $this->candidateBaseUrls,
+        ]);
 
         return false;
     }
 
     /**
-     * Create embedding using Ollama API
+     * Normalize vector dimensions to match DB schema.
+     * - If larger than target: truncate
+     * - If smaller than target: zero-pad
      */
-    protected function createOllamaEmbedding(string $text): array
+    protected function normalizeDimensions(array $embedding): array
     {
-        $startTime = microtime(true);
+        $current = count($embedding);
+        $target = $this->dimensions;
 
-        try {
-            Log::info('[EmbeddingService] Sending request to Ollama', [
-                'model' => $this->model,
-                'base_url' => $this->baseUrl,
-            ]);
-
-            $response = Http::timeout(30)->post("{$this->baseUrl}/api/embeddings", [
-                'model' => $this->model,
-                'prompt' => $text,
-            ]);
-
-            $elapsed = round((microtime(true) - $startTime) * 1000);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                Log::info('[EmbeddingService] Ollama response successful', [
-                    'elapsed_ms' => $elapsed,
-                    'dimensions' => count($data['embedding'] ?? []),
-                ]);
-                return [
-                    'success' => true,
-                    'embedding' => $data['embedding'] ?? [],
-                    'provider' => 'ollama',
-                    'dimensions' => count($data['embedding'] ?? []),
-                ];
-            }
-
-            Log::error('[EmbeddingService] Ollama Embedding Error', [
-                'status' => $response->status(),
-                'body' => substr($response->body(), 0, 200),
-                'elapsed_ms' => $elapsed,
-            ]);
-
-            return [
-                'success' => false,
-                'error' => 'Ollama embedding failed: ' . substr($response->body(), 0, 200),
-                'embedding' => [],
-            ];
-        } catch (\Exception $e) {
-            $elapsed = round((microtime(true) - $startTime) * 1000);
-            Log::error('[EmbeddingService] Ollama Embedding Exception', [
-                'message' => $e->getMessage(),
-                'type' => get_class($e),
-                'elapsed_ms' => $elapsed,
-            ]);
-
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-                'embedding' => [],
-            ];
+        if ($current === $target) {
+            return $embedding;
         }
+
+        if ($current > $target) {
+            return array_slice($embedding, 0, $target);
+        }
+
+        return array_merge($embedding, array_fill(0, $target - $current, 0.0));
     }
 }

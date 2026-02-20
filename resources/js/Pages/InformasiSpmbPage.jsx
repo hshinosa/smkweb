@@ -22,6 +22,7 @@ import {
 import Navbar from '@/Components/Navbar';
 import SEOHead from '@/Components/SEOHead';
 import { HeroImage } from '@/Components/ResponsiveImage';
+import SanitizedContent from '@/Components/SanitizedContent';
 import Footer from '@/Components/Footer';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
@@ -226,84 +227,80 @@ export default function InformasiSpmbPage({ spmbData }) {
                 programStudiLinks={navigationData.programStudiLinks}
             />
 
-            <main id="main-content" className="pt-24" tabIndex="-1">
-                {/* 1. HERO SECTION (High Energy) */}
-                <section className="relative min-h-screen flex items-center justify-center overflow-hidden pb-32">
+            <main id="main-content" className="pt-0" tabIndex="-1">
+                
+                {/* ========== HERO SECTION: Organic Flow ========== */}
+                <section className="relative min-h-[600px] lg:h-[85vh] flex items-center overflow-hidden pt-36 pb-16 lg:pt-44 lg:pb-20">
                     {/* Background Image with Overlay */}
-                    <div className="absolute inset-0 z-0">
-                        <img 
-                            src={formatImagePath(heroImage)} 
-                            alt={`PPDB ${siteName}`} 
-                            className="w-full h-full object-cover"
-                            loading="eager"
-                            fetchpriority="high"
-                            width="1920"
-                            height="1080"
-                        />
-                        <div className="absolute inset-0 bg-black/60"></div>
+                    <div className="absolute inset-0">
+                        <img src={formatImagePath(heroImage)} alt="" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/50"></div>
                     </div>
+                    
+                    {/* (Deleted Blobs & Particles) */}
 
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center text-white">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm mb-6 animate-fade-in-up">
-                            <span className="text-white font-bold text-sm tracking-wide uppercase">
-                                PPDB Tahun Ajaran {pengaturan_umum?.registration_year || "2025/2026"}
-                            </span>
-                        </div>
-                        <h1 className={`${TYPOGRAPHY.heroTitle} mb-6 drop-shadow-lg`}>
-                            {renderHighlightedTitle(pengaturan_umum?.title || "Informasi Penerimaan Peserta Didik Baru")}
-                        </h1>
-                        <div 
-                            className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto mb-10 opacity-95`}
-                            dangerouslySetInnerHTML={{ __html: pengaturan_umum?.description_html || `Selamat datang di portal informasi pendaftaran siswa baru ${siteName}.` }}
-                        />
-                        
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                            {pengaturan_umum?.is_registration_open ? (
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                        <div className="text-center max-w-4xl mx-auto">
+                            {/* Title with Gradient Mesh */}
+                            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-white leading-tight mb-4 sm:mb-6">
+                                <span className="block">Masa Depan</span>
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-blue-100 to-cyan-300">Cemerlang</span>
+                                <span className="block text-white/80 text-xl sm:text-3xl md:text-4xl mt-2 sm:mt-3">Dimulai Dari Sini</span>
+                            </h1>
+                            
+                            {/* Description */}
+                            <p className="text-base sm:text-lg md:text-xl text-gray-200 max-w-2xl mx-auto mb-8 leading-relaxed font-light px-4">
+                                {siteName} mengundangmu untuk menjadi bagian dari perjalanan transformatif yang akan membentuk karakter dan masa depanmu.
+                            </p>
+                            
+                            {/* CTA Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
+                                {pengaturan_umum?.is_registration_open ? (
+                                    <a href="https://ppdb.jabarprov.go.id/" target="_blank" rel="noopener noreferrer"
+                                        className="group w-full sm:w-auto px-6 py-3.5 sm:px-10 sm:py-5 bg-accent-yellow text-gray-900 font-bold rounded-xl sm:rounded-2xl hover:shadow-[0_0_40px_rgba(255,193,7,0.4)] transition-all flex items-center justify-center gap-2 text-sm sm:text-base">
+                                        <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
+                                        Mulai Pendaftaran
+                                    </a>
+                                ) : (
+                                    <div className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-5 bg-white/10 backdrop-blur-xl border border-white/20 text-white font-semibold rounded-xl sm:rounded-2xl text-sm sm:text-base">
+                                        Pendaftaran Segera Dibuka
+                                    </div>
+                                )}
                                 <a 
-                                    href="https://ppdb.jabarprov.go.id/" 
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-8 py-4 bg-accent-yellow text-primary font-bold rounded-xl hover:bg-yellow-400 transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(255,193,7,0.5)] flex items-center gap-2"
+                                    href="#jalur-pendaftaran" 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        document.getElementById('jalur-pendaftaran')?.scrollIntoView({ behavior: 'smooth' });
+                                    }}
+                                    className="w-full sm:w-auto px-6 py-3.5 sm:px-10 sm:py-5 bg-white/5 backdrop-blur-xl border border-white/20 text-white font-bold rounded-xl sm:rounded-2xl hover:bg-white/10 transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
                                 >
-                                    <ExternalLink className="w-5 h-5" />
-                                    Daftar Sekarang (Portal Jabar)
+                                    Eksplorasi Jalur
+                                    <ChevronDown className="w-4 h-4 sm:w-4 sm:h-4" />
                                 </a>
-                            ) : (
-                                <div 
-                                    className="px-8 py-4 bg-amber-500/20 border border-amber-500/30 text-amber-400 font-bold rounded-xl backdrop-blur-sm prose prose-invert prose-sm max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: pengaturan_umum?.announcement_text || "Pendaftaran Belum Dibuka" }}
-                                />
-                            )}
+                            </div>
                         </div>
                     </div>
-
-                    {/* Scroll Indicator */}
-                    <div className="absolute bottom-10 left-50 -translate-x-1/2 z-20 animate-bounce hidden md:block">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-accent-yellow text-primary shadow-lg">
-                            <ChevronDown className="w-6 h-6" />
-                        </div>
-                    </div>
-
-                    {/* Decorative Wave Bottom */}
-                    <div className="absolute -bottom-6 left-0 right-0 w-full overflow-hidden leading-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" className="fill-white block w-full h-auto">
-                            <path fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,160C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                    
+                    {/* Bottom Wave - Organic */}
+                    <div className="absolute -bottom-1 left-0 right-0">
+                        <svg viewBox="0 0 1440 200" className="w-full h-auto fill-white">
+                            <path d="M0,128L48,138.7C96,149,192,171,288,165.3C384,160,480,128,576,128C672,128,768,160,864,170.7C960,181,1056,171,1152,149.3C1248,128,1344,96,1392,80L1440,64L1440,200L1392,200C1344,200,1248,200,1152,200C1056,200,960,200,864,200C768,200,672,200,576,200C480,200,384,200,288,200C192,200,96,200,48,200L0,200Z"></path>
                         </svg>
                     </div>
                 </section>
 
                 {/* 2. SECTION: JALUR PENDAFTARAN (Interactive Tabs) */}
-                <section className="py-20 bg-white">
+                <section id="jalur-pendaftaran" className="py-16 sm:py-20 bg-white">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-12">
-                            <h2 className={TYPOGRAPHY.sectionHeading}>{jalur_pendaftaran?.title || "Jalur Pendaftaran"}</h2>
+                        <div className="text-center mb-8 sm:mb-12">
+                            <h2 className={TYPOGRAPHY.sectionHeading}>Jalur <span className="text-primary">Pendaftaran</span></h2>
                             <p className={`${TYPOGRAPHY.bodyText} mt-4`}>
                                 {jalur_pendaftaran?.description || "Pilih jalur yang sesuai dengan kualifikasi dan kebutuhan Anda."}
                             </p>
                         </div>
 
-                        {/* Tabs Navigation */}
-                        <div className="flex flex-wrap justify-center gap-4 mb-12">
+                        {/* Cards Selection Navigation */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-12">
                             {displayJalurData.map((jalur) => {
                                 const Icon = jalur.icon;
                                 const isActive = activeTab === jalur.id;
@@ -311,63 +308,75 @@ export default function InformasiSpmbPage({ spmbData }) {
                                     <button
                                         key={jalur.id}
                                         onClick={() => setActiveTab(jalur.id)}
-                                        className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all duration-300 border-2 ${
+                                        className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-colors duration-200 text-left ${
                                             isActive 
-                                                ? 'bg-primary border-primary text-white shadow-lg scale-105' 
-                                                : 'bg-white border-gray-200 text-gray-600 hover:border-primary hover:text-primary'
+                                                ? 'bg-primary border-primary text-white shadow-lg' 
+                                                : 'bg-white border-gray-100 text-gray-500 hover:border-blue-200 hover:bg-blue-50/50'
                                         }`}
                                     >
-                                        <Icon className="w-5 h-5" />
-                                        {jalur.label}
+                                        <div className={`mb-3 sm:mb-4 w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center ${
+                                            isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'
+                                        }`}>
+                                            <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                                        </div>
+                                        <h3 className={`font-bold text-sm sm:text-lg mb-0.5 sm:mb-1 ${isActive ? 'text-white' : 'text-gray-900'}`}>
+                                            {jalur.label}
+                                        </h3>
+                                        <p className={`text-xs sm:text-sm ${isActive ? 'text-blue-100' : 'text-gray-400'}`}>
+                                            Kuota: {jalur.quota}
+                                        </p>
                                     </button>
                                 );
                             })}
                         </div>
 
-                        {/* Tab Content Area */}
+                        {/* Selected Content Area */}
                         {activeJalur && (
-                            <div className="max-w-5xl mx-auto bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 animate-fade-in-up">
-                                <div className="flex flex-col md:flex-row gap-12">
-                                    {/* Left: Description & Quota */}
-                                    <div className="md:w-1/2">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="p-3 bg-blue-100 rounded-xl text-primary">
-                                                {React.createElement(activeJalur.icon, { size: 32 })}
-                                            </div>
-                                            <div>
-                                                <h3 className="text-2xl font-bold text-gray-900">{activeJalur.label}</h3>
-                                                <span className="inline-block px-3 py-1 bg-accent-yellow/20 text-yellow-700 text-xs font-bold rounded-full mt-1">
-                                                    Kuota: {activeJalur.quota}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                            <div className="bg-white rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 md:p-12 shadow-xl border border-gray-100 relative overflow-hidden">
+                                {/* Decorative Background */}
+                                <div className="absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-gradient-to-br from-blue-50 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-60 pointer-events-none"></div>
+                                
+                                <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 relative z-10">
+                                    {/* Left: Description */}
+                                    <div className="lg:w-7/12">
+                                        <h3 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
+                                            {activeJalur.label}
+                                        </h3>
+                                        <p className="text-gray-600 text-base sm:text-lg leading-relaxed mb-6 sm:mb-8">
                                             {activeJalur.description}
                                         </p>
-                                        <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-                                            <p className="text-sm text-primary font-medium flex items-start gap-2">
-                                                <HelpCircle className="w-5 h-5 flex-shrink-0" />
-                                                Pastikan Anda memilih jalur yang paling sesuai dengan kondisi dan prestasi Anda untuk memperbesar peluang diterima.
+                                        
+                                        <div className="bg-accent-yellow/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-accent-yellow/20">
+                                            <h4 className="font-bold text-yellow-800 mb-2 flex items-center gap-2 text-sm sm:text-base">
+                                                <Info className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                Informasi Kuota
+                                            </h4>
+                                            <p className="text-yellow-800/80 text-xs sm:text-sm">
+                                                Kuota jalur ini sebesar <span className="font-bold">{activeJalur.quota}</span> dari total daya tampung sekolah. Persaingan mungkin berbeda setiap tahunnya.
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* Right: Requirements Checklist */}
-                                    <div className="md:w-1/2 border-l border-gray-200 md:pl-12 pt-8 md:pt-0">
-                                        <h4 className="font-bold text-gray-900 text-lg mb-6 flex items-center gap-2">
-                                            <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                            Syarat Dokumen Utama
-                                        </h4>
-                                        <ul className="space-y-4">
-                                            {activeJalur.requirements?.map((req, idx) => (
-                                                <li key={idx} className="flex items-start gap-3 group">
-                                                    <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center flex-shrink-0 group-hover:border-primary transition-colors">
-                                                        <div className="w-2.5 h-2.5 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                    </div>
-                                                    <span className="text-gray-700 group-hover:text-gray-900 transition-colors">{req}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
+                                    {/* Right: Requirements */}
+                                    <div className="lg:w-5/12">
+                                        <div className="bg-gray-50 rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-gray-100 h-full">
+                                            <h4 className="font-bold text-gray-900 text-base sm:text-lg mb-4 sm:mb-6 flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center shadow-sm text-green-600">
+                                                    <CheckCircle2 className="w-5 h-5" />
+                                                </div>
+                                                Syarat Dokumen
+                                            </h4>
+                                            <ul className="space-y-3 sm:space-y-4">
+                                                {activeJalur.requirements?.map((req, idx) => (
+                                                    <li key={idx} className="flex items-start gap-3 sm:gap-4 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                                                        <div className="mt-1 w-5 h-5 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600">
+                                                            <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                                                        </div>
+                                                        <span className="text-gray-700 text-sm font-medium">{req}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -376,91 +385,88 @@ export default function InformasiSpmbPage({ spmbData }) {
                 </section>
 
                 {/* 2.5 SECTION: PROSEDUR & PERSYARATAN UMUM */}
-                <section className="py-20 bg-slate-50">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                <section className="py-16 sm:py-24 bg-slate-50 relative overflow-hidden">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
                             {/* Prosedur Pendaftaran */}
                             <div>
-                                <h2 className={`${TYPOGRAPHY.sectionHeading} mb-8 text-left`}>Prosedur <span className="text-primary">Pendaftaran</span></h2>
-                                <div className="space-y-6">
+                                <div className="mb-8 sm:mb-10">
+                                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-3 sm:mb-4">Prosedur <span className="text-primary">Pendaftaran</span></h2>
+                                    <p className="text-gray-500 text-sm sm:text-base">Ikuti langkah-langkah berikut untuk melakukan pendaftaran secara online.</p>
+                                </div>
+                                
+                                <div className="space-y-6 sm:space-y-8 relative before:absolute before:left-6 before:top-6 before:bottom-6 before:w-0.5 before:bg-gray-200 before:border-l before:border-dashed before:border-gray-300">
                                     {(prosedur?.items || []).map((step, idx) => (
-                                        <div key={idx} className="flex gap-6 group">
-                                            <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white shadow-md border border-gray-100 flex items-center justify-center text-primary font-bold text-xl group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                                        <div key={idx} className="relative flex gap-4 sm:gap-6">
+                                            <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white shadow-sm border border-gray-100 flex items-center justify-center text-primary font-bold text-lg z-10">
                                                 {idx + 1}
                                             </div>
-                                            <div>
-                                                <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
-                                                <div 
-                                                    className="text-gray-600 leading-relaxed prose prose-sm max-w-none"
-                                                    dangerouslySetInnerHTML={{ __html: step.description }}
+                                            <div className="pt-2">
+                                                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">{step.title}</h3>
+                                                <SanitizedContent
+                                                    className="text-gray-600 leading-relaxed text-sm"
+                                                    html={step.description}
                                                 />
                                             </div>
                                         </div>
                                     ))}
                                     {(!prosedur?.items || prosedur.items.length === 0) && (
-                                        <p className="text-gray-500 italic">Informasi prosedur pendaftaran akan segera diperbarui.</p>
+                                        <p className="text-gray-500 italic pl-20">Informasi prosedur pendaftaran akan segera diperbarui.</p>
                                     )}
                                 </div>
                                 
-                                {/* Bantuan Pendaftaran - From Site Settings */}
-                                <div className="mt-10 p-6 bg-blue-50 rounded-2xl border border-blue-100">
-                                    <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
-                                        <MessageCircle className="w-5 h-5" />
-                                        Bantuan Pendaftaran
-                                    </h4>
-                                    <div className="text-sm text-gray-700 space-y-3">
-                                        <p className="mb-3">Untuk informasi lebih lanjut, hubungi:</p>
-                                        <div className="flex items-start gap-2">
-                                            <Phone className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                                            <span className="font-medium">{siteSettings?.general?.phone || '(022) 5940262'}</span>
-                                        </div>
-                                        <div className="flex items-start gap-2">
-                                            <Mail className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                                            <span className="font-medium">{siteSettings?.general?.email || 'info@sman1baleendah.sch.id'}</span>
-                                        </div>
-                                        <div className="flex items-start gap-2">
-                                            <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                                            <span className="font-medium">{siteSettings?.general?.address || 'Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Kec. Baleendah, Kabupaten Bandung, Jawa Barat 40375'}</span>
-                                        </div>
+                                {/* Help Card */}
+                                <div className="mt-10 sm:mt-12 bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-sm flex items-center gap-4 sm:gap-6">
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-full flex items-center justify-center text-primary flex-shrink-0">
+                                        <Phone className="w-5 h-5 sm:w-6 sm:h-6" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs sm:text-sm text-gray-500 font-medium mb-0.5 sm:mb-1">Butuh bantuan teknis?</p>
+                                        <p className="font-bold text-gray-900 text-sm sm:text-base">Hubungi Helpdesk: {siteSettings?.general?.phone || '(022) 5940262'}</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Persyaratan Umum */}
                             <div>
-                                <h2 className={`${TYPOGRAPHY.sectionHeading} mb-8 text-left`}>Persyaratan <span className="text-primary">Umum</span></h2>
-                                <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100">
-                                    <ul className="space-y-4 mb-8">
+                                <div className="mb-8 sm:mb-10">
+                                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-3 sm:mb-4">Persyaratan <span className="text-primary">Umum</span></h2>
+                                    <p className="text-gray-500 text-sm sm:text-base">Dokumen dan syarat yang wajib dipenuhi oleh seluruh calon peserta didik.</p>
+                                </div>
+                                
+                                <div className="bg-white rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 shadow-lg border border-gray-100">
+                                    <div className="space-y-3 sm:space-y-4">
                                         {(persyaratan?.items || []).map((doc, idx) => (
-                                            <li key={idx} className="flex items-start gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-gray-100">
-                                                <div className={`mt-1 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${doc.required ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-                                                    <CheckCircle2 className="w-4 h-4" />
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-gray-900">{doc.name}</span>
-                                                        {doc.required && (
-                                                            <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded-full uppercase tracking-wider">Wajib</span>
-                                                        )}
+                                            <div key={idx} className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gray-50 border border-transparent">
+                                                <div className="flex items-start gap-3 sm:gap-4">
+                                                    <div className={`mt-1 w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                                        doc.required ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'
+                                                    }`}>
+                                                        {doc.required ? <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                                                     </div>
-                                                    <p className="text-sm text-gray-600 mt-1">{doc.description}</p>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <span className="font-bold text-gray-900 text-sm sm:text-base">{doc.name}</span>
+                                                            {doc.required && (
+                                                                <span className="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-white text-red-600 text-[9px] sm:text-[10px] font-bold rounded-md uppercase tracking-wider border border-red-100">Wajib</span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs sm:text-sm text-gray-500">{doc.description}</p>
+                                                    </div>
                                                 </div>
-                                            </li>
+                                            </div>
                                         ))}
-                                        {(!persyaratan?.items || persyaratan.items.length === 0) && (
-                                            <p className="text-gray-500 italic">Informasi persyaratan umum akan segera diperbarui.</p>
-                                        )}
-                                    </ul>
+                                    </div>
 
                                     {persyaratan?.additional_notes && (
-                                        <div className="pt-6 border-t border-gray-100">
-                                            <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                                <Info className="w-5 h-5 text-accent-yellow" />
+                                        <div className="mt-8 p-6 bg-accent-yellow/10 rounded-2xl border border-accent-yellow/20">
+                                            <h4 className="font-bold text-yellow-800 mb-3 flex items-center gap-2">
+                                                <Info className="w-5 h-5" />
                                                 Catatan Penting
                                             </h4>
-                                            <div 
-                                                className="text-sm text-gray-600 leading-relaxed prose prose-sm max-w-none"
-                                                dangerouslySetInnerHTML={{ __html: persyaratan.additional_notes }}
+                                            <SanitizedContent
+                                                className="text-sm text-yellow-800/80 leading-relaxed prose prose-sm max-w-none"
+                                                html={persyaratan.additional_notes}
                                             />
                                         </div>
                                     )}
@@ -471,41 +477,59 @@ export default function InformasiSpmbPage({ spmbData }) {
                 </section>
 
                 {/* 3. SECTION: ALUR & JADWAL (Timeline) */}
-                <section className="py-20 bg-white overflow-hidden">
+                <section className="py-16 sm:py-24 bg-white overflow-hidden">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16">
-                            <h2 className={TYPOGRAPHY.sectionHeading}>{jadwal_penting?.title || "Alur & Jadwal Penting"}</h2>
-                            <p className={`${TYPOGRAPHY.bodyText} mt-4`}>
+                        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-20">
+                            <h2 className={TYPOGRAPHY.sectionHeading}>Alur & Jadwal <span className="text-primary">Penting</span></h2>
+                            <p className={`${TYPOGRAPHY.bodyText} mt-4 sm:mt-6 text-gray-500`}>
                                 {jadwal_penting?.description || "Catat tanggal-tanggal penting agar tidak tertinggal proses seleksi."}
                             </p>
                         </div>
 
-                        <div className="relative">
-                            {/* Connecting Line (Desktop) */}
-                            <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
+                        <div className="relative max-w-6xl mx-auto">
+                            {/* Horizontal Line (Desktop) */}
+                            <div className="hidden lg:block absolute top-[50px] sm:top-[60px] left-0 w-full h-1 bg-blue-100/50"></div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 relative z-10">
                                 {displayTimelineData.map((item, index) => (
-                                    <div key={index} className="relative group">
-                                        {/* Node Circle */}
-                                        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center border-4 transition-all duration-500 mb-6 bg-white ${
-                                            item.status === 'completed' ? 'border-green-500 text-green-500' :
-                                            item.status === 'active' ? 'border-primary text-primary shadow-[0_0_20px_rgba(13,71,161,0.3)] scale-110' :
-                                            'border-gray-300 text-gray-400'
+                                    <div key={index} className="relative group flex flex-col items-center">
+                                        {/* Step Number & Icon */}
+                                        <div className={`w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] mx-auto rounded-full flex flex-col items-center justify-center border-[5px] sm:border-[6px] transition-colors duration-300 mb-6 sm:mb-8 bg-white relative z-10 ${
+                                            item.status === 'completed' ? 'border-green-100 text-green-600' :
+                                            item.status === 'active' ? 'border-blue-100 text-primary shadow-xl shadow-blue-900/10' :
+                                            'border-blue-50 text-gray-400'
                                         }`}>
-                                            <Calendar className="w-6 h-6" />
+                                            <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1 ${
+                                                item.status === 'completed' ? 'text-green-400' :
+                                                item.status === 'active' ? 'text-blue-400' :
+                                                'text-gray-400'
+                                            }`}>Tahap {index + 1}</span>
+                                            <Calendar className={`w-6 h-6 sm:w-8 sm:h-8 ${
+                                                item.status === 'completed' ? 'text-green-600' :
+                                                item.status === 'active' ? 'text-primary' :
+                                                'text-gray-400'
+                                            }`} />
+                                            
+                                            {/* Status Badge */}
+                                            {item.status === 'active' && (
+                                                <div className="absolute -bottom-3 px-2 sm:px-3 py-0.5 sm:py-1 bg-accent-yellow text-yellow-900 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm whitespace-nowrap">
+                                                    Berlangsung
+                                                </div>
+                                            )}
                                         </div>
                                         
-                                        {/* Content */}
-                                        <div className="text-center bg-white p-6 rounded-xl shadow-md border border-gray-100">
-                                            <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-3 ${
-                                                item.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                item.status === 'active' ? 'bg-blue-100 text-primary' :
-                                                'bg-gray-100 text-gray-500'
+                                        {/* Content Card */}
+                                        <div className="text-center w-full">
+                                            <div className={`inline-block px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg font-bold text-xs sm:text-sm mb-3 sm:mb-4 border ${
+                                                item.status === 'active' 
+                                                    ? 'bg-blue-50 text-primary border-blue-100' 
+                                                    : 'bg-gray-50 text-gray-600 border-gray-100'
                                             }`}>
                                                 {item.date}
                                             </div>
-                                            <h3 className="font-bold text-gray-900 text-lg leading-tight">{item.title}</h3>
+                                            <h3 className={`font-serif font-bold text-lg sm:text-xl mb-2 sm:mb-3 ${
+                                                item.status === 'active' ? 'text-primary' : 'text-gray-900'
+                                            }`}>{item.title}</h3>
                                         </div>
                                     </div>
                                 ))}
@@ -514,78 +538,82 @@ export default function InformasiSpmbPage({ spmbData }) {
                     </div>
                 </section>
 
-                {/* 4. SECTION: FAQ (Accordion) */}
-                <section className="py-20 bg-slate-50">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
-                        <div className="text-center mb-12">
-                            <h2 className={TYPOGRAPHY.sectionHeading}>{faq?.title || "Pertanyaan Umum (FAQ)"}</h2>
-                            <p className={`${TYPOGRAPHY.bodyText} mt-4`}>
-                                {faq?.description || "Jawaban atas pertanyaan yang sering diajukan oleh calon siswa dan orang tua."}
-                            </p>
-                        </div>
+                {/* 4 & 5. COMBINED SECTION: FAQ & HELP CENTER */}
+                <section className="py-20 bg-primary relative overflow-hidden rounded-3xl mx-4 mb-16">
+                    {/* Decorative Circles */}
+                    <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                    <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
 
-                        <div className="space-y-4">
-                            {displayFaqData.map((faqItem, index) => (
-                                <div 
-                                    key={index} 
-                                    className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md"
-                                >
-                                    <button
-                                        onClick={() => toggleFaq(index)}
-                                        className="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none group"
-                                    >
-                                        <span className="font-bold text-gray-900 font-serif text-lg group-hover:text-primary transition-colors">{faqItem.question}</span>
-                                        {openFaqIndex === index ? (
-                                            <ChevronUp className="w-5 h-5 text-primary" />
-                                        ) : (
-                                            <ChevronDown className="w-5 h-5 text-gray-400" />
-                                        )}
-                                    </button>
-                                    <div 
-                                        className={`px-6 overflow-hidden transition-all duration-300 ease-in-out ${
-                                            openFaqIndex === index ? 'max-h-96 pb-6 opacity-100' : 'max-h-0 opacity-0'
-                                        }`}
-                                    >
-                                        <p className="text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
-                                            {faqItem.answer}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* 5. SECTION: HELP CENTER (Sticky/Distinct) */}
-                <section className="py-12 bg-primary text-white">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-8 bg-white/10 backdrop-blur-sm p-8 rounded-3xl border border-white/20">
-                            <div className="flex items-center gap-6">
-                                <div className="w-16 h-16 bg-accent-yellow rounded-full flex items-center justify-center text-primary shadow-lg flex-shrink-0">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+                            
+                            {/* Left Side: Help Center */}
+                            <div className="text-center lg:text-left">
+                                <div className="w-16 h-16 bg-accent-yellow rounded-full flex items-center justify-center text-primary shadow-lg mb-6 mx-auto lg:mx-0">
                                     <MessageCircle className="w-8 h-8" />
                                 </div>
-                                <div>
-                                    <h3 className="text-2xl font-bold mb-2">Kesulitan Mendaftar?</h3>
-                                    <p className="text-blue-100 text-lg">Tim Helpdesk PPDB kami siap membantu Anda setiap hari kerja.</p>
+                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                                    Kesulitan Mendaftar?
+                                </h2>
+                                <p className="text-blue-100 text-lg mb-10 max-w-xl mx-auto lg:mx-0">
+                                    Tim Helpdesk PPDB kami siap membantu Anda setiap hari kerja melalui saluran komunikasi berikut.
+                                </p>
+                                
+                                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                                    <a 
+                                        href={`https://wa.me/${siteSettings?.general?.whatsapp?.replace(/[^0-9]/g, '') || '6281234567890'}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-6 py-3.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
+                                    >
+                                        <MessageCircle className="w-5 h-5" />
+                                        Chat WhatsApp
+                                    </a>
+                                    <a 
+                                        href={`tel:${siteSettings?.general?.phone?.replace(/[^0-9]/g, '') || '0225940262'}`}
+                                        className="px-6 py-3.5 bg-white text-primary font-bold rounded-xl hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 shadow-lg"
+                                    >
+                                        <MessageCircle className="w-5 h-5" />
+                                        Telepon Kami
+                                    </a>
                                 </div>
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                                <a 
-                                    href={`https://wa.me/${siteSettings?.general?.whatsapp?.replace(/[^0-9]/g, '') || '6281234567890'}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg"
-                                >
-                                    <MessageCircle className="w-5 h-5" />
-                                    Chat WhatsApp
-                                </a>
-                                <a 
-                                    href={`tel:${siteSettings?.general?.phone?.replace(/[^0-9]/g, '') || '0225940262'}`}
-                                    className="px-6 py-3 bg-white text-primary font-bold rounded-xl hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 shadow-lg"
-                                >
-                                    <MessageCircle className="w-5 h-5" />
-                                    Telepon Kami
-                                </a>
+
+                            {/* Right Side: FAQ */}
+                            <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-white/20">
+                                <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                                    <HelpCircle className="w-6 h-6 text-accent-yellow" />
+                                    Pertanyaan Umum
+                                </h3>
+                                <div className="space-y-3">
+                                    {displayFaqData.map((faqItem, index) => (
+                                        <div 
+                                            key={index} 
+                                            className="bg-white/5 rounded-xl border border-white/10 overflow-hidden transition-all duration-300"
+                                        >
+                                            <button
+                                                onClick={() => toggleFaq(index)}
+                                                className="w-full px-5 py-4 text-left flex items-center justify-between focus:outline-none group"
+                                            >
+                                                <span className="font-bold text-white text-base leading-snug group-hover:text-accent-yellow transition-colors">{faqItem.question}</span>
+                                                {openFaqIndex === index ? (
+                                                    <ChevronUp className="w-4 h-4 text-accent-yellow" />
+                                                ) : (
+                                                    <ChevronDown className="w-4 h-4 text-white/40" />
+                                                )}
+                                            </button>
+                                            <div 
+                                                className={`px-5 overflow-hidden transition-all duration-300 ease-in-out ${
+                                                    openFaqIndex === index ? 'max-h-96 pb-5 opacity-100' : 'max-h-0 opacity-0'
+                                                }`}
+                                            >
+                                                <p className="text-blue-100/80 text-sm leading-relaxed border-t border-white/10 pt-4">
+                                                    {faqItem.answer}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>

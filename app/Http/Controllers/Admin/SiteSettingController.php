@@ -69,30 +69,40 @@ class SiteSettingController extends Controller
             $section = $request->input('section');
             $content = $request->input('content');
             
+            // Clean content from null files sent as strings or empty values
+            foreach ($content as $key => $value) {
+                if ($value === 'undefined' || $value === 'null') {
+                    unset($content[$key]);
+                }
+            }
+
+            $setting = SiteSetting::firstOrCreate(['section_key' => $section]);
+            $existingContent = is_array($setting->content) ? $setting->content : [];
+            
+            // Re-map nested sanitization
             foreach ($content as $key => &$value) {
                 if (is_string($value)) {
                     $value = strip_tags($value, '<b><i><u><p><br>');
                 }
             }
 
-            $setting = SiteSetting::firstOrCreate(['section_key' => $section]);
-            $existingContent = $setting->content ?? [];
-
             if ($section === 'general') {
                 if ($request->hasFile("content.site_logo")) {
                     $setting->clearMediaCollection('site_logo');
                     $media = $setting->addMediaFromRequest("content.site_logo")->toMediaCollection('site_logo');
                     $content['site_logo'] = $media->getUrl();
-                } elseif (isset($existingContent['site_logo'])) {
-                    $content['site_logo'] = $existingContent['site_logo'];
+                } else {
+                    // Preserve existing if not re-uploaded
+                    $content['site_logo'] = $existingContent['site_logo'] ?? ($content['site_logo'] ?? null);
                 }
 
                 if ($request->hasFile("content.hero_image")) {
                     $setting->clearMediaCollection('hero_image');
                     $media = $setting->addMediaFromRequest("content.hero_image")->toMediaCollection('hero_image');
                     $content['hero_image'] = $media->getUrl();
-                } elseif (isset($existingContent['hero_image'])) {
-                    $content['hero_image'] = $existingContent['hero_image'];
+                } else {
+                    // Preserve existing if not re-uploaded
+                    $content['hero_image'] = $existingContent['hero_image'] ?? ($content['hero_image'] ?? null);
                 }
             }
 

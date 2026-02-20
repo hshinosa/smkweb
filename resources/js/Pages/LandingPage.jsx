@@ -21,6 +21,7 @@ import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import SEOHead from '@/Components/SEOHead';
 import ResponsiveImage, { HeroImage, ContentImage, GalleryImage } from '@/Components/ResponsiveImage';
+import SanitizedContent from '@/Components/SanitizedContent';
 import { getNavigationData } from '@/Utils/navigationData';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { usePage } from '@inertiajs/react';
@@ -184,9 +185,9 @@ export default function LandingPage({
                             <h2 className={`${TYPOGRAPHY.sectionHeading} mb-6`}>
                                 {aboutLpContent.title.split(' ').slice(0, -1).join(' ')} <span className="text-primary">{aboutLpContent.title.split(' ').slice(-1)}</span>
                             </h2>
-                            <div 
+                            <SanitizedContent 
                                 className={`${TYPOGRAPHY.bodyText} mb-8 prose prose-blue max-w-none`}
-                                dangerouslySetInnerHTML={{ __html: aboutLpContent.description_html }}
+                                html={aboutLpContent.description_html}
                             />
 
                             <Link 
@@ -244,9 +245,9 @@ export default function LandingPage({
                             </svg>
                         </div>
                         
-                        <div
+                        <SanitizedContent
                             className="prose prose-lg prose-blue text-gray-600 leading-relaxed max-w-none [&>p]:mb-3 [&>p:last-child]:mb-0"
-                            dangerouslySetInnerHTML={{ __html: kepsekWelcomeLpContent.welcome_text_html }}
+                            html={kepsekWelcomeLpContent.welcome_text_html}
                         />
                     </div>
                 </div>
@@ -465,8 +466,8 @@ export default function LandingPage({
                 </div>
             </section>
 
-            {/* CTA SECTION */}
-            <section className="py-20 bg-primary relative overflow-hidden">
+            {/* CTA SECTION - Updated Style */}
+            <section className="py-20 bg-primary relative overflow-hidden rounded-3xl mx-4 mb-16">
                 {/* Decorative Circles */}
                 <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
                 <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
@@ -481,13 +482,13 @@ export default function LandingPage({
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link 
                             href="/informasi-spmb" 
-                            className="px-8 py-4 bg-accent-yellow text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-lg"
+                            className="px-8 py-4 bg-accent-yellow text-gray-900 font-bold rounded-xl hover:bg-yellow-400 transition-colors shadow-lg"
                         >
                             Daftar Sekarang
                         </Link>
                         <Link 
                             href="/kontak" 
-                            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary transition-colors"
+                            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-xl hover:bg-white hover:text-primary transition-colors"
                         >
                             Hubungi Kami
                         </Link>

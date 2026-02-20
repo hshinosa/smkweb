@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Post;
 use App\Services\RagService;
 use App\Services\ContentCreationService;
+use App\Services\GroqService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -56,7 +57,7 @@ class ProcessInstagramPost implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(RagService $ragService, ContentCreationService $contentCreationService): void
+    public function handle(RagService $ragService, ContentCreationService $contentCreationService, GroqService $groqService): void
     {
         Log::info('[InstagramJob] ===== JOB EXECUTION STARTED =====', [
             'scraped_id' => $this->scrapedPostId,
@@ -137,7 +138,34 @@ class ProcessInstagramPost implements ShouldQueue
                 try {
                     // Build image context for AI generation
                     $imageCount = count($fixedImagePaths);
-                    $imageDescription = $this->generateImageDescription($fixedImagePaths, $caption);
+                    
+                    // Try AI Vision for ALL images analysis
+                    $imageDescriptions = [];
+                    if (!empty($fixedImagePaths)) {
+                        Log::info('[InstagramJob] Analyzing all images', ['total_images' => $imageCount]);
+                        
+                        foreach ($fixedImagePaths as $index => $imagePath) {
+                            $fullPath = base_path($imagePath);
+                            if (file_exists($fullPath)) {
+                                Log::info("[InstagramJob] Analyzing image " . ($index + 1) . "/{$imageCount}", ['path' => $imagePath]);
+                                $visionResult = $groqService->analyzeImage($fullPath);
+                                if ($visionResult['success']) {
+                                    $imageDescriptions[] = "Gambar " . ($index + 1) . ": " . $visionResult['message'];
+                                } else {
+                                    Log::warning("[InstagramJob] Vision failed for image " . ($index + 1), ['error' => $visionResult['error'] ?? 'unknown']);
+                                }
+                            }
+                        }
+                    }
+
+                    // Combine all descriptions or use heuristic fallback
+                    if (!empty($imageDescriptions)) {
+                        $imageDescription = "Deskripsi visual dari {$imageCount} gambar:\n" . implode("\n", $imageDescriptions);
+                        Log::info('[InstagramJob] Combined vision analysis successful', ['total_analyzed' => count($imageDescriptions)]);
+                    } else {
+                        $imageDescription = $this->generateImageDescription($fixedImagePaths, $caption);
+                        Log::info('[InstagramJob] Using heuristic image description');
+                    }
                     
                     // Get likes/engagement if available
                     $engagement = null;
@@ -247,34 +275,45 @@ class ProcessInstagramPost implements ShouldQueue
                 'category' => $post->category,
             ]);
 
-            // Handle featured image
+            // Handle ALL images attachment
             if (!empty($fixedImagePaths)) {
-                $firstImage = $fixedImagePaths[0] ?? null;
-                $fullPath = base_path($firstImage);
-                
-                Log::info('[InstagramJob] Attempting to attach image', [
-                    'path' => $firstImage,
-                    'full_path' => $fullPath,
-                    'exists' => file_exists($fullPath),
+                Log::info('[InstagramJob] Attaching all images to post', [
+                    'total_images' => count($fixedImagePaths),
+                    'post_id' => $post->id,
                 ]);
-
-                if ($firstImage && file_exists($fullPath)) {
-                    try {
-                        $post->addMedia($fullPath)
-                            ->preservingOriginal()
-                            ->toMediaCollection('featured');
-                        
-                        Log::info('[InstagramJob] Image attached successfully', [
-                            'post_id' => $post->id,
-                        ]);
-                    } catch (\Exception $e) {
-                        Log::warning('[InstagramJob] Failed to attach image', [
-                            'post_id' => $post->id,
-                            'image' => $firstImage,
-                            'error' => $e->getMessage(),
-                        ]);
+                
+                $attachedCount = 0;
+                foreach ($fixedImagePaths as $index => $imagePath) {
+                    $fullPath = base_path($imagePath);
+                    
+                    if (file_exists($fullPath)) {
+                        try {
+                            $post->addMedia($fullPath)
+                                ->preservingOriginal()
+                                ->toMediaCollection('featured'); // Spatie supports multiple in one collection
+                            
+                            $attachedCount++;
+                            Log::info("[InstagramJob] Image " . ($index + 1) . " attached successfully", [
+                                'post_id' => $post->id,
+                                'image' => $imagePath,
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::warning("[InstagramJob] Failed to attach image " . ($index + 1), [
+                                'post_id' => $post->id,
+                                'image' => $imagePath,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    } else {
+                        Log::warning("[InstagramJob] Image file not found", ['path' => $fullPath]);
                     }
                 }
+                
+                Log::info('[InstagramJob] Image attachment completed', [
+                    'post_id' => $post->id,
+                    'attached' => $attachedCount,
+                    'total' => count($fixedImagePaths),
+                ]);
             }
 
             // Mark scraped post as processed and clear processing status

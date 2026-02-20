@@ -128,9 +128,14 @@ class PopulateSpmbSeeder extends Seeder
     private function attachMedia($model, $collection, $filename)
     {
         $path = public_path("images/{$filename}");
+        $smansaPath = base_path('foto-guru/SMANSA.jpeg');
+
         if (File::exists($path)) {
             $model->clearMediaCollection($collection);
             $model->addMedia($path)->preservingOriginal()->toMediaCollection($collection);
+        } elseif (File::exists($smansaPath)) {
+            $model->clearMediaCollection($collection);
+            $model->addMedia($smansaPath)->preservingOriginal()->toMediaCollection($collection);
         }
     }
 }

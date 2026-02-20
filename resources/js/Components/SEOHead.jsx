@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 
 export default function SEOHead({
@@ -13,7 +13,8 @@ export default function SEOHead({
     modifiedTime,
     canonical,
 }) {
-    const siteUrl = "https://smansa.hshinoshowcase.site";
+    const { props } = usePage();
+    const siteUrl = props.siteSettings?.general?.site_url || "https://sman1baleendah.sch.id";
     const fullUrl = url || (typeof window !== 'undefined' ? window.location.href : siteUrl);
     const canonicalUrl = canonical || fullUrl;
     const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image}`;

@@ -26,7 +26,7 @@ import ResponsiveImage from '@/Components/ResponsiveImage';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { getPageMetadata } from '@/Utils/academicData';
-import { usePage } from '@inertiajs/react';
+import { usePage, Link } from '@inertiajs/react';
 
 export default function KurikulumPage({ curriculumData }) {
     const { siteSettings } = usePage().props;
@@ -286,6 +286,36 @@ export default function KurikulumPage({ curriculumData }) {
                             </div>
                         </div>
                     ))}
+                </div>
+            </section>
+
+            {/* CTA SECTION - Updated Style */}
+            <section className="py-20 bg-primary relative overflow-hidden rounded-3xl mx-4 mb-16">
+                {/* Decorative Circles */}
+                <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
+
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                        Siap Menjadi Bagian dari <br/> Keluarga Besar {siteName}?
+                    </h2>
+                    <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
+                        Dapatkan informasi lengkap mengenai pendaftaran peserta didik baru, jadwal, dan persyaratan yang dibutuhkan.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <Link 
+                            href="/informasi-spmb" 
+                            className="px-8 py-4 bg-accent-yellow text-gray-900 font-bold rounded-xl hover:bg-yellow-400 transition-colors shadow-lg"
+                        >
+                            Daftar Sekarang
+                        </Link>
+                        <Link 
+                            href="/kontak" 
+                            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-xl hover:bg-white hover:text-primary transition-colors"
+                        >
+                            Hubungi Kami
+                        </Link>
+                    </div>
                 </div>
             </section>
 

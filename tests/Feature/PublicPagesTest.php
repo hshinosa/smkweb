@@ -85,6 +85,8 @@ class PublicPagesTest extends TestCase
     public function test_ekstrakurikuler_page_can_be_accessed()
     {
         $response = $this->get('/akademik/ekstrakurikuler');
+        $response->assertRedirect(route('akademik.organisasi_ekstrakurikuler'));
+        $response = $this->get('/akademik/organisasi-ekstrakurikuler');
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
             ->component('EkstrakurikulerPage')

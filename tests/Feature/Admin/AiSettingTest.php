@@ -21,9 +21,8 @@ class AiSettingTest extends TestCase
 
     public function test_can_view_ai_settings_page()
     {
-        // Seed some settings
-        AiSetting::set('ai_model_provider', 'openai');
-        AiSetting::set('openai_api_key', 'sk-test-123');
+        AiSetting::set('groq_api_keys', json_encode(['gsk-test-key']), 'json');
+        AiSetting::set('groq_chat_model', 'llama-3.3-70b-versatile');
 
         $response = $this->actingAs($this->admin, 'admin')
             ->get(route('admin.ai-settings.index'));
@@ -37,17 +36,17 @@ class AiSettingTest extends TestCase
 
     public function test_can_update_ai_settings()
     {
-        AiSetting::set('ai_model_provider', 'openai');
+        AiSetting::set('groq_chat_model', 'llama-3.3-70b-versatile');
 
         $data = [
             'settings' => [
                 [
-                    'key' => 'ai_model_provider',
-                    'value' => 'anthropic',
+                    'key' => 'groq_chat_model',
+                    'value' => 'mixtral-8x7b-32768',
                 ],
                 [
-                    'key' => 'anthropic_api_key',
-                    'value' => 'sk-ant-123',
+                    'key' => 'groq_api_keys',
+                    'value' => json_encode(['gsk-new-key-123']),
                 ]
             ]
         ];
@@ -56,8 +55,7 @@ class AiSettingTest extends TestCase
             ->post(route('admin.ai-settings.update'), $data);
 
         $response->assertRedirect();
-        $this->assertEquals('anthropic', AiSetting::get('ai_model_provider'));
-        $this->assertEquals('sk-ant-123', AiSetting::get('anthropic_api_key'));
+        $this->assertEquals('mixtral-8x7b-32768', AiSetting::get('groq_chat_model'));
     }
 
     public function test_validates_ai_settings_update()

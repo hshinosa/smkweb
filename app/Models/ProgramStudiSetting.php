@@ -69,12 +69,6 @@ class ProgramStudiSetting extends Model implements HasMedia
                 'description' => 'textarea',
                 'items' => 'list',
             ],
-            'alumni_spotlight' => [
-                'image' => 'image',
-                'quote' => 'textarea',
-                'name' => 'text',
-                'description' => 'text',
-            ],
         ];
     }
 
@@ -103,12 +97,6 @@ class ProgramStudiSetting extends Model implements HasMedia
                 'title' => 'Prospek Karir',
                 'description' => 'Peluang karir setelah lulus.',
                 'items' => [],
-            ],
-            'alumni_spotlight' => [
-                'image' => null,
-                'quote' => 'Testimoni alumni.',
-                'name' => 'Nama Alumni',
-                'description' => 'Pekerjaan / Universitas',
             ],
         ];
 

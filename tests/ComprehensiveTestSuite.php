@@ -597,7 +597,7 @@ class ComprehensiveTestSuite extends TestCase
         
         // Verify RAG service exists
         $ragService = new \App\Services\RagService(
-            new \App\Services\OpenAIService(),
+            new \App\Services\GroqService(),
             new \App\Services\EmbeddingService()
         );
         $this->check($ragService instanceof \App\Services\RagService, 'RAG Service should exist');

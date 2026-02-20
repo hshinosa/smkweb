@@ -23,6 +23,7 @@ RUN install-php-extensions \
     intl \
     redis \
     opcache \
+    zip \
     && apk add --no-cache \
     git curl zip unzip postgresql-client su-exec python3 py3-pip
 

@@ -37,13 +37,12 @@ services:
   #     - app
 
   # Backup: Automated PostgreSQL backups
-  backup:
+  db-backup:
     image: prodrigestivill/postgres-backup-local:latest
-    container_name: sman1-baleendah-backup
+    container_name: sman1-baleendah-db-backup
     restart: unless-stopped
     volumes:
       - backups:/backups
-      - postgres_data:/var/lib/postgresql/data:ro
     environment:
       POSTGRES_HOST: db
       POSTGRES_DB: ${DB_DATABASE:-sman1_baleendah}
@@ -58,17 +57,26 @@ services:
       db:
         condition: service_healthy
 
+  # Storage Backup: Automated file backups
+  storage-backup:
+    image: alpine:latest
+    container_name: sman1-baleendah-storage-backup
+    restart: unless-stopped
+    volumes:
+      - ./storage:/var/www/storage:ro
+      - backups:/backups
+      - ./docker/scripts/backup-storage.sh:/usr/local/bin/backup-storage.sh:ro
+    entrypoint: ["/bin/sh", "-c", "echo \"0 3 * * * /usr/local/bin/backup-storage.sh\" > /etc/periodic/daily/storage-backup && crond -f -l 2"]
+    networks:
+      - sman1-network
+
   app:
-    image: hshinosa/smkweb:latest
+    image: hshinosa/smansa-web:latest
     container_name: sman1-baleendah-app
     restart: unless-stopped
     working_dir: /var/www
-    # No port mapping here if using internal Nginx to bridge
     volumes:
-      - ./.env:/var/www/.env
-      - ./storage:/var/www/storage
-      - ./public:/var/www/public
-      - ./instagram-scraper:/var/www/instagram-scraper
+      - ./:/var/www
       - ./docker/php-fpm/php.ini:/usr/local/etc/php/conf.d/custom.ini
     env_file:
       - .env
@@ -78,14 +86,20 @@ services:
       - DB_CONNECTION=pgsql
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_DATABASE=sman1_baleendah
-      - DB_USERNAME=sman1_user
-      - DB_PASSWORD=sman1_password_2024
+      - DB_DATABASE=${DB_DATABASE:-sman1_baleendah}
+      - DB_USERNAME=${DB_USERNAME:-sman1_user}
+      - DB_PASSWORD=${DB_PASSWORD:-sman1_password_2024}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - CACHE_STORE=redis
       - SESSION_DRIVER=redis
       - QUEUE_CONNECTION=database
+      - EMBEDDING_BASE_URL=http://embedding:8080
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     logging:
       driver: "json-file"
       options:
@@ -146,21 +160,34 @@ services:
       retries: 5
 
   queue:
-    image: hshinosa/smkweb:latest
-    container_name: sman1-baleendah-queue
+    image: hshinosa/smansa-web:latest
     restart: unless-stopped
-    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600 --queue=default,instagram
+    command: php artisan queue:work --sleep=1 --tries=3 --timeout=120 --queue=default,instagram
     working_dir: /var/www
     volumes:
-      - ./storage:/var/www/storage
-      - ./instagram-scraper:/var/www/instagram-scraper
-      - ./.env:/var/www/.env
+      - ./:/var/www
     env_file:
       - .env
+    environment:
+      - APP_ENV=production
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-sman1_baleendah}
+      - DB_USERNAME=${DB_USERNAME:-sman1_user}
+      - DB_PASSWORD=${DB_PASSWORD:-sman1_password_2024}
+      - CACHE_STORE=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=database
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - EMBEDDING_BASE_URL=http://embedding:8080
     depends_on:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      embedding:
         condition: service_healthy
     logging:
       driver: "json-file"
@@ -171,27 +198,48 @@ services:
       - sman1-network
 
   scheduler:
-    image: hshinosa/smkweb:latest
+    image: hshinosa/smansa-web:latest
     container_name: sman1-baleendah-scheduler
     restart: unless-stopped
     command: /bin/sh -c "while true; do php artisan schedule:run; sleep 60; done"
     working_dir: /var/www
     volumes:
-      - ./storage:/var/www/storage
-      - ./.env:/var/www/.env
+      - ./:/var/www
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - sman1-network
 
+  # Self-hosted embedding service (HuggingFace TEI)
+  embedding:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-latest
+    container_name: sman1-baleendah-embedding
+    restart: unless-stopped
+    command: ["--model-id", "intfloat/multilingual-e5-small", "--port", "8080"]
+    environment:
+      - HF_HOME=/data
+    volumes:
+      - embedding_cache:/data
+    ports:
+      - "8090:8080"
+    networks:
+      - sman1-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   # Python Instagram Scraper Service
   instagram-scraper:
-    image: hshinosa/smkweb:latest
+    image: hshinosa/smansa-web:latest
     container_name: sman1-baleendah-scraper
     restart: unless-stopped
-    # Jalankan scraper dalam loop atau sesuai jadwal (contoh: setiap 6 jam)
     command: /bin/sh -c "while true; do python3 instagram-scraper/scraper.py; echo 'Scraping finished, sleeping for 6 hours...'; sleep 21600; done"
     working_dir: /var/www
     volumes:
@@ -208,69 +256,6 @@ services:
     networks:
       - sman1-network
 
-  # CLI Proxy API - Build from local source
-  cliproxyapi:
-    image: hshinosa/cliproxyapi:latest
-    container_name: sman1-baleendah-cliproxy
-    restart: unless-stopped
-    ports:
-      - "8317:8317"
-    volumes:
-      - ./cliproxyapi/config.yaml:/CLIProxyAPI/config.yaml
-      - ./cliproxyapi/auths:/root/.cli-proxy-api
-      - ./cliproxyapi/logs:/CLIProxyAPI/logs
-    networks:
-      - sman1-network
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8317/ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # Ollama service for RAG and AI features
-  ollama:
-    image: ollama/ollama:latest
-    container_name: sman1-baleendah-ollama
-    restart: unless-stopped
-    volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      - sman1-network
-    # ports: # Dibuka hanya jika butuh akses dari luar docker network
-    #   - "11434:11434"
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    environment:
-      - OLLAMA_NUM_THREADS=4
-      - OLLAMA_MAX_LOADED_MODELS=1
-      - OLLAMA_KEEP_ALIVE=30m
-      - OLLAMA_HOST=0.0.0.0
-    deploy:
-      resources:
-        limits:
-          cpus: '2.5'
-          memory: 4G
-
-  # One-time service to pull required models
-  ollama-pull-models:
-    image: ollama/ollama:latest
-    container_name: sman1-baleendah-ollama-setup
-    networks:
-      - sman1-network
-    depends_on:
-      ollama:
-        condition: service_healthy
-    entrypoint: /bin/sh
-    command: -c "ollama pull llama3.2:1b && ollama pull nomic-embed-text:v1.5"
-
 volumes:
   postgres_data:
     driver: local
@@ -280,7 +265,7 @@ volumes:
     driver: local
   redis_data:
     driver: local
-  ollama_data:
+  embedding_cache:
     driver: local
 
 networks:

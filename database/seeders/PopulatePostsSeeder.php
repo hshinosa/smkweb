@@ -97,6 +97,8 @@ class PopulatePostsSeeder extends Seeder
             ]
         ];
 
+        $smansaPath = base_path('foto-guru/SMANSA.jpeg');
+
         foreach ($posts as $index => $data) {
             $post = Post::create([
                 'title' => $data['title'],
@@ -111,15 +113,9 @@ class PopulatePostsSeeder extends Seeder
                 'views_count' => rand(50, 500),
             ]);
 
-            // Attach Image
-            $imageName = $data['image_name'];
-            $sourcePath = public_path("images/{$imageName}");
-            if (!File::exists($sourcePath)) {
-                $sourcePath = public_path("images/hero-bg-sman1baleendah.jpeg");
-            }
-
-            if (File::exists($sourcePath)) {
-                $post->addMedia($sourcePath)
+            // Attach SMANSA.jpeg as requested
+            if (File::exists($smansaPath)) {
+                $post->addMedia($smansaPath)
                     ->preservingOriginal()
                     ->toMediaCollection('featured');
             }

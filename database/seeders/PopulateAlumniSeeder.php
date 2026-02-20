@@ -68,8 +68,10 @@ class PopulateAlumniSeeder extends Seeder
             ]
         ];
 
+        $studentPhotoPath = public_path('images/anak-sma.png');
+        $secondaryPhotoPath = public_path('images/anak-sma-programstudi.png');
+
         foreach ($alumniData as $data) {
-            $imageName = $data['image_name'] ?? null;
             unset($data['image_name']);
             
             $data['is_published'] = true;
@@ -77,14 +79,16 @@ class PopulateAlumniSeeder extends Seeder
 
             $alumni = Alumni::create($data);
 
-            // Attach Image only for non-video content
-            if ($imageName && $data['content_type'] === 'text') {
-                $sourcePath = public_path("images/{$imageName}");
-                
-                if (File::exists($sourcePath)) {
-                    $alumni->addMedia($sourcePath)
+            // Use student photo (anak-sma.png) for alumni as requested
+            if ($data['content_type'] === 'text' && File::exists($studentPhotoPath)) {
+                $alumni->addMedia($studentPhotoPath)
+                    ->preservingOriginal()
+                    ->toMediaCollection('testimonial_images');
+
+                if (File::exists($secondaryPhotoPath)) {
+                    $alumni->addMedia($secondaryPhotoPath)
                         ->preservingOriginal()
-                        ->toMediaCollection('avatars');
+                        ->toMediaCollection('testimonial_images');
                 }
             }
         }

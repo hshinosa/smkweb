@@ -1,4 +1,4 @@
-import { Camera, Facebook, Linkedin, Twitter, Youtube } from 'lucide-react';
+import { Camera, Facebook, Linkedin, Twitter, Youtube, Shirt } from 'lucide-react';
 
 /**
  * Centralized navigation data for consistent use across all academic pages
@@ -24,14 +24,21 @@ export function getNavigationData(siteSettings = {}) {
             { title: "Program Sekolah", href: "/program" },
             { title: "Galeri", href: "/galeri" },
             { title: "Guru & Staff", href: "/guru-staff" },
+            { title: "Seragam Sekolah", href: "/seragam" },
         ],
 
         akademikLinks: [
             { title: "Kalender Akademik", href: "/kalender-akademik" },
             { title: "Kurikulum", href: "/akademik/kurikulum" },
             { title: "Organisasi & Ekstrakurikuler", href: "/akademik/organisasi-ekstrakurikuler" },
-            { title: "Data Serapan PTN", href: "/prestasi-akademik" },
-            { title: "Hasil TKA", href: "/hasil-tka" },
+            { 
+                title: "Prestasi Akademik", 
+                href: "#",
+                subItems: [
+                    { title: "Data Serapan PTN", href: "/akademik/prestasi-akademik/serapan-ptn" },
+                    { title: "Hasil TKA", href: "/akademik/prestasi-akademik/hasil-tka" },
+                ]
+            },
         ],
 
         programStudiLinks: [

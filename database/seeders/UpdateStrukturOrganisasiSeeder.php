@@ -36,7 +36,7 @@ class UpdateStrukturOrganisasiSeeder extends Seeder
             ['content' => json_encode([
                 'title' => 'Bagan Struktur Organisasi',
                 'description' => 'Struktur organisasi SMA Negeri 1 Baleendah Tahun Pelajaran 2025/2026',
-                'image_url' => '/images/struktur-organisasi-sman1-baleendah.jpg'
+                'image_url' => '/images/hero-bg-sman1baleendah.jpeg'
             ])]
         );
 

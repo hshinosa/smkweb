@@ -80,6 +80,8 @@ class PopulateTeachersSeeder extends Seeder
 
         $counter = 0;
 
+        $smansaPath = base_path('foto-guru/SMANSA.jpeg');
+
         foreach ($teachersData as $data) {
             $teacher = Teacher::create([
                 'name' => $data['name'],
@@ -91,16 +93,11 @@ class PopulateTeachersSeeder extends Seeder
                 'sort_order' => $counter++,
             ]);
 
-            // Attach Image ONLY for Kepala Sekolah (sample) to save time
-            if ($data['position'] === 'Kepala Sekolah') {
-                $imageName = 'keluarga-besar-sman1-baleendah.png';
-                $sourcePath = public_path("images/{$imageName}");
-                
-                if (File::exists($sourcePath)) {
-                    $teacher->addMedia($sourcePath)
-                        ->preservingOriginal()
-                        ->toMediaCollection('photos');
-                }
+            // Attach SMANSA.jpeg for Kepala Sekolah as a sample placeholder if original not available
+            if ($data['position'] === 'Kepala Sekolah' && File::exists($smansaPath)) {
+                $teacher->addMedia($smansaPath)
+                    ->preservingOriginal()
+                    ->toMediaCollection('photos');
             }
         }
 

@@ -28,9 +28,9 @@ class RagDocumentCrudTest extends TestCase
         $this->admin = Admin::factory()->create();
         $this->actingAs($this->admin, 'admin');
 
-        // Seed AI Settings for OpenAIService validation
-        \App\Models\AiSetting::create(['key' => 'ai_model_base_url', 'value' => 'https://api.openai.com/v1']);
-        \App\Models\AiSetting::create(['key' => 'ai_model_api_key', 'value' => 'sk-test-key']);
+        // Seed AI Settings for GroqService validation
+        \App\Models\AiSetting::create(['key' => 'groq_api_keys', 'value' => json_encode(['gsk-test-key']), 'type' => 'json']);
+        \App\Models\AiSetting::create(['key' => 'groq_chat_model', 'value' => 'llama-3.3-70b-versatile']);
 
         // Mock Services
         $this->embeddingServiceMock = $this->mock(EmbeddingService::class, function (MockInterface $mock) {

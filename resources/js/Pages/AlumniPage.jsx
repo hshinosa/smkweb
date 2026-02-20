@@ -1,20 +1,18 @@
-import React, { useState, useRef } from 'react';
-import { Head } from '@inertiajs/react';
+import React, { useState } from 'react';
 import { 
     GraduationCap, 
-    Briefcase, 
     Quote, 
     Users, 
     ChevronLeft,
     ChevronRight,
     X,
-    Play,
-    Building2
+    Play
 } from 'lucide-react';
 
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import SEOHead from '@/Components/SEOHead';
+import Modal from '@/Components/Modal';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 import { usePage } from '@inertiajs/react';
@@ -28,17 +26,6 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-
-// Helper function to normalize URL paths
-const normalizeVideoUrl = (url) => {
-    if (!url) return null;
-    // If it's already a full URL (http/https) or absolute path, return as is
-    if (url.startsWith('http') || url.startsWith('/')) {
-        return url;
-    }
-    // Otherwise, prepend /storage/
-    return `/storage/${url}`;
-};
 
 // Featured Card untuk Hero Carousel
 const FeaturedCard = ({ alumni }) => {
@@ -59,12 +46,6 @@ const FeaturedCard = ({ alumni }) => {
             if (match) return match[1];
         }
         return null;
-    };
-
-    const getYouTubeThumbnail = (url) => {
-        if (!url) return null;
-        const id = getYouTubeId(url);
-        return id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : null;
     };
 
     // Get the actual video URL
@@ -161,7 +142,8 @@ const FeaturedCard = ({ alumni }) => {
 };
 
 // Testimonial Card untuk Grid
-const TestimonialCard = ({ alumni }) => {
+const TestimonialCard = ({ alumni, onClick }) => {
+    const primaryImage = alumni?.testimonialImages?.[0]?.original_url || alumni?.image_url || null;
     const formatImagePath = (path) => {
         if (!path) return null;
         if (path.startsWith('http') || path.startsWith('/')) return path;
@@ -169,7 +151,12 @@ const TestimonialCard = ({ alumni }) => {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full group p-6">
+        <button
+            type="button"
+            onClick={onClick}
+            className="w-full text-left bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full group p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            aria-label={`Lihat detail testimoni ${alumni.name}`}
+        >
             <div className="flex-grow flex items-center justify-center text-center mb-6 relative">
                  <Quote className="absolute top-0 left-0 w-6 h-6 text-primary/10 -translate-x-2 -translate-y-2 rotate-180" />
                  <p className="text-gray-600 italic leading-relaxed text-sm relative z-10">
@@ -179,10 +166,9 @@ const TestimonialCard = ({ alumni }) => {
 
             <div className="flex flex-col items-center text-center pt-4 border-t border-gray-50">
                 <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-100 mb-3 shadow-sm bg-gray-50">
-                     {alumni.avatarsImage || alumni.image_url ? (
+                     {primaryImage ? (
                         <ThumbnailImage
-                            src={formatImagePath(alumni.image_url)}
-                            media={alumni.avatarsImage}
+                            src={formatImagePath(primaryImage)}
                             alt={alumni.name}
                             className="w-full h-full object-cover"
                         />
@@ -199,7 +185,7 @@ const TestimonialCard = ({ alumni }) => {
                     <span>Angkatan {alumni.graduation_year}</span>
                 </div>
             </div>
-        </div>
+        </button>
     );
 };
 
@@ -209,6 +195,8 @@ export default function AlumniPage({ auth, alumnis = [] }) {
     const siteName = siteSettings?.general?.site_name || 'SMAN 1 Baleendah';
     const heroImage = siteSettings?.general?.hero_image || '/images/hero-bg-sman1baleendah.jpeg';
     const [currentPage, setCurrentPage] = useState(1);
+    const [isTestimonialModalOpen, setIsTestimonialModalOpen] = useState(false);
+    const [selectedAlumni, setSelectedAlumni] = useState(null);
     const itemsPerPage = 16; // 4x4 grid
 
     const heroSettings = siteSettings?.hero_alumni || {};
@@ -247,6 +235,23 @@ export default function AlumniPage({ auth, alumnis = [] }) {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
+
+    const selectedAlumniImages = selectedAlumni?.testimonialImages?.length
+        ? selectedAlumni.testimonialImages.map((media) => media?.original_url).filter(Boolean)
+        : [];
+
+    const openTestimonialModal = (alumniId) => {
+        const alumni = regularAlumni.find((item) => item.id === alumniId);
+        if (!alumni) return;
+
+        setSelectedAlumni(alumni);
+        setIsTestimonialModalOpen(true);
+    };
+
+    const closeTestimonialModal = () => {
+        setIsTestimonialModalOpen(false);
+        setSelectedAlumni(null);
+    };
 
 
     return (
@@ -358,7 +363,10 @@ export default function AlumniPage({ auth, alumnis = [] }) {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                                     {paginatedAlumni.map((alumni) => (
                                         <div key={alumni.id} className="h-full">
-                                            <TestimonialCard alumni={alumni} />
+                                            <TestimonialCard
+                                                alumni={alumni}
+                                                onClick={() => openTestimonialModal(alumni.id)}
+                                            />
                                         </div>
                                     ))}
                                 </div>
@@ -409,6 +417,89 @@ export default function AlumniPage({ auth, alumnis = [] }) {
                         )}
                     </div>
                 </section>
+
+                <Modal show={isTestimonialModalOpen} onClose={closeTestimonialModal} maxWidth="4xl">
+                    <div className="relative bg-white">
+                        <button
+                            type="button"
+                            onClick={closeTestimonialModal}
+                            className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow hover:bg-white hover:text-gray-900"
+                            aria-label="Tutup modal testimoni"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        {selectedAlumni && (
+                            <div className="p-4 sm:p-6">
+                                <Swiper
+                                    modules={[Navigation, Pagination]}
+                                    spaceBetween={16}
+                                    slidesPerView={1}
+                                    loop={selectedAlumniImages.length > 1}
+                                    navigation={{
+                                        prevEl: '.swiper-button-prev-testimonial-modal',
+                                        nextEl: '.swiper-button-next-testimonial-modal',
+                                    }}
+                                    pagination={{ clickable: true }}
+                                    className="pb-10"
+                                >
+                                    {selectedAlumniImages.length > 0 ? selectedAlumniImages.map((imageUrl, index) => (
+                                        <SwiperSlide key={`${selectedAlumni.id}-${index}`}>
+                                            <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-2xl bg-gray-100">
+                                                {imageUrl ? (
+                                                    <ContentImage
+                                                        src={formatImagePath(imageUrl)}
+                                                        alt={`${selectedAlumni.name} - foto ${index + 1}`}
+                                                        className="h-[340px] w-full object-cover sm:h-[420px]"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-[340px] w-full items-center justify-center bg-gray-200 text-gray-400 sm:h-[420px]">
+                                                        <Users size={60} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </SwiperSlide>
+                                    )) : (
+                                        <SwiperSlide key={`fallback-${selectedAlumni.id}`}>
+                                            <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-2xl bg-gray-100">
+                                                <div className="flex h-[340px] w-full items-center justify-center bg-gray-200 text-gray-400 sm:h-[420px]">
+                                                    <Users size={60} />
+                                                </div>
+                                            </div>
+                                        </SwiperSlide>
+                                    )}
+                                </Swiper>
+
+                                {selectedAlumniImages.length > 1 && (
+                                    <>
+                                        <button
+                                            className="swiper-button-prev-testimonial-modal absolute left-3 top-[42%] z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-md text-primary hover:bg-primary hover:text-white transition-all duration-300"
+                                            aria-label="Sebelumnya"
+                                        >
+                                            <ChevronLeft className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            className="swiper-button-next-testimonial-modal absolute right-3 top-[42%] z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-md text-primary hover:bg-primary hover:text-white transition-all duration-300"
+                                            aria-label="Berikutnya"
+                                        >
+                                            <ChevronRight className="h-5 w-5" />
+                                        </button>
+                                    </>
+                                )}
+
+                                {selectedAlumni && (
+                                    <div className="mx-auto mt-4 max-w-3xl text-center">
+                                        <h3 className="text-2xl font-bold text-gray-900">{selectedAlumni.name}</h3>
+                                        <p className="mt-2 text-sm font-medium text-primary">Angkatan {selectedAlumni.graduation_year}</p>
+                                        <p className="mt-4 text-base leading-relaxed text-gray-600">
+                                            "{selectedAlumni.testimonial}"
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </Modal>
             </main>
 
             <Footer

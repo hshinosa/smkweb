@@ -36,7 +36,7 @@ class TestPgvectorRag extends Command
         $this->newLine();
 
         // 2. Process document
-        $this->info('2. Processing document (chunking + embedding with Ollama)...');
+        $this->info('2. Processing document (chunking + embedding)...');
         $ragService = app(RagService::class);
 
         try {

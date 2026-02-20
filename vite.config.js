@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 import { compression } from 'vite-plugin-compression2';
-// import sri from '@small-tech/vite-plugin-sri';
 
 export default defineConfig(({ mode }) => {
     // CDN URL from environment or empty for relative paths
@@ -27,8 +26,6 @@ export default defineConfig(({ mode }) => {
                 algorithm: 'brotliCompress',
                 exclude: [/\.(br)$/, /\.(gz)$/],
             }),
-            // Subresource Integrity (SRI)
-            // sri(),
         ],
         base: cdnUrl || undefined,
         resolve: {

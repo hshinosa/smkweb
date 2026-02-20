@@ -30,6 +30,8 @@ export default function ChatWidget() {
     
     const [isOpen, setIsOpen] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
+    const [countdown, setCountdown] = useState(0);
     const [inputValue, setInputValue] = useState("");
     const [isHidden, setIsHidden] = useState(false);
     const [sessionId, setSessionId] = useState(null);
@@ -47,6 +49,14 @@ export default function ChatWidget() {
     ]);
     const messagesEndRef = useRef(null);
     const sessionInitializedRef = useRef(false);
+
+    // Handle countdown timer for rate limits
+    useEffect(() => {
+        if (countdown > 0) {
+            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [countdown]);
 
     // Initialize or get session ID from localStorage with lock mechanism
     useEffect(() => {
@@ -143,7 +153,7 @@ export default function ChatWidget() {
                     {
                         id: 1,
                         sender: 'bot',
-                        text: `Halo! 👋 Selamat datang kembali di ${siteName}. Berikut adalah percakapan sebelumnya:`,
+                        text: `Halo lagi! 👋 Aku AI SMANSA~ Ini percakapan kita sebelumnya ya ✨`,
                         isRagEnhanced: false,
                     },
                     ...historyMessages,
@@ -173,13 +183,13 @@ export default function ChatWidget() {
         {
             id: 1,
             sender: 'bot',
-            text: `Halo! 👋 Selamat datang di ${siteName}. Saya adalah **AI SMANSA**, asisten virtual yang siap membantu menjawab pertanyaan seputar sekolah.`,
+            text: `Halo! 👋 Aku **AI SMANSA**, teman virtualmu buat ngobrolin SMAN 1 Baleendah! ✨`,
             isRagEnhanced: false,
         },
         {
             id: 2,
             sender: 'bot',
-            text: 'Silakan tanyakan apa saja tentang PPDB, program studi, ekstrakurikuler, informasi akademik, atau hal lain terkait SMANSA!',
+            text: `Mau tanya apa nih tentang SMANSA? PPDB, jurusan, ekskul, atau yang lain? Yuk, tanya aja~ 😊`,
             isRagEnhanced: false,
         }
     ]);
@@ -308,9 +318,11 @@ export default function ChatWidget() {
                                 const data = JSON.parse(line.slice(6));
 
                                 if (data.type === 'metadata') {
+                                    setIsSearching(false);
                                     isRagEnhanced = data.is_rag_enhanced;
                                     logChat('Metadata received', { isRagEnhanced, sessionId: data.session_id });
                                 } else if (data.type === 'content') {
+                                    setIsSearching(false);
                                     streamedText += data.content;
                                     updateMessage(botMessageId, streamedText, isRagEnhanced);
                                 } else if (data.type === 'done') {
@@ -369,6 +381,7 @@ export default function ChatWidget() {
                     errorMessage = 'Sesi Anda telah berakhir. Silakan refresh halaman.';
                 } else if (error.message.includes('429')) {
                     errorMessage = 'Terlalu banyak permintaan. Mohon tunggu sebentar.';
+                    setCountdown(60);
                 }
                 
                 // Add error message to chat
@@ -504,7 +517,8 @@ Silakan klik tombol di bawah ini untuk langsung chat:`,
         setInputValue("");
         setShowSuggestions(false); // Hide suggestions during response
         
-        setIsTyping(true); // Show typing indicator briefly
+        setIsTyping(true); // Show typing indicator
+        setIsSearching(true); // Show "searching" status
 
         try {
             const result = await sendMessageToAPIStream(inputValue.trim());
@@ -571,13 +585,13 @@ Silakan klik tombol di bawah ini untuk langsung chat:`,
             {
                 id: 1,
                 sender: 'bot',
-                text: `Halo! 👋 Selamat datang di ${siteName}. Saya adalah **AI SMANSA**, asisten virtual yang siap membantu menjawab pertanyaan seputar sekolah.`,
+                text: `Halo! 👋 Aku **AI SMANSA**, teman virtualmu buat ngobrolin SMAN 1 Baleendah! ✨`,
                 isRagEnhanced: false,
             },
             {
                 id: 2,
                 sender: 'bot',
-                text: 'Silakan tanyakan apa saja tentang PPDB, program studi, ekstrakurikuler, informasi akademik, atau hal lain terkait SMANSA!',
+                text: `Mau tanya apa nih tentang SMANSA? PPDB, jurusan, ekskul, atau yang lain? Yuk, tanya aja~ 😊`,
                 isRagEnhanced: false,
             }
         ]);
@@ -729,7 +743,9 @@ Silakan klik tombol di bawah ini untuk langsung chat:`,
                                         <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                                         <div className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                                         <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
-                                        <span className="text-[10px] text-gray-400 ml-1 font-medium italic">AI sedang menyiapkan jawaban...</span>
+                                        <span className="text-[10px] text-gray-400 ml-1 font-medium italic">
+                                            {isSearching ? 'AI sedang mencari dokumen...' : 'AI sedang menyiapkan jawaban...'}
+                                        </span>
                                     </div>
                                 </div>
                             )}
@@ -763,13 +779,13 @@ Silakan klik tombol di bawah ini untuk langsung chat:`,
                                     type="text"
                                     value={inputValue}
                                     onChange={(e) => setInputValue(e.target.value)}
-                                    placeholder="Tanya apa saja..."
-                                    disabled={isTyping}
+                                    placeholder={countdown > 0 ? `Tunggu ${countdown} detik...` : "Tanya apa saja..."}
+                                    disabled={isTyping || countdown > 0}
                                     className="flex-1 bg-gray-100 border-0 rounded-full px-4 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-primary focus:bg-white transition-all disabled:opacity-50"
                                 />
                                 <button 
                                     type="submit"
-                                    disabled={!inputValue.trim() || isTyping}
+                                    disabled={!inputValue.trim() || isTyping || countdown > 0}
                                     className="bg-primary text-white p-2 rounded-full hover:bg-primary-darker disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
                                 >
                                     <Send size={18} className={inputValue.trim() ? "ml-0.5" : ""} />

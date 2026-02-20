@@ -101,17 +101,10 @@ class PopulateProgramsTableSeeder extends Seeder
                 ]
             );
 
-            // Media
-            if (isset($data['path']) && File::exists($data['path'])) {
+            // Use SMANSA.jpeg for all programs as requested
+            if (File::exists($smansaPath)) {
                 $program->clearMediaCollection('program_images');
-                $program->addMedia($data['path'])->preservingOriginal()->toMediaCollection('program_images');
-            } elseif (isset($data['image_name'])) {
-                $imageName = $data['image_name'];
-                $sourcePath = public_path("images/{$imageName}");
-                if (File::exists($sourcePath)) {
-                    $program->clearMediaCollection('program_images');
-                    $program->addMedia($sourcePath)->preservingOriginal()->toMediaCollection('program_images');
-                }
+                $program->addMedia($smansaPath)->preservingOriginal()->toMediaCollection('program_images');
             }
         }
     }

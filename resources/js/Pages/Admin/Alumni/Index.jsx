@@ -1,18 +1,17 @@
 // FILE: resources/js/Pages/Admin/Alumni/Index.jsx
 // Fully responsive alumni management page with accent color theme and video support
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import FileUploadField from '@/Components/Admin/FileUploadField';
-import { Plus, Edit2, Trash2, X, User, GraduationCap, Briefcase, Star, Video, FileText } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, User, GraduationCap, Star, Video, FileText, Image as ImageIcon, GripVertical } from 'lucide-react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import Modal from '@/Components/Modal';
 import toast from 'react-hot-toast';
-import { getImageUrl } from '@/Utils/imageUtils';
 
 export default function Index({ alumnis }) {
     const { success } = usePage().props;
@@ -26,8 +25,9 @@ export default function Index({ alumnis }) {
         graduation_year: new Date().getFullYear(),
         testimonial: '',
         content_type: 'text',
-        image: null,
         image_url: '',
+        testimonial_images: [],
+        existing_testimonial_images: [],
         video_source: 'youtube',
         video_url: '',
         video_file: null,
@@ -47,8 +47,11 @@ export default function Index({ alumnis }) {
                 graduation_year: alumni.graduation_year || new Date().getFullYear(),
                 testimonial: alumni.testimonial || '',
                 content_type: alumni.content_type || 'text',
-                image: null,
                 image_url: alumni.image_url || '',
+                testimonial_images: [],
+                existing_testimonial_images: Array.isArray(alumni.testimonialImages)
+                    ? alumni.testimonialImages.map((image) => image.original_url).filter(Boolean)
+                    : [],
                 video_source: alumni.video_source || 'youtube',
                 video_url: alumni.video_url || '',
                 video_file: null,
@@ -57,11 +60,28 @@ export default function Index({ alumnis }) {
                 sort_order: alumni.sort_order || 0
             });
         }
-        else { setEditMode(false); setCurrentId(null); reset(); }
+        else {
+            setEditMode(false);
+            setCurrentId(null);
+            reset();
+            setData((d) => ({
+                ...d,
+                testimonial_images: [],
+                existing_testimonial_images: [],
+            }));
+        }
         setIsModalOpen(true);
     };
 
-    const closeModal = () => { setIsModalOpen(false); reset(); };
+    const closeModal = () => {
+        setIsModalOpen(false);
+        reset();
+        setData((d) => ({
+            ...d,
+            testimonial_images: [],
+            existing_testimonial_images: [],
+        }));
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -76,17 +96,94 @@ export default function Index({ alumnis }) {
                     closeModal();
                     toast.success('Data alumni berhasil diperbarui');
                 },
+                onError: (formErrors) => {
+                    const firstError = Object.values(formErrors || {})[0];
+                    toast.error(firstError || 'Gagal memperbarui data alumni');
+                },
             });
         } else {
             transform((data) => data); // Reset transform or ensure no _method for create
             post(route('admin.alumni.store'), {
+                forceFormData: true,
                 onSuccess: () => {
                     closeModal();
                     toast.success('Alumni baru berhasil ditambahkan');
-                }
+                },
+                onError: (formErrors) => {
+                    const firstError = Object.values(formErrors || {})[0];
+                    toast.error(firstError || 'Gagal menambahkan alumni');
+                },
             });
         }
     };
+
+    const appendTestimonialImages = (files) => {
+        if (!Array.isArray(files) || files.length === 0) return;
+        setData((prev) => ({
+            ...prev,
+            testimonial_images: [...(prev.testimonial_images || []), ...files],
+        }));
+    };
+
+    const newTestimonialImagePreviews = useMemo(
+        () => (data.testimonial_images || []).map((file) => ({
+            name: file.name,
+            url: URL.createObjectURL(file),
+        })),
+        [data.testimonial_images]
+    );
+
+    useEffect(() => {
+        return () => {
+            newTestimonialImagePreviews.forEach((preview) => {
+                URL.revokeObjectURL(preview.url);
+            });
+        };
+    }, [newTestimonialImagePreviews]);
+
+    // Drag and drop reordering state
+    const [draggedIndex, setDraggedIndex] = useState(null);
+    const [dragOverIndex, setDragOverIndex] = useState(null);
+
+    const handleDragStart = useCallback((index, type) => {
+        setDraggedIndex({ index, type });
+    }, []);
+
+    const handleDragOver = useCallback((e, index) => {
+        e.preventDefault();
+        setDragOverIndex(index);
+    }, []);
+
+    const handleDrop = useCallback((targetIndex, targetType) => {
+        if (!draggedIndex) return;
+
+        const sourceArray = draggedIndex.type === 'existing' ? 'existing_testimonial_images' : 'testimonial_images';
+        const targetArray = targetType === 'existing' ? 'existing_testimonial_images' : 'testimonial_images';
+
+        if (sourceArray === targetArray) {
+            // Reorder within same array
+            const items = [...(data[sourceArray] || [])];
+            const [removed] = items.splice(draggedIndex.index, 1);
+            items.splice(targetIndex, 0, removed);
+            setData(sourceArray, items);
+        } else {
+            // Move between arrays - remove from source, add to target
+            const sourceItems = [...(data[sourceArray] || [])];
+            const targetItems = [...(data[targetArray] || [])];
+            const [removed] = sourceItems.splice(draggedIndex.index, 1);
+            targetItems.splice(targetIndex, 0, removed);
+            setData(sourceArray, sourceItems);
+            setData(targetArray, targetItems);
+        }
+
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    }, [draggedIndex, data, setData]);
+
+    const handleDragEnd = useCallback(() => {
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    }, []);
 
     const handleDelete = (id) => {
         if (confirm('Apakah Anda yakin ingin menghapus data alumni ini? Tindakan ini tidak dapat dibatalkan.')) {
@@ -129,11 +226,16 @@ export default function Index({ alumnis }) {
                                 {alumnis.map((alumni) => (
                                     <tr key={alumni.id} className="hover:bg-gray-50">
                                         <td className="px-4 py-3">
+                                            {(() => {
+                                                const primaryImage = Array.isArray(alumni.testimonialImages) && alumni.testimonialImages.length > 0
+                                                    ? alumni.testimonialImages[0]?.original_url
+                                                    : alumni.image_url;
+                                                return (
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border-2 border-gray-200">
-                                                    {alumni.avatarsImage?.original_url || alumni.image_url ? (
+                                                    {primaryImage ? (
                                                         <img
-                                                            src={alumni.avatarsImage?.original_url || getImageUrl(alumni.image_url)}
+                                                            src={primaryImage}
                                                             alt={alumni.name}
                                                             className="w-full h-full object-cover"
                                                         />
@@ -152,6 +254,8 @@ export default function Index({ alumnis }) {
                                                     </div>
                                                 </div>
                                             </div>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-accent-yellow/10 text-accent-yellow">{alumni.graduation_year}</span></td>
                                         <td className="px-4 py-3 text-center">{alumni.is_featured ? <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700"><Star size={12} fill="currentColor" /> Ya</span> : <span className="text-gray-300">-</span>}</td>
@@ -248,14 +352,102 @@ export default function Index({ alumnis }) {
                                     <InputError message={errors.testimonial} className="mt-2" />
                                 </div>
                                 <div>
-                                    <InputLabel htmlFor="image" value="Foto Profil" />
-                                    <FileUploadField
-                                        id="image"
-                                        label="Upload Foto"
-                                        onChange={(file) => setData('image', file)}
-                                        previewUrl={getImageUrl(data.image_url)}
-                                        error={errors.image}
-                                    />
+                                    <InputLabel htmlFor="testimonial_images" value="Galeri Foto Testimoni" />
+                                    <p className="text-sm text-gray-500 mt-1">Upload beberapa foto untuk ditampilkan sebagai carousel di modal testimoni (maksimal 10 foto).</p>
+
+                                    <label
+                                        htmlFor="testimonial_images"
+                                        className="mt-3 flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 transition hover:border-accent-yellow hover:bg-yellow-50/40"
+                                    >
+                                        <ImageIcon size={28} className="text-gray-400 mb-2" />
+                                        <span className="text-sm font-medium text-gray-600">Klik atau drag untuk upload foto</span>
+                                        <span className="text-xs text-gray-400 mt-1">JPEG, PNG, WebP · maks 10MB/foto</span>
+                                        <input
+                                            id="testimonial_images"
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                if (e.target.files && e.target.files.length > 0) {
+                                                    appendTestimonialImages(Array.from(e.target.files));
+                                                    e.target.value = '';
+                                                }
+                                            }}
+                                        />
+                                    </label>
+
+                                    {(data.existing_testimonial_images?.length > 0 || data.testimonial_images?.length > 0) && (
+                                        <div className="mt-4 space-y-2">
+                                            <p className="text-xs text-gray-500 italic">* Geser gambar untuk mengubah urutan tampil di carousel</p>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                                {(data.existing_testimonial_images || []).map((img, idx) => (
+                                                    <div
+                                                        key={`existing-${idx}`}
+                                                        draggable
+                                                        onDragStart={(e) => handleDragStart(idx, 'existing')}
+                                                        onDragOver={(e) => handleDragOver(e, idx)}
+                                                        onDrop={() => handleDrop(idx, 'existing')}
+                                                        onDragEnd={handleDragEnd}
+                                                        className={`relative overflow-hidden rounded-lg border-2 transition-all cursor-move ${
+                                                            dragOverIndex === idx && draggedIndex?.type === 'existing' ? 'border-primary border-dashed scale-105' : 'border-gray-200'
+                                                        } ${draggedIndex?.index === idx && draggedIndex?.type === 'existing' ? 'opacity-50' : ''}`}
+                                                    >
+                                                        <div className="absolute top-0 left-0 z-10 p-1">
+                                                            <GripVertical size={14} className="text-gray-400" />
+                                                        </div>
+                                                        <img src={img} alt={`Existing testimonial ${idx + 1}`} className="h-24 w-full object-cover" />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setData('existing_testimonial_images', (data.existing_testimonial_images || []).filter((_, i) => i !== idx));
+                                                            }}
+                                                            className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-red-600 shadow"
+                                                            aria-label="Hapus gambar yang sudah ada"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                        <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">{idx + 1}</span>
+                                                    </div>
+                                                ))}
+
+                                                {newTestimonialImagePreviews.map((preview, idx) => (
+                                                    <div
+                                                        key={`new-${idx}`}
+                                                        draggable
+                                                        onDragStart={(e) => handleDragStart(idx, 'new')}
+                                                        onDragOver={(e) => handleDragOver(e, idx)}
+                                                        onDrop={() => handleDrop(idx, 'new')}
+                                                        onDragEnd={handleDragEnd}
+                                                        className={`relative overflow-hidden rounded-lg border-2 border-primary/20 transition-all cursor-move ${
+                                                            dragOverIndex === idx && draggedIndex?.type === 'new' ? 'border-primary border-dashed scale-105' : ''
+                                                        } ${draggedIndex?.index === idx && draggedIndex?.type === 'new' ? 'opacity-50' : ''}`}
+                                                    >
+                                                        <div className="absolute top-0 left-0 z-10 p-1">
+                                                            <GripVertical size={14} className="text-primary" />
+                                                        </div>
+                                                        <img src={preview.url} alt={preview.name} className="h-24 w-full object-cover" />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setData('testimonial_images', (data.testimonial_images || []).filter((_, i) => i !== idx));
+                                                            }}
+                                                            className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-red-600 shadow"
+                                                            aria-label="Hapus gambar baru"
+                                                        >
+                                                            <X size={12} />
+                                                        </button>
+                                                        <span className="absolute bottom-1 left-1 rounded bg-primary/80 px-1.5 py-0.5 text-[10px] text-white">
+                                                            Baru {idx + 1}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <InputError message={errors.testimonial_images} className="mt-2" />
+                                    <InputError message={errors['testimonial_images.0']} className="mt-2" />
                                 </div>
                             </div>
                         ) : (

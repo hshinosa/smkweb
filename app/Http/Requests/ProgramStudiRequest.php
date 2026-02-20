@@ -18,7 +18,7 @@ class ProgramStudiRequest extends FormRequest
             'thumbnail_card' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
         ];
 
-        $sectionKeys = ['hero', 'core_subjects', 'facilities', 'career_paths', 'alumni_spotlight'];
+        $sectionKeys = ['hero', 'core_subjects', 'facilities', 'career_paths'];
         foreach ($sectionKeys as $key) {
             if ($this->has($key)) {
                 if ($key === 'hero') {
@@ -46,11 +46,6 @@ class ProgramStudiRequest extends FormRequest
                     $rules["{$key}.items"] = 'nullable|array';
                     $rules["{$key}.items.*.title"] = 'required|string';
                     $rules["{$key}.items.*.icon"] = 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240';
-                } elseif ($key === 'alumni_spotlight') {
-                    $rules["{$key}.name"] = 'required|string|max:100';
-                    $rules["{$key}.description"] = 'required|string|max:200';
-                    $rules["{$key}.quote"] = 'required|string|max:1000';
-                    $rules["{$key}.image"] = 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240';
                 }
             }
         }

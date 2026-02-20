@@ -62,6 +62,13 @@ return new class extends Migration
             $table->index('document_id');
         });
 
+        // Add embedding column for non-pgsql drivers (like sqlite in tests)
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            Schema::table('rag_document_chunks', function (Blueprint $table) {
+                $table->text('embedding')->nullable();
+            });
+        }
+
         // Add pgvector support for PostgreSQL (if available)
         if (DB::connection()->getDriverName() === 'pgsql') {
             try {

@@ -576,8 +576,8 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
                 </div>
             </section>
 
-            {/* 4. CTA / JOIN SECTION */}
-            <section className="py-20 bg-primary relative overflow-hidden">
+            {/* 4. CTA / JOIN SECTION - Updated Style */}
+            <section className="py-20 bg-primary relative overflow-hidden rounded-3xl mx-4 mb-16">
                 {/* Decorative Circles */}
                 <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
                 <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
@@ -592,13 +592,13 @@ export default function EkstrakurikulerPage({ extracurriculars = [] }) {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link 
                             href="/informasi-spmb" 
-                            className="px-8 py-4 bg-accent-yellow text-gray-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-lg"
+                            className="px-8 py-4 bg-accent-yellow text-gray-900 font-bold rounded-xl hover:bg-yellow-400 transition-colors shadow-lg"
                         >
                             Daftar Sekarang
                         </Link>
                         <Link 
                             href="/kontak" 
-                            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary transition-colors"
+                            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-xl hover:bg-white hover:text-primary transition-colors"
                         >
                             Hubungi Kami
                         </Link>

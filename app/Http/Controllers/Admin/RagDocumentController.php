@@ -69,11 +69,11 @@ class RagDocumentController extends Controller
 
             DB::commit();
 
-            // Background processing recommended, but keep sequential for now as per original
-            $this->ragService->processDocument($document);
+            // Processing via queue to avoid timeouts on large documents
+            \App\Jobs\ProcessRagDocument::dispatch($document);
 
             return redirect()->route('admin.rag-documents.index')
-                ->with('success', 'Dokumen berhasil ditambahkan dan diproses untuk RAG.');
+                ->with('success', 'Dokumen berhasil ditambahkan dan sedang diproses di latar belakang.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to store RAG document: ' . $e->getMessage());
@@ -107,11 +107,11 @@ class RagDocumentController extends Controller
             DB::commit();
 
             if ($ragDocument->content !== $oldContent) {
-                $this->ragService->processDocument($ragDocument);
+                \App\Jobs\ProcessRagDocument::dispatch($ragDocument);
             }
 
             return redirect()->route('admin.rag-documents.index')
-                ->with('success', 'Dokumen berhasil diperbarui.');
+                ->with('success', 'Dokumen berhasil diperbarui dan sedang diproses di latar belakang.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to update RAG document: ' . $e->getMessage());
@@ -133,8 +133,8 @@ class RagDocumentController extends Controller
 
     public function reprocess(RagDocument $ragDocument)
     {
-        $this->ragService->processDocument($ragDocument);
-        return back()->with('success', 'Dokumen berhasil diproses ulang.');
+        \App\Jobs\ProcessRagDocument::dispatch($ragDocument);
+        return back()->with('success', 'Dokumen sedang diproses ulang di latar belakang.');
     }
 
     protected function extractTextFromFile($file): string

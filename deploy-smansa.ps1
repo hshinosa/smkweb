@@ -65,8 +65,6 @@ Write-Status "Transferring files..."
 scp docker-compose.yml "${VpsHost}:${RemotePath}/"
 scp .env.vm "${VpsHost}:${RemotePath}/"
 scp -r docker "${VpsHost}:${RemotePath}/"
-ssh $VpsHost "mkdir -p ${RemotePath}/cliproxyapi"
-scp cliproxyapi/config.yaml "${VpsHost}:${RemotePath}/cliproxyapi/"
 
 if ($LASTEXITCODE -ne 0) {
     Write-ErrorMsg "Config sync failed"
@@ -142,9 +140,7 @@ echo "=== Step 6: Pulling required Docker images ==="
 sudo docker pull pgvector/pgvector:pg16
 sudo docker pull redis:7-alpine
 sudo docker pull nginx:alpine
-sudo docker pull ollama/ollama:latest
 sudo docker pull hshinosa/smkweb:latest
-sudo docker pull hshinosa/cliproxyapi:latest
 
 echo "=== Step 7: Starting services ==="
 sudo docker compose up -d
@@ -187,12 +183,7 @@ sudo docker compose exec -T app php artisan config:cache
 sudo docker compose exec -T app php artisan route:cache
 sudo docker compose exec -T app php artisan view:cache
 
-echo "=== Step 15: Pulling Ollama models in background ==="
-sudo docker compose exec -d ollama ollama pull llama3.2:1b
-sudo docker compose exec -d ollama ollama pull nomic-embed-text:v1.5
-echo 'Ollama models pulling in background...'
-
-echo "=== Step 16: Setting final permissions ==="
+echo "=== Step 15: Setting final permissions ==="
 sudo docker compose exec -T app chown -R www-data:www-data /var/www/storage 2>/dev/null || true
 sudo docker compose exec -T app chown -R www-data:www-data /var/www/bootstrap/cache 2>/dev/null || true
 

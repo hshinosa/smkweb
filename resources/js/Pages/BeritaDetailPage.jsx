@@ -18,6 +18,7 @@ import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer';
 import SEOHead from '@/Components/SEOHead';
 import { ContentImage } from '@/Components/ResponsiveImage';
+import SanitizedContent from '@/Components/SanitizedContent';
 import { TYPOGRAPHY } from '@/Utils/typography';
 import { getNavigationData } from '@/Utils/navigationData';
 
@@ -281,7 +282,7 @@ export default function BeritaDetailPage({ post, relatedPosts = [] }) {
 
                             {/* Article Body */}
                             <article className="prose prose-lg prose-blue max-w-none font-serif text-gray-700 leading-relaxed mb-12">
-                                <div dangerouslySetInnerHTML={{ __html: post.content }} />
+                                <SanitizedContent html={post.content} />
                             </article>
 
                             {/* Tags */}

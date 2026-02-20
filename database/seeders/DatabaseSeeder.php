@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             PopulateAlumniSeeder::class, // Alumni
             PopulateSpmbSeeder::class, // SPMB (Rich content)
             PopulateFaqSeeder::class, // FAQ Kontak
+            PopulateSeragamSeeder::class, // Seragam Sekolah
             
             // Settings & Layout Fixes
             UpdateLandingPageContentSeeder::class, // Landing Page Settings
@@ -44,6 +45,9 @@ class DatabaseSeeder extends Seeder
             FixContactHeroSeeder::class, // Contact Hero Fix
             PopulateGalleriesSeeder::class, // Gallery Images
             PopulateAiSettingsSeeder::class, // AI Settings
+            PtnUniversitySeeder::class, // PTN List
+            PopulatePtnAdmissionsSeeder::class, // PTN Admissions Data
+            PopulateTkaAveragesSeeder::class, // TKA Results Data
 
             // Final Content Import
             ImportTeachersFromFolderSeeder::class, // Guru & Staff (Moved to last as requested)

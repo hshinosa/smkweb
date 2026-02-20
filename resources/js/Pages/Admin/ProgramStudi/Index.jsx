@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import ContentManagementPage from '@/Components/Admin/ContentManagementPage';
 import { useContentManagement } from '@/Hooks/useContentManagement';
-import { BookOpen, Microscope, Briefcase, UserCheck, Layout } from 'lucide-react';
+import { BookOpen, Microscope, Briefcase, Layout } from 'lucide-react';
 
 import CoreSubjectsSection from '@/Components/Admin/ProgramStudiSections/CoreSubjectsSection';
 import FacilitiesSection from '@/Components/Admin/ProgramStudiSections/FacilitiesSection';
 import CareerPathsSection from '@/Components/Admin/ProgramStudiSections/CareerPathsSection';
-import AlumniSpotlightSection from '@/Components/Admin/ProgramStudiSections/AlumniSpotlightSection';
 import ThumbnailCardSection from '@/Components/Admin/ProgramStudiSections/ThumbnailCardSection';
 
 export default function Index({ currentSettings, activeProgram, thumbnailCardUrl }) {
@@ -22,7 +21,6 @@ export default function Index({ currentSettings, activeProgram, thumbnailCardUrl
         core_subjects: currentSettings.core_subjects || { title: '', description: '', items: [] },
         facilities: currentSettings.facilities || { title: '', description: '', items: [] },
         career_paths: currentSettings.career_paths || { title: '', description: '', items: [] },
-        alumni_spotlight: currentSettings.alumni_spotlight || {},
         thumbnail_card: { 
             image: null,
             _preview: thumbnailCardUrl // Store preview URL separately
@@ -55,12 +53,6 @@ export default function Index({ currentSettings, activeProgram, thumbnailCardUrl
             label: 'Prospek Karir',
             description: 'Peluang karir bagi lulusan.',
             icon: Briefcase,
-        },
-        {
-            key: 'alumni_spotlight',
-            label: 'Alumni Spotlight',
-            description: 'Testimoni dan profil alumni sukses.',
-            icon: UserCheck,
         },
     ];
 
@@ -137,7 +129,6 @@ export default function Index({ currentSettings, activeProgram, thumbnailCardUrl
             case 'core_subjects': return <CoreSubjectsSection {...sectionProps} />;
             case 'facilities': return <FacilitiesSection {...sectionProps} />;
             case 'career_paths': return <CareerPathsSection {...sectionProps} />;
-            case 'alumni_spotlight': return <AlumniSpotlightSection {...sectionProps} />;
             case 'thumbnail_card': return <ThumbnailCardSection {...sectionProps} programName={activeProgram} />;
             default: return null;
         }

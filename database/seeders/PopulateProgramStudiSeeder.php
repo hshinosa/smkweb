@@ -42,12 +42,13 @@ class PopulateProgramStudiSeeder extends Seeder
     {
         $imagePath = null;
         $collection = null;
+        $smansaPath = base_path('foto-guru/SMANSA.jpeg');
 
         if ($sectionKey === 'hero') {
             $imagePath = public_path('images/anak-sma-programstudi.png');
             $collection = 'hero_background_image';
 
-            // Also attach thumbnail_card
+            // Also attach thumbnail_card (Student photo)
             if (File::exists($imagePath)) {
                 $setting->clearMediaCollection('thumbnail_card');
                 $setting->addMedia($imagePath)
@@ -55,26 +56,22 @@ class PopulateProgramStudiSeeder extends Seeder
                     ->toMediaCollection('thumbnail_card');
             }
         } elseif ($sectionKey === 'facilities') {
-            // Main Facility Image
-            $imagePath = base_path('foto-guru/SMANSA.jpeg');
+            // Main Facility Image - USE SMANSA.jpeg
+            $imagePath = $smansaPath;
             $collection = 'facilities_main_image';
 
-            // Attach nested item images
+            // Attach nested item images - USE SMANSA.jpeg
             if (isset($content['items']) && is_array($content['items'])) {
                 foreach ($content['items'] as $index => $item) {
-                    if (File::exists($imagePath)) {
+                    if (File::exists($smansaPath)) {
                         $itemCollection = "facilities_item_{$index}_image";
                         $setting->clearMediaCollection($itemCollection);
-                        $setting->addMedia($imagePath)
+                        $setting->addMedia($smansaPath)
                             ->preservingOriginal()
                             ->toMediaCollection($itemCollection);
                     }
                 }
             }
-        } elseif ($sectionKey === 'alumni_spotlight') {
-            // Fixed image for alumni spotlight
-            $imagePath = public_path('images/anak-sma.png');
-            $collection = 'alumni_spotlight_image';
         }
 
         if ($imagePath && $collection && File::exists($imagePath)) {
@@ -125,11 +122,6 @@ class PopulateProgramStudiSeeder extends Seeder
                             ['title' => 'Sains Murni', 'desc' => 'Peneliti, Ahli Biologi, Kimiawan'],
                             ['title' => 'Teknologi Informasi', 'desc' => 'Data Scientist, Software Engineer']
                         ]
-                    ],
-                    'alumni_spotlight' => [
-                        'quote' => 'Dasar logika dan analisis yang saya pelajari di program MIPA SMAN 1 Baleendah sangat membantu saya bertahan dan berprestasi di perkuliahan Teknik Informatika ITB.',
-                        'name' => 'Aditya Pratama',
-                        'description' => 'Software Engineer di Unicorn Tech, Alumni 2018'
                     ]
                 ];
 
@@ -170,11 +162,6 @@ class PopulateProgramStudiSeeder extends Seeder
                             ['title' => 'Media & Komunikasi', 'desc' => 'Jurnalis, Public Relations'],
                             ['title' => 'Psikologi & Sosial', 'desc' => 'Psikolog, Peneliti Sosial']
                         ]
-                    ],
-                    'alumni_spotlight' => [
-                        'quote' => 'Belajar IPS mengajarkan saya memahami perspektif manusia yang beragam. Skill komunikasi dan analisis sosial ini kunci sukses saya di dunia hukum.',
-                        'name' => 'Sarah Amalia, S.H.',
-                        'description' => 'Associate Lawyer di Jakarta, Alumni 2017'
                     ]
                 ];
 
@@ -215,11 +202,6 @@ class PopulateProgramStudiSeeder extends Seeder
                             ['title' => 'Hubungan Internasional', 'desc' => 'Diplomat, Staff NGO'],
                             ['title' => 'Seni & Kreatif', 'desc' => 'Penulis Skenario, Kurator Seni']
                         ]
-                    ],
-                    'alumni_spotlight' => [
-                        'quote' => 'Kemampuan bahasa asing yang saya asah di SMA membuka kesempatan saya mendapatkan beasiswa kuliah di Jepang. Budaya disiplin yang diajarkan sangat membekas.',
-                        'name' => 'Rizky Ramadhan',
-                        'description' => 'Mahasiswa S2 Tokyo University, Alumni 2019'
                     ]
                 ];
 

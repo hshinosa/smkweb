@@ -11,23 +11,33 @@ use App\Models\Extracurricular;
 use App\Models\Faq;
 use App\Models\Program;
 use App\Models\SiteSetting;
+use App\Models\AcademicCalendarContent;
+use App\Models\Alumni;
+use App\Models\Gallery;
+use App\Models\LandingPageSetting;
+use App\Models\CurriculumSetting;
+use App\Models\SchoolProfileSetting;
+use App\Models\SpmbSetting;
+use App\Models\ProgramStudiSetting;
+use App\Models\PtnAdmission;
+use App\Models\TkaAverage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RagService
 {
-    protected OpenAIService $openAI;
+    protected GroqService $groq;
     protected EmbeddingService $embeddingService;
     protected int $chunkSize = 512; // tokens per chunk
     protected int $chunkOverlap = 50; // overlap tokens
     protected bool $pgvectorAvailable;
 
     public function __construct(
-        OpenAIService $openAI,
+        GroqService $groq,
         EmbeddingService $embeddingService
     ) {
-        $this->openAI = $openAI;
+        $this->groq = $groq;
         $this->embeddingService = $embeddingService;
         $this->pgvectorAvailable = $this->checkPgvectorAvailability();
     }
@@ -65,7 +75,7 @@ class RagService
             }
 
             // 1. Generate embedding for query
-            $queryEmbeddingResult = $this->embeddingService->createEmbedding($query);
+            $queryEmbeddingResult = $this->embeddingService->createEmbedding($query, 'query');
 
             if (!$queryEmbeddingResult['success']) {
                 Log::error('Query embedding failed', ['query' => $query]);
@@ -157,8 +167,14 @@ class RagService
         foreach ($chunks as $chunk) {
             if (empty($chunk->embedding)) continue;
 
-            $chunkEmbedding = json_decode($chunk->embedding, true);
-            if (!$chunkEmbedding) continue;
+            $chunkEmbedding = $chunk->embedding;
+            if (is_string($chunkEmbedding)) {
+                $decoded = json_decode($chunkEmbedding, true);
+                if (is_array($decoded)) {
+                    $chunkEmbedding = $decoded;
+                }
+            }
+            if (!is_array($chunkEmbedding)) continue;
 
             $similarity = $this->cosineSimilarity($queryEmbedding, $chunkEmbedding);
 
@@ -212,7 +228,9 @@ class RagService
 
     /**
      * Search database for relevant content
-     * Sources: Site Settings, Posts, Programs (including Program Studi), FAQs, Extracurriculars, Teachers
+     * Included: public/content data used by website and school information pages.
+     * Excluded: credentials/sensitive/internal tables (users, admins, ai_settings,
+     * contact_messages, chat_histories, activity_logs, instagram bot credentials, etc).
      */
     protected function searchDatabaseContent(string $query, int $limit = 5): array
     {
@@ -360,25 +378,413 @@ class RagService
             }
 
             // 6. Search Teachers (Guru & Staff)
-            $teachers = Teacher::where('is_active', true)
+            // Check if this is a list query for teachers
+            $isTeacherListQuery = $this->isTeacherListQuery($queryLower);
+            
+            // Jika query tentang program/jurusan (IPA/IPS/Bahasa), jangan tampilkan daftar guru
+            $isProgramQuery = str_contains($queryLower, 'mipa') || str_contains($queryLower, 'ipa') || 
+                str_contains($queryLower, 'ips') || str_contains($queryLower, 'bahasa') ||
+                str_contains($queryLower, 'jurusan') || str_contains($queryLower, 'program') ||
+                str_contains($queryLower, 'peminatan');
+            
+            if ($isTeacherListQuery && !$isProgramQuery) {
+                // For list queries, get all active teachers and create a summary chunk
+                $isStaffQuery = str_contains($queryLower, 'staff') || 
+                               str_contains($queryLower, 'tata usaha') || 
+                               str_contains($queryLower, 'manajemen') ||
+                               str_contains($queryLower, 'humas') ||
+                               str_contains($queryLower, 'kesiswaan') ||
+                               str_contains($queryLower, 'kurikulum');
+                $teacherType = $isStaffQuery ? 'staff' : 'guru';
+                $allTeachers = Teacher::where('is_active', true)
+                    ->where('type', $teacherType)
+                    ->orderBy('department')
+                    ->orderBy('name')
+                    ->get();
+                
+                if ($allTeachers->isNotEmpty()) {
+                    // Create a comprehensive teacher list as a single chunk
+                    $teacherList = [];
+                    $totalCount = $allTeachers->count();
+                    
+                    foreach ($allTeachers->take(20) as $t) { // Limit to 20 for context size
+                        $dept = $t->department ? " [{$t->department}]" : '';
+                        $pos = $t->position ? " ({$t->position})" : '';
+                        $teacherList[] = "- {$t->name}{$pos}{$dept}";
+                    }
+                    
+                    $remainingCount = max(0, $totalCount - 20);
+                    $teacherListText = implode("\n", $teacherList);
+                    if ($remainingCount > 0) {
+                        $teacherListText .= "\n- ... dan {$remainingCount} {$teacherType} lainnya";
+                    }
+                    
+                    $typeLabel = $teacherType === 'staff' ? 'Staff/Tata Usaha' : 'Guru';
+                    $results[] = [
+                        'id' => 'teacher_list_summary',
+                        'content' => "Daftar {$typeLabel} SMAN 1 Baleendah (Total: {$totalCount}):\n\n{$teacherListText}\n\nUntuk detail lengkap tentang masing-masing {$teacherType}, silakan tanya dengan menyebutkan nama.",
+                        'title' => "Daftar {$typeLabel} SMANSA",
+                        'category' => $typeLabel,
+                        'source' => 'database',
+                        'table' => 'teachers',
+                        'type' => 'Tenaga Pendidik',
+                        'similarity' => 0.95, // High similarity for list queries
+                    ];
+                }
+            } else {
+                // For specific teacher queries, search individual teachers
+                $teachers = Teacher::where('is_active', true)
+                    ->where(function ($q) use ($queryLower) {
+                        $q->where('name', 'like', "%{$queryLower}%")
+                          ->orWhere('position', 'like', "%{$queryLower}%")
+                          ->orWhere('department', 'like', "%{$queryLower}%");
+                    })
+                    ->limit(3)
+                    ->get();
+
+                foreach ($teachers as $teacher) {
+                    $results[] = [
+                        'id' => $teacher->id,
+                        'content' => trim($teacher->position . "\n\nDepartemen: " . ($teacher->department ?? '-')),
+                        'title' => $teacher->name,
+                        'category' => $teacher->type === 'guru' ? 'Guru' : 'Staff',
+                        'source' => 'database',
+                        'table' => 'teachers',
+                        'type' => 'Tenaga Pendidik',
+                        'similarity' => $this->calculateKeywordMatch($queryLower, $teacher->name . ' ' . $teacher->position),
+                    ];
+                }
+            }
+            
+            // Jika query tentang program (IPA/IPS/Bahasa), cari info program bukan guru
+            if ($isProgramQuery) {
+                // Map query IPA ke MIPA untuk pencarian
+                $searchTerms = [$queryLower];
+                if (str_contains($queryLower, 'ipa') && !str_contains($queryLower, 'mipa')) {
+                    $searchTerms[] = 'mipa';
+                }
+
+                // 1. Cari dari Programs table (landing page programs)
+                $programs = Program::where('is_featured', true)
+                    ->where(function ($q) use ($searchTerms) {
+                        foreach ($searchTerms as $term) {
+                            $q->orWhere('title', 'like', "%{$term}%")
+                              ->orWhere('description', 'like', "%{$term}%")
+                              ->orWhere('category', 'like', "%{$term}%");
+                        }
+                    })
+                    ->limit(3)
+                    ->get();
+
+                foreach ($programs as $program) {
+                    $results[] = [
+                        'id' => 'program_' . $program->id,
+                        'content' => trim($program->description ?? ''),
+                        'title' => $program->title,
+                        'category' => $program->category ?? 'Program',
+                        'source' => 'database',
+                        'table' => 'programs',
+                        'type' => 'Program Sekolah',
+                        'similarity' => 0.85,
+                    ];
+                }
+
+                // 2. Cari dari RAG Documents (vectorized ProgramStudiSettings)
+                // This contains detailed info about MIPA/IPS/Bahasa
+                $programNames = [];
+                if (str_contains($queryLower, 'mipa') || str_contains($queryLower, 'ipa')) {
+                    $programNames[] = 'MIPA';
+                }
+                if (str_contains($queryLower, 'ips')) {
+                    $programNames[] = 'IPS';
+                }
+                if (str_contains($queryLower, 'bahasa')) {
+                    $programNames[] = 'BAHASA';
+                }
+
+                if (!empty($programNames)) {
+                    $ragProgramDocs = \App\Models\RagDocument::where('file_type', 'database')
+                        ->where('category', 'Program Studi')
+                        ->where('is_active', true)
+                        ->where(function ($q) use ($programNames) {
+                            foreach ($programNames as $progName) {
+                                $q->orWhere('title', 'like', "%{$progName}%")
+                                  ->orWhere('content', 'like', "%{$progName}%");
+                            }
+                        })
+                        ->limit(10)
+                        ->get();
+
+                    foreach ($ragProgramDocs as $doc) {
+                        $results[] = [
+                            'id' => 'rag_' . $doc->id,
+                            'content' => $doc->content,
+                            'title' => $doc->title,
+                            'category' => 'Program Studi Detail',
+                            'source' => 'rag',
+                            'table' => 'rag_documents',
+                            'type' => 'Program Studi',
+                            'similarity' => 0.95, // Higher priority for RAG documents
+                        ];
+                    }
+                }
+            }
+
+            // 7. Search Alumni (published testimonials)
+            $alumni = Alumni::where('is_published', true)
                 ->where(function ($q) use ($queryLower) {
                     $q->where('name', 'like', "%{$queryLower}%")
-                      ->orWhere('position', 'like', "%{$queryLower}%")
-                      ->orWhere('department', 'like', "%{$queryLower}%");
+                      ->orWhere('testimonial', 'like', "%{$queryLower}%")
+                      ->orWhere('graduation_year', 'like', "%{$queryLower}%");
                 })
                 ->limit(2)
                 ->get();
 
-            foreach ($teachers as $teacher) {
+            foreach ($alumni as $item) {
                 $results[] = [
-                    'id' => $teacher->id,
-                    'content' => trim($teacher->position . "\n\nDepartemen: " . ($teacher->department ?? '-')),
-                    'title' => $teacher->name,
-                    'category' => $teacher->type === 'guru' ? 'Guru' : 'Staff',
+                    'id' => $item->id,
+                    'content' => trim(($item->testimonial ?? '') . "\n\nAngkatan: " . ($item->graduation_year ?? '-')),
+                    'title' => $item->name,
+                    'category' => 'Alumni',
                     'source' => 'database',
-                    'table' => 'teachers',
-                    'type' => 'Tenaga Pendidik',
-                    'similarity' => $this->calculateKeywordMatch($queryLower, $teacher->name . ' ' . $teacher->position),
+                    'table' => 'alumni',
+                    'type' => 'Alumni',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $item->name . ' ' . ($item->testimonial ?? '')),
+                ];
+            }
+
+            // 8. Search Gallery
+            $galleries = Gallery::where(function ($q) use ($queryLower) {
+                    $q->where('title', 'like', "%{$queryLower}%")
+                      ->orWhere('description', 'like', "%{$queryLower}%")
+                      ->orWhere('category', 'like', "%{$queryLower}%");
+                })
+                ->limit(2)
+                ->get();
+
+            foreach ($galleries as $item) {
+                $results[] = [
+                    'id' => $item->id,
+                    'content' => trim(($item->description ?? '') . "\n\nKategori: " . ($item->category ?? '-')),
+                    'title' => $item->title,
+                    'category' => 'Galeri',
+                    'source' => 'database',
+                    'table' => 'galleries',
+                    'type' => 'Galeri',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $item->title . ' ' . ($item->description ?? '')),
+                ];
+            }
+
+            // 9. Search Academic Calendar Content
+            $calendarItems = AcademicCalendarContent::where('is_active', true)
+                ->where(function ($q) use ($queryLower) {
+                    $q->where('title', 'like', "%{$queryLower}%")
+                      ->orWhere('academic_year_start', 'like', "%{$queryLower}%");
+                })
+                ->limit(2)
+                ->get();
+
+            foreach ($calendarItems as $item) {
+                $results[] = [
+                    'id' => $item->id,
+                    'content' => trim('Semester: ' . ($item->semester_name ?? '-') . "\nTahun Ajaran: " . ($item->academic_year ?? '-')),
+                    'title' => $item->title,
+                    'category' => 'Kalender Akademik',
+                    'source' => 'database',
+                    'table' => 'academic_calendar_contents',
+                    'type' => 'Kalender Akademik',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $item->title . ' ' . ($item->academic_year ?? '')),
+                ];
+            }
+
+            // 10. Search Landing Page Settings content
+            $landingSettings = LandingPageSetting::where(function ($q) use ($queryLower) {
+                    $q->where('section_key', 'like', "%{$queryLower}%")
+                      ->orWhere('content', 'like', "%{$queryLower}%");
+                })
+                ->limit(3)
+                ->get();
+
+            foreach ($landingSettings as $item) {
+                $content = is_array($item->content) ? json_encode($item->content) : (string) $item->content;
+                $results[] = [
+                    'id' => $item->id,
+                    'content' => Str::limit((string) $content, 1200),
+                    'title' => 'Landing: ' . $item->section_key,
+                    'category' => 'Landing Page',
+                    'source' => 'database',
+                    'table' => 'landing_page_settings',
+                    'type' => 'Landing',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $item->section_key . ' ' . (string) $content),
+                ];
+            }
+
+            // 11. Search Curriculum Settings
+            $curriculumSettings = CurriculumSetting::where(function ($q) use ($queryLower) {
+                    $q->where('section_key', 'like', "%{$queryLower}%")
+                      ->orWhere('content', 'like', "%{$queryLower}%");
+                })
+                ->limit(3)
+                ->get();
+
+            foreach ($curriculumSettings as $item) {
+                $content = is_array($item->content) ? json_encode($item->content) : (string) $item->content;
+                $results[] = [
+                    'id' => $item->id,
+                    'content' => Str::limit((string) $content, 1200),
+                    'title' => 'Kurikulum: ' . $item->section_key,
+                    'category' => 'Kurikulum',
+                    'source' => 'database',
+                    'table' => 'curriculum_settings',
+                    'type' => 'Kurikulum',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $item->section_key . ' ' . (string) $content),
+                ];
+            }
+
+            // 12. Search School Profile Settings
+            $profileSettings = SchoolProfileSetting::where(function ($q) use ($queryLower) {
+                    $q->where('section_key', 'like', "%{$queryLower}%")
+                      ->orWhere('content', 'like', "%{$queryLower}%");
+                })
+                ->limit(3)
+                ->get();
+
+            foreach ($profileSettings as $item) {
+                $content = is_array($item->content) ? json_encode($item->content) : (string) $item->content;
+                $results[] = [
+                    'id' => $item->id,
+                    'content' => Str::limit((string) $content, 1200),
+                    'title' => 'Profil: ' . $item->section_key,
+                    'category' => 'Profil Sekolah',
+                    'source' => 'database',
+                    'table' => 'school_profile_settings',
+                    'type' => 'Profil Sekolah',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $item->section_key . ' ' . (string) $content),
+                ];
+            }
+
+            // 13. Search SPMB Settings
+            $spmbSettings = SpmbSetting::where(function ($q) use ($queryLower) {
+                    $q->where('section_key', 'like', "%{$queryLower}%")
+                      ->orWhere('content', 'like', "%{$queryLower}%");
+                })
+                ->limit(3)
+                ->get();
+
+            foreach ($spmbSettings as $item) {
+                $content = is_array($item->content) ? json_encode($item->content) : (string) $item->content;
+                $results[] = [
+                    'id' => $item->id,
+                    'content' => Str::limit((string) $content, 1200),
+                    'title' => 'SPMB: ' . $item->section_key,
+                    'category' => 'SPMB',
+                    'source' => 'database',
+                    'table' => 'spmb_settings',
+                    'type' => 'SPMB',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $item->section_key . ' ' . (string) $content),
+                ];
+            }
+
+            // 14. Search Program Studi Settings
+            $prodiSettings = ProgramStudiSetting::where(function ($q) use ($queryLower) {
+                    $q->where('program_name', 'like', "%{$queryLower}%")
+                      ->orWhere('section_key', 'like', "%{$queryLower}%")
+                      ->orWhere('content', 'like', "%{$queryLower}%");
+                })
+                ->limit(3)
+                ->get();
+
+            foreach ($prodiSettings as $item) {
+                $content = is_array($item->content) ? json_encode($item->content) : (string) $item->content;
+                $results[] = [
+                    'id' => $item->id,
+                    'content' => Str::limit((string) $content, 1200),
+                    'title' => $item->program_name . ' - ' . $item->section_key,
+                    'category' => 'Program Studi',
+                    'source' => 'database',
+                    'table' => 'program_studi_settings',
+                    'type' => 'Program Studi',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $item->program_name . ' ' . $item->section_key . ' ' . (string) $content),
+                ];
+            }
+
+            // 15. Search PTN Admissions (serapan PTN)
+            $ptnAdmissions = PtnAdmission::with(['university', 'batch'])
+                ->where(function ($q) use ($queryLower) {
+                    $q->where('program_studi', 'like', "%{$queryLower}%")
+                      ->orWhereHas('university', function ($uq) use ($queryLower) {
+                          $uq->where('name', 'like', "%{$queryLower}%")
+                             ->orWhere('short_name', 'like', "%{$queryLower}%");
+                      })
+                      ->orWhereHas('batch', function ($bq) use ($queryLower) {
+                          $bq->where('name', 'like', "%{$queryLower}%")
+                             ->orWhere('type', 'like', "%{$queryLower}%")
+                             ->orWhere('year', 'like', "%{$queryLower}%");
+                      });
+                })
+                ->limit(5)
+                ->get();
+
+            foreach ($ptnAdmissions as $item) {
+                $uni = $item->university?->name ?? '-';
+                $batch = $item->batch?->name ?? '-';
+                $content = "Universitas: {$uni}\nProgram Studi: {$item->program_studi}\nJumlah Siswa: {$item->count}\nBatch: {$batch}";
+                $results[] = [
+                    'id' => $item->id,
+                    'content' => $content,
+                    'title' => $uni . ' - ' . $item->program_studi,
+                    'category' => 'Serapan PTN',
+                    'source' => 'database',
+                    'table' => 'ptn_admissions',
+                    'type' => 'Serapan PTN',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $content),
+                ];
+            }
+
+            // 16. Search TKA Averages
+            $tkaAverages = TkaAverage::where(function ($q) use ($queryLower) {
+                    $q->where('academic_year', 'like', "%{$queryLower}%")
+                      ->orWhere('exam_type', 'like', "%{$queryLower}%")
+                      ->orWhere('subject_name', 'like', "%{$queryLower}%");
+                })
+                ->limit(8)
+                ->get();
+
+            foreach ($tkaAverages as $item) {
+                $content = "Tahun Ajaran: {$item->academic_year}\nJenis Ujian: {$item->exam_type}\nMata Pelajaran: {$item->subject_name}\nRata-rata: {$item->average_score}";
+                $results[] = [
+                    'id' => $item->id,
+                    'content' => $content,
+                    'title' => $item->subject_name . ' - ' . $item->academic_year,
+                    'category' => 'Rata-rata TKA',
+                    'source' => 'database',
+                    'table' => 'tka_averages',
+                    'type' => 'Rata-rata TKA',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $content),
+                ];
+            }
+
+            // 17. Search Seragam (School Uniforms)
+            $seragams = \App\Models\Seragam::where('is_active', true)
+                ->where(function ($q) use ($queryLower) {
+                    $q->where('name', 'like', "%{$queryLower}%")
+                      ->orWhere('description', 'like', "%{$queryLower}%")
+                      ->orWhere('category', 'like', "%{$queryLower}%");
+                })
+                ->limit(3)
+                ->get();
+
+            foreach ($seragams as $item) {
+                $days = !empty($item->usage_days) ? implode(', ', $item->usage_days) : '-';
+                $results[] = [
+                    'id' => $item->id,
+                    'content' => trim(($item->description ?? '') . "\n\nHari: {$days}\n\nAturan: " . strip_tags($item->rules ?? '-')),
+                    'title' => $item->name,
+                    'category' => 'Seragam Sekolah',
+                    'source' => 'database',
+                    'table' => 'seragams',
+                    'type' => 'Seragam',
+                    'similarity' => $this->calculateKeywordMatch($queryLower, $item->name . ' ' . ($item->description ?? '')),
                 ];
             }
 
@@ -430,7 +836,7 @@ class RagService
 
             // 3. Generate embeddings and store in PostgreSQL
             foreach ($chunks as $index => $chunkText) {
-                $embeddingResult = $this->embeddingService->createEmbedding($chunkText);
+                $embeddingResult = $this->embeddingService->createEmbedding($chunkText, 'passage');
 
                 if (!$embeddingResult['success']) {
                     Log::error('Failed to generate embedding', [
@@ -525,8 +931,8 @@ class RagService
                 'table' => 'posts'
             ],
             'program_studi' => [
-                'primary' => ['program studi', 'peminatan', 'jurusan', 'mipa', 'ips', 'bahasa'],
-                'title_must_contain' => ['program', 'peminatan', 'jurusan', 'mipa', 'ips', 'bahasa'],
+                'primary' => ['program studi', 'peminatan', 'jurusan', 'mipa', 'ipa ', 'ipa?', 'ipa!', 'ipa,', '.ipa', 'ipa', 'ips ', 'ips?', 'ips!', 'ips,', '.ips', 'ips', 'bahasa'],
+                'title_must_contain' => ['program', 'peminatan', 'jurusan', 'mipa', 'ipa', 'ips', 'bahasa'],
                 'category' => null,
                 'table' => 'programs'
             ],
@@ -608,13 +1014,161 @@ class RagService
             }
         }
 
+        // Check for teacher/guru list queries
+        // Hanya trigger jika query spesifik tentang guru/staff/manajemen
+        $isTeacherQuery = str_contains($query, ' daftar guru') || str_contains($query, 'list guru') || 
+            str_contains($query, 'siapa guru') || str_contains($query, 'siapa saja guru') ||
+            str_contains($query, 'tenaga pendidik') || 
+            str_contains($query, 'staff') || str_contains($query, 'tata usaha') ||
+            str_contains($query, 'manajemen') || str_contains($query, 'humas') || 
+            str_contains($query, 'kesiswaan') || str_contains($query, 'kurikulum') ||
+            ($query === 'guru') || str_starts_with($query, 'guru ') || str_ends_with($query, ' guru');
+        
+        if ($isTeacherQuery) {
+            return $this->getTeacherListReply($query);
+        }
+
         // No quick reply found, let RAG/AI handle it
         return ['found' => false];
     }
 
     /**
-     * Generate RAG-enhanced response
+     * Get teacher list reply
      */
+    protected function getTeacherListReply(string $query): ?array
+    {
+        try {
+            $queryLower = strtolower($query);
+            
+            // Determine what type of teacher data to retrieve
+            $isStaffQuery = str_contains($queryLower, 'staff') || 
+                           str_contains($queryLower, 'tata usaha') || 
+                           str_contains($queryLower, 'tu') ||
+                           str_contains($queryLower, 'manajemen') ||
+                           str_contains($queryLower, 'humas') ||
+                           str_contains($queryLower, 'kesiswaan') ||
+                           str_contains($queryLower, 'kurikulum');
+            $isSpecificDepartment = false;
+            $departmentFilter = null;
+            $departmentFilterTerms = [];
+
+            // Subject/department aliases -> canonical department names in DB
+            $departmentAliasMap = [
+                'Biologi' => ['biologi'],
+                'Fisika' => ['fisika'],
+                'Kimia' => ['kimia'],
+                'Matematika' => ['matematika'],
+                'Pendidikan Pancasila' => ['pkn', 'ppkn', 'pendidikan pancasila'],
+                'Pendidikan Agama Islam' => ['pai', 'pendidikan agama islam'],
+                'Penjasorkes' => ['pjok', 'penjaskes', 'penjas', 'olahraga'],
+                'Bimbingan Konseling' => ['bk', 'bimbingan konseling'],
+                'Bahasa Indonesia' => ['bahasa indonesia', 'bhs indonesia'],
+                'Bahasa Inggris' => ['bahasa inggris', 'bhs inggris', 'english'],
+                'Sejarah' => ['sejarah'],
+                'Geografi' => ['geografi'],
+                'Ekonomi' => ['ekonomi'],
+                'Sosiologi' => ['sosiologi'],
+                'Kesiswaan' => ['kesiswaan'],
+                'Kurikulum' => ['kurikulum'],
+                'Humas' => ['humas'],
+                'Perpustakaan' => ['perpus', 'perpustakaan'],
+            ];
+
+            foreach ($departmentAliasMap as $canonical => $aliases) {
+                foreach ($aliases as $alias) {
+                    if (str_contains($queryLower, $alias)) {
+                        $departmentFilterTerms[] = $canonical;
+                        break;
+                    }
+                }
+            }
+
+            // "Guru IPA" should return science teachers (Biologi/Fisika/Kimia/Matematika)
+            if (preg_match('/\bipa\b/u', $queryLower) === 1) {
+                $departmentFilterTerms = array_merge($departmentFilterTerms, ['Biologi', 'Fisika', 'Kimia', 'Matematika']);
+            }
+
+            $departmentFilterTerms = array_values(array_unique($departmentFilterTerms));
+            if (!empty($departmentFilterTerms)) {
+                $isSpecificDepartment = true;
+                $departmentFilter = implode(', ', $departmentFilterTerms);
+            }
+            
+            // Build query
+            $teacherQuery = Teacher::where('is_active', true);
+            
+            if ($isStaffQuery) {
+                $teacherQuery->where('type', 'staff');
+            } else {
+                $teacherQuery->where('type', 'guru');
+            }
+            
+            if ($isSpecificDepartment && !empty($departmentFilterTerms)) {
+                // Case-insensitive partial match for one or more department terms
+                $teacherQuery->where(function ($q) use ($departmentFilterTerms) {
+                    foreach ($departmentFilterTerms as $term) {
+                        $q->orWhereRaw('LOWER(COALESCE(department, \'\')) LIKE ?', ['%' . strtolower($term) . '%']);
+                    }
+                });
+            }
+            
+            $teachers = $teacherQuery->orderBy('position', 'asc')->orderBy('name', 'asc')->get();
+            
+            if ($teachers->isEmpty()) {
+                return [
+                    'found' => true,
+                    'message' => 'Hmm, data guru/staff belum tersedia di sistem nih. Coba hubungi sekolah langsung ya untuk info lengkapnya! 📞',
+                    'source' => 'database',
+                ];
+            }
+            
+            // Build response message
+            $totalCount = $teachers->count();
+            $typeLabel = $isStaffQuery ? 'Staff' : 'Guru';
+            
+            if ($isSpecificDepartment) {
+                $deptDisplay = $departmentFilter;
+                $message = "✨ **Daftar {$typeLabel} {$deptDisplay} SMAN 1 Baleendah** ✨\n\n";
+                $message .= "Total: {$totalCount} {$typeLabel} {$deptDisplay}\n\n";
+            } else {
+                $message = "✨ **Daftar {$typeLabel} SMAN 1 Baleendah** ✨\n\n";
+                $message .= "Total: {$totalCount} {$typeLabel}\n\n";
+            }
+            
+            // Group by department/position for better organization
+            $grouped = $teachers->groupBy('department');
+            
+            foreach ($grouped as $department => $group) {
+                $deptName = $department ?: 'Umum';
+                $message .= "📚 *{$deptName}*\n";
+                
+                foreach ($group->take(10) as $teacher) { // Limit 10 per department to avoid too long message
+                    $position = $teacher->position ? " ({$teacher->position})" : '';
+                    $message .= "• {$teacher->name}{$position}\n";
+                }
+                
+                if ($group->count() > 10) {
+                    $remaining = $group->count() - 10;
+                    $message .= "• ... dan {$remaining} lainnya\n";
+                }
+                
+                $message .= "\n";
+            }
+            
+            $message .= "💡 *Mau tau detail lengkap tentang salah satu {$typeLabel}? Tanya aja namanya!*";
+            
+            return [
+                'found' => true,
+                'message' => $message,
+                'source' => 'database',
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Teacher list reply failed', ['error' => $e->getMessage()]);
+            return ['found' => false];
+        }
+    }
+
     /**
      * Generate RAG-enhanced response
      */
@@ -647,7 +1201,7 @@ class RagService
             Log::info('[RagService] Query not school-related', ['request_id' => $requestId]);
             return [
                 'success' => true,
-                'message' => 'Maaf, saya hanya dapat menjawab pertanyaan terkait SMAN 1 Baleendah seperti PPDB, program studi, ekstrakurikuler, dan informasi akademik. Silakan tanyakan hal yang berhubungan dengan sekolah.',
+                'message' => "Eh, maaf ya! Aku ini AI SMANSA, jadi cuma bisa ngebantu tentang SMAN 1 Baleendah aja nih 😅\n\nKalo kamu mau tanya tentang:\n• PPDB dan pendaftaran\n• Jurusan (MIPA, IPS, Bahasa)\n• Ekstrakurikuler\n• Fasilitas sekolah\n• Info akademik\n\nAku siap banget bantu! Yuk, tanya aja~ ✨",
                 'is_rag_enhanced' => false,
                 'retrieved_documents' => [],
             ];
@@ -731,14 +1285,14 @@ class RagService
         // Add current query
         $messages[] = ['role' => 'user', 'content' => $userQuery];
         
-        Log::info('[RagService] Calling OpenAIService::chatCompletion', [
+        Log::info('[RagService] Calling GroqService::chatCompletion', [
             'request_id' => $requestId,
             'num_messages' => count($messages),
             'system_prompt_length' => strlen($systemPrompt),
         ]);
 
         // 7. Generate response
-        $completionResult = $this->openAI->chatCompletion($messages);
+        $completionResult = $this->groq->chatCompletion($messages);
         
         $totalElapsed = round((microtime(true) - $startTime) * 1000);
         
@@ -802,23 +1356,30 @@ class RagService
             ];
         }
 
-        $systemPrompt = "Anda adalah AI SMANSA, asisten virtual SMAN 1 Baleendah.
+        $systemPrompt = "Kamu adalah AI SMANSA, teman ngobrol santai dan asik dari SMAN 1 Baleendah. Gaya bicara kamu kayak teman SMA yang friendly dan kekinian! 🎉
 
-INFORMASI PENTING:
+📍 INFO PENTING SMANSA:
 - Alamat: Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Bandung 40375
-- Biaya: 100% GRATIS (SMA Negeri)
-- Program: MIPA, IPS, Bahasa
-- PPDB: Zonasi, prestasi, afirmasi, perpindahan tugas orang tua
+- Biaya: GRATIS 100%! (SMA Negeri)
+- Jurusan: MIPA, IPS, Bahasa
+- PPDB: Ada jalur zonasi, prestasi, afirmasi, perpindahan tugas
 
-ATURAN:
-1. Jawab langsung dan ringkas
-2. Gunakan bullet points untuk info kompleks
-3. Jika tidak tahu: \"Info belum tersedia, hubungi sekolah\"
-4. Fokus topik: PPDB, akademik, fasilitas, ekstrakurikuler, prestasi, kontak
-5. Ramah dan profesional
-6. Jelaskan jika pertanyaan di luar topik sekolah
+GAYA NGOMONG KAMU:
+1. Selalu sapa dulu dengan ramah (pake 'Halo!', 'Hai!', 'Eh!', dll)
+2. Bicara dengan santai dan natural, jangan kaku kayak robot
+3. Pake emoji biar hidup dan seru ✨
+4. Panjang jawaban yang pas - jangan terlalu pendek, jangan terlalu panjang
+5. Kalo info kurang lengkap, bilang dengan baik dan kasih solusi alternatif
+6. Tunjukkan antusiasme! Semangatin user yang nanya
+7. Tutup dengan nawarin bantuan lagi, misal 'Ada yang mau ditanya lagi?' atau 'Mau tau info lain?'
+8. Kalo ditanya hal di luar sekolah, jawab dengan baik sambil arahin ke topik sekolah
+9. Sebut 'SMANSA' dengan bangga! 🏫
 
-Jawab singkat dan langsung ke poin!";
+Contoh gaya jawab:
+- 'Halo! Mau daftar SMANSA ya? Keren banget! Yuk, aku jelasin caranya...'
+- 'Wah, info lengkapnya aku belum ada nih. Tapi tenang, kamu bisa hubungi sekolah langsung ya!'
+
+Jawab dengan gaya yang asik dan ngenakin! 😊";
 
         $messages = [
             ['role' => 'system', 'content' => $systemPrompt],
@@ -860,7 +1421,7 @@ Jawab singkat dan langsung ke poin!";
             'messages_preview' => array_map(fn($m) => ['role' => $m['role'], 'length' => strlen($m['content'])], $messages)
         ]);
 
-        $completionResult = $this->openAI->chatCompletion($messages);
+        $completionResult = $this->groq->chatCompletion($messages);
 
         Log::info('[RagService] OpenAI Result', [
             'success' => $completionResult['success'] ?? false,
@@ -940,28 +1501,13 @@ Jawab singkat dan langsung ke poin!";
     }
 
     /**
-     * Determine if we should use simple prompt (for Ollama) or enhanced RAG prompt (for OpenAI)
+     * Determine if we should use simple prompt or enhanced RAG prompt
+     * With Groq, always use enhanced prompt since it's a capable cloud model
      */
     protected function shouldUseSimplePrompt(): bool
     {
-        // Check if we have OpenAI credentials configured
-        $hasOpenAI = !empty(AiSetting::get('ai_model_base_url', '')) 
-                     && !empty(AiSetting::get('ai_model_api_key', ''));
-
-        // If OpenAI is available, use enhanced RAG prompt
-        if ($hasOpenAI) {
-            return false; // Use enhanced prompt for OpenAI
-        }
-
-        // Check if Ollama is enabled and available
-        $useOllamaFallback = AiSetting::get('use_ollama_fallback', true);
-        
-        // If only Ollama available, use simple prompt
-        if ($useOllamaFallback) {
-            return true; // Use simple prompt for Ollama
-        }
-
-        // Default: use simple prompt
+        // Groq models are capable enough for enhanced RAG prompts
+        return false;
         return true;
     }
 
@@ -970,23 +1516,30 @@ Jawab singkat dan langsung ke poin!";
      */
     protected function buildSimpleSystemPrompt(): string
     {
-        return "Anda adalah AI SMANSA, asisten virtual SMAN 1 Baleendah.
+        return "Kamu adalah AI SMANSA, teman ngobrol santai dari SMAN 1 Baleendah. Bicara dengan gaya kekinian, friendly, dan kayak lagi chat sama teman!
 
-INFORMASI PENTING:
+📍 INFO PENTING SMANSA:
 - Alamat: Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Bandung 40375
-- Biaya: 100% GRATIS (SMA Negeri)
-- Program: MIPA, IPS, Bahasa
-- PPDB: Zonasi, prestasi, afirmasi, perpindahan tugas orang tua
+- Biaya: GRATIS! (SMA Negeri)
+- Jurusan: MIPA, IPS, Bahasa
+- PPDB: Ada jalur zonasi, prestasi, afirmasi, sama perpindahan tugas orang tua
 
-ATURAN:
-1. Jawab langsung dan ringkas
-2. Gunakan bullet points untuk info kompleks
-3. Jika tidak tahu: \"Info belum tersedia, hubungi sekolah\"
-4. Fokus topik: PPDB, akademik, fasilitas, ekstrakurikuler, prestasi, kontak
-5. Ramah dan profesional
-6. Jelaskan jika pertanyaan di luar topik sekolah
+GAYA NGOMONG KAMU:
+1. Pake bahasa sehari-hari yang asik, gak kaku
+2. Boleh pake emoji biar lebih hidup dan seru ✨
+3. Selalu sapa dulu, misal \"Halo!\" atau \"Hai!\"
+4. Jelasin dengan panjang yang pas - jangan terlalu pendek, jangan terlalu panjang
+5. Kalo info kurang lengkap, bilang dengan sopan dan kasih solusi
+6. Tunjukkan semangat dan antusiasme! Jangan monotone
+7. Selalu tutup dengan kalimat yang ngebantu user, misal \"Ada yang mau ditanya lagi?\" atau \"Mau tau info lain nggak?\"
+8. Kalo ditanya hal di luar sekolah, jelasin dengan baik sambil arahin ke topik sekolah
+9. Jawab dengan natural, kayak lagi ngobrol langsung
 
-Jawab singkat dan langsung ke poin!";
+CONTOH GAYA JAWAB:
+- \"Halo! Mau daftar SMANSA ya? Keren! Yuk, aku jelasin caranya...\"
+- \"Wah, info lengkapnya belum ada nih. Tapi tenang, kamu bisa hubungi sekolah langsung ya!\"
+
+Yuk, jawab dengan gaya yang friendly dan ngenakin! 😊";
     }
 
     /**
@@ -1014,25 +1567,129 @@ Jawab singkat dan langsung ke poin!";
     protected function buildRagSystemPrompt(string $context): string
     {
         return <<<PROMPT
-Anda adalah AI SMANSA, asisten virtual SMAN 1 Baleendah. Gunakan informasi dari konteks di bawah.
+Hai! Aku AI SMANSA, teman virtual yang siap nemenin kamu ngobrol tentang SMAN 1 Baleendah! 😊
 
-KONTEKS DOKUMEN:
+Berikut info yang aku punya buat kamu:
 {$context}
 
-ATURAN:
-1. Jawab berdasarkan informasi di konteks
-2. Jika info tidak ada: "Info belum tersedia, hubungi sekolah"
-3. Jawab singkat dan langsung ke poin
-4. Gunakan bullet points untuk info kompleks
-5. Ramah dan profesional
+CARA JAWABKU:
+1. Sapa dulu dengan ramah dan hangat (pake "Halo", "Hai", "Eh", dll)
+2. Jawab berdasarkan info di atas, tapi dengan gaya ngobrol santai
+3. Pake emoji biar seru dan gak membosankan ✨
+4. Kalo ada info yang kurang, bilang dengan baik dan kasih saran alternatif
+5. Jangan terlalu kaku atau formal kayak robot
+6. Tutup dengan ajakan buat nanya lagi atau kasih info tambahan yang mungkin berguna
+7. Sebut "SMANSA" dengan bangga! Ini sekolah keren lho
 
-INFORMASI PENTING:
+📍 INFO SINGKAT SMANSA:
 - Alamat: Jl. R.A.A. Wiranatakoesoemah No.30, Baleendah, Bandung 40375
-- Biaya: 100% GRATIS (SMA Negeri)
-- Program: MIPA, IPS, Bahasa
+- Biaya: GRATIS! (SMA Negeri Jawa Barat)
+- Jurusan: MIPA, IPS, Bahasa
 
-Jawab dengan bahasa Indonesia yang natural!
+Contoh gaya jawab:
+- "Halo! Mau tau tentang PPDB ya? Oke, aku jelasin ya..."
+- "Wah, info lengkapnya aku belum punya nih. Tapi kamu bisa tanya langsung ke sekolah, mereka pasti bantu!"
+
+Yuk, jawab dengan gaya yang asik dan ngenakin! 🎉
 PROMPT;
+    }
+
+    /**
+     * Check if query is asking for teacher list
+     * COMPREHENSIVE: Avoid conflicts with program-related queries
+     */
+    protected function isTeacherListQuery(string $query): bool
+    {
+        $queryLower = strtolower($query);
+
+        // Check for specific teacher list patterns FIRST (higher priority)
+        $teacherListPatterns = [
+            'daftar guru', 'list guru', 'data guru', 'nama guru',
+            'siapa saja guru', 'siapa-siapa guru', 'semua guru',
+            'daftar staff', 'list staff', 'data staff',
+            'siapa saja staff', 'semua staff',
+            'tenaga pendidik', 'tata usaha', 'kepala sekolah',
+            'wakasek', 'wakil kepala',
+            'jumlah guru', 'total guru', 'berapa guru',
+            'manajemen sekolah', 'staff manajemen', 'tim manajemen',
+            'humas', 'kesiswaan', 'kurikulum', 'sarana prasarana',
+        ];
+
+        // Check if query has teacher intent with subject/department
+        // e.g., "guru biologi", "guru matematika", "staff perpus"
+        $hasTeacherKeyword = str_contains($queryLower, 'guru') || 
+                            str_contains($queryLower, 'staff') ||
+                            str_contains($queryLower, 'pengajar');
+        
+        $hasListIndicator = str_contains($queryLower, 'siapa') ||
+                           str_contains($queryLower, 'daftar') ||
+                           str_contains($queryLower, 'list') ||
+                           str_contains($queryLower, 'semua');
+        
+        // If query has teacher keyword + list intent, it's a teacher query
+        // This catches queries like "guru biologi", "guru matematika", etc.
+        if ($hasTeacherKeyword && $hasListIndicator) {
+            return true;
+        }
+
+        // EXCLUDE pure program-related queries (without teacher keywords)
+        // These should go to Program/ProgramStudi search instead
+        $programIndicators = [
+            'jurusan', 'peminatan', 'program ', 'prodi', 'saintek', 'soshum',
+            'laboratorium', 'lab '
+        ];
+
+        foreach ($programIndicators as $indicator) {
+            if (str_contains($queryLower, $indicator)) {
+                return false;
+            }
+        }
+
+        // Check for isolated "guru" or "staff" with list intent
+        $listIndicators = ['daftar', 'list', 'siapa saja', 'siapa-siapa', 'semua', 'total', 'jumlah', 'berapa'];
+        $hasListIndicator = false;
+        foreach ($listIndicators as $indicator) {
+            if (str_contains($queryLower, $indicator)) {
+                $hasListIndicator = true;
+                break;
+            }
+        }
+
+        // Only if combined with teacher keyword AND no program keywords
+        if ($hasListIndicator) {
+            $teacherKeywords = ['guru', 'pengajar', 'staff', 'tu ', 'tu,', 'tu?', 'tu!', 'manajemen', 'humas', 'kesiswaan', 'kurikulum'];
+            foreach ($teacherKeywords as $keyword) {
+                if (str_contains($queryLower, $keyword)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if query is about program studi (MIPA/IPS/Bahasa)
+     */
+    protected function isProgramStudiQuery(string $query): bool
+    {
+        $queryLower = strtolower($query);
+
+        $programKeywords = [
+            'mipa', 'ipa ', ' ipa', 'matematika', 'fisika', 'kimia', 'biologi',
+            'ips ', ' ips', 'sosiologi', 'geografi', 'ekonomi', 'sejarah',
+            'bahasa', 'sastra', 'bhs ', 'bhs.', 'inggris', 'indonesia', 'jepang',
+            'jurusan', 'peminatan', 'program studi', 'prodi',
+            'saintek', 'soshum', 'soshum'
+        ];
+
+        foreach ($programKeywords as $keyword) {
+            if (str_contains($queryLower, $keyword)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -1040,12 +1697,104 @@ PROMPT;
      */
     protected function isSchoolRelatedQuery(string $query): bool
     {
-        // Guardrails yang lebih luwes/fleksibel
-        // Kita izinkan hampir semua percakapan wajar agar chatbot tidak kaku.
-        // Filter hanya akan memblokir jika input benar-benar spam atau berbahaya (bisa ditambahkan nanti).
-        // Untuk sekarang, kita return true agar System Prompt yang menangani pembatasan topik secara halus.
+        $queryLower = mb_strtolower($query);
         
-        return true; 
+        // Block known prompt injection attempts or jailbreak patterns
+        $blockedPatterns = [
+            'ignore previous instructions',
+            'ignore all instructions',
+            'system prompt',
+            'dan/jailbreak',
+            'jailbreak',
+            'forget everything',
+            'new rules',
+            'hypothetical scenario',
+            'acting as',
+            'developer mode',
+        ];
+
+        foreach ($blockedPatterns as $pattern) {
+            if (str_contains($queryLower, $pattern)) {
+                Log::warning('[RagService] Potential prompt injection detected', ['query' => $query]);
+                return false;
+            }
+        }
+
+        // List of allowed topics/keywords - EXPANDED for more lenient filtering
+        $allowedTopics = [
+            // School names
+            'sman', 'sekolah', 'baleendah', 'smansa', 'sma', 'negeri', 'man',
+            // Registration & Admission
+            'ppdb', 'pendaftaran', 'daftar', 'online', 'offline', 'cara daftar', 
+            'cara mendaftar', 'syarat', 'dokumen', 'berkas', 'verifikasi', 'zonasi',
+            'afirmasi', 'prestasi', 'mutasi', 'jalur', 'kuota', 'daya tampung',
+            // Students & Teachers
+            'siswa', 'guru', 'murid', 'pengajar', 'tenaga pendidik', 'kepala sekolah', 'wakasek',
+            // Academic
+            'pelajaran', 'kurikulum', 'mata pelajaran', 'mapel', 'kelas', 'rapor', 'nilai',
+            'ujian', 'pts', 'pas', 'pat', 'usbn', 'ujian nasional', 'tka', 'try out',
+            'semester', 'tahun ajaran', 'libur', 'kenaikan kelas', 'kelulusan',
+            // Programs/Subjects
+            'mipa', 'ips', 'bahasa', 'ipa', 'matematika', 'fisika', 'kimia', 'biologi',
+            'ekonomi', 'sosiologi', 'geografi', 'sejarah', 'bimbingan konseling', 'bk',
+            // Extracurricular
+            'eskul', 'ekstrakurikuler', 'organisasi', 'osis', 'pramuka', 'paskibra',
+            'pmr', 'pecinta alam', 'rohis', 'karya ilmiah', 'kir', 'debat', 'english club',
+            'basket', 'voli', 'futsal', 'badmin', 'tenis meja', 'silat', 'taekwondo',
+            'musik', 'paduan suara', 'tari', 'teater', 'fotografi', 'roboitk',
+            // Schedule & Events
+            'jadwal', 'kalender', 'akademik', 'waktu', 'jam', 'hari', 'senin', 'selasa',
+            'rabu', 'kamis', 'jumat', 'sabtu', 'minggu',
+            // Achievements
+            'prestasi', 'lomba', 'juara', 'peringkat', 'medali', 'penghargaan', 'penghargaan',
+            // Alumni & Further Education
+            'alumni', 'lulusan', 'angkatan', 'ptn', 'perguruan tinggi', 'universitas',
+            'institut', 'politeknik', 'snbp', 'snbt', 'sbmptn', 'mandiri', 'kuliah',
+            // Location & Contact
+            'lokasi', 'alamat', 'kontak', 'telepon', 'wa', 'whatsapp', 'email', 'media sosial',
+            'instagram', 'facebook', 'twitter', 'maps', 'rute', ' Transportasi', 'angkot',
+            // Fees & Costs
+            'biaya', 'gratis', 'bayar', 'uang', 'spp', 'iuran', 'bantuan', 'beasiswa', 'kjp',
+            // Facilities
+            'perpustakaan', 'fasilitas', 'kantin', 'lapangan', 'parkir', 'seragam',
+            'atribut', 'laboratorium', 'lab', 'komputer', 'perkantoran', 'toilet', 'mushola',
+            'masjid', 'aula', 'koperasi', 'kantin', 'pos keamanan', 'security', 'parkiran',
+            // Uniform & Attributes
+            'seragam', 'atribut', 'dasi', 'topi', 'logo', 'lambang', 'warna', 'putih', 'abu',
+            // General inquiries
+            'halo', 'hai', 'hello', 'hi', 'selamat', 'pagi', 'siang', 'sore', 'malam',
+            'siapa', 'apa', 'apa itu', 'bantu', 'bantuan', 'tolong', 'tanya', 'bertanya',
+            'bagaimana', 'gimana', 'cara', 'info', 'informasi', 'detail', 'jelaskan', 'penjelasan',
+            'kenapa', 'mengapa', 'kapan', 'dimana', 'di mana', 'berapa', 'siapa', 'mau', 'ingin',
+            'bisa', 'boleh', 'ya', 'tidak', 'ok', 'oke', 'baik', 'terima kasih', 'thanks', 'makasih',
+            'sama-sama', 'sama sama', 'oke', 'sip', 'mantap', 'keren', 'bagus',
+        ];
+
+        foreach ($allowedTopics as $topic) {
+            if (str_contains($queryLower, $topic)) {
+                return true;
+            }
+        }
+        
+        // If query is short, likely a simple greeting or single-word question - allow it
+        if (strlen($query) < 20) {
+            return true;
+        }
+
+        // For longer queries, check if any word might be school-related
+        // Split query and check each word
+        $words = preg_split('/\s+/', $queryLower);
+        $genericWords = ['yang', 'dan', 'atau', 'dengan', 'untuk', 'dari', 'pada', 'dalam', 'saya', 'aku', 'kamu', 'kita'];
+        $meaningfulWords = array_diff($words, $genericWords);
+        
+        // If query has meaningful content but not caught by allowed topics, 
+        // allow it and let the AI handle it gracefully
+        if (count($meaningfulWords) > 0 && strlen($query) < 100) {
+            Log::info('[RagService] Query allowed despite no keyword match', ['query' => $query]);
+            return true;
+        }
+
+        return false; 
     }
 
     /**
@@ -1053,21 +1802,18 @@ PROMPT;
      */
     protected function isNonSchoolResponse(string $response): bool
     {
-        // Relaxed Post-Filter
-        // Kita percayakan pada System Prompt untuk menolak dengan sopan.
-        // Filter ini hanya untuk menangkap jika LLM benar-benar 'berhalusinasi' menjadi assistant umum yang tidak mau membahas sekolah sama sekali.
-        // Untuk sekarang, kita buat sangat minimal atau disable agar jawaban 'basa-basi' tidak terblokir.
-        
         $nonSchoolIndicators = [
-            // 'di luar topik', // Disabled: Allow polite refusal like "Itu di luar topik sekolah..."
-            // 'tidak terkait sekolah',
-            'saya tidak bisa menjawab apapun tentang sekolah', // Extreme case
+            'saya tidak bisa menjawab apapun tentang sekolah',
+            'tidak memiliki informasi tentang sekolah',
+            'asisten ai umum',
+            'i am a large language model',
+            'as an ai language model',
         ];
 
-        $responseLower = strtolower($response);
+        $responseLower = mb_strtolower($response);
         
         foreach ($nonSchoolIndicators as $indicator) {
-            if (strpos($responseLower, $indicator) !== false) {
+            if (str_contains($responseLower, $indicator)) {
                 return true;
             }
         }

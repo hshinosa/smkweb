@@ -1,15 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     BarChart3,
     Calendar,
-    Award,
     BookOpen,
     TrendingUp,
     Filter,
     ChevronRight,
-    Search,
-    AlertCircle
+    ArrowUp,
+    ArrowDown,
+    Minus
 } from 'lucide-react';
 import {
     Chart as ChartJS,
@@ -47,11 +47,10 @@ export default function HasilTkaPage({ tkaGroups = [] }) {
     const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
     const activeGroup = tkaGroups[selectedGroupIndex] || null;
 
-    // Transform data for Chart
     const chartData = useMemo(() => {
         if (!activeGroup) return null;
 
-        const subjects = activeGroup.subjects.sort((a, b) => b.average_score - a.average_score);
+        const subjects = [...activeGroup.subjects].sort((a, b) => b.average_score - a.average_score);
         
         return {
             labels: subjects.map(s => s.subject_name),
@@ -59,14 +58,21 @@ export default function HasilTkaPage({ tkaGroups = [] }) {
                 {
                     label: 'Nilai Rata-rata',
                     data: subjects.map(s => s.average_score),
-                    // Gradient-like solid color for cleaner look, or use pattern
-                    backgroundColor: '#0D47A1', 
-                    borderRadius: 6,
-                    barThickness: 32,
-                    maxBarThickness: 40,
+                    backgroundColor: '#0D47A1',
+                    borderRadius: 4,
+                    barThickness: 28,
                 },
             ],
         };
+    }, [activeGroup]);
+
+    // Hitung max value untuk chart secara dinamis
+    const chartMaxValue = useMemo(() => {
+        if (!activeGroup) return 100;
+        const scores = activeGroup.subjects.map(s => parseFloat(s.average_score));
+        const maxScore = Math.max(...scores);
+        // Round up ke kelipatan 100 terdekat untuk tampilan yang rapi
+        return Math.ceil(maxScore / 100) * 100 + 50;
     }, [activeGroup]);
 
     const chartOptions = {
@@ -74,15 +80,13 @@ export default function HasilTkaPage({ tkaGroups = [] }) {
         maintainAspectRatio: false,
         plugins: {
             legend: { display: false },
-            title: { display: false },
             tooltip: {
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                titleColor: '#0f172a',
-                bodyColor: '#334155',
+                backgroundColor: '#fff',
+                titleColor: '#1e293b',
+                bodyColor: '#475569',
                 borderColor: '#e2e8f0',
                 borderWidth: 1,
                 padding: 12,
-                cornerRadius: 8,
                 callbacks: {
                     label: (context) => ` Rata-rata: ${context.raw}`
                 }
@@ -91,22 +95,21 @@ export default function HasilTkaPage({ tkaGroups = [] }) {
         scales: {
             y: {
                 beginAtZero: true,
-                grid: { color: '#f1f5f9', drawBorder: false },
-                ticks: { font: { family: "'Plus Jakarta Sans', sans-serif" } },
+                suggestedMax: chartMaxValue,
+                grid: { color: '#f1f5f9' },
+                ticks: { font: { family: "'Plus Jakarta Sans'" } },
                 border: { display: false }
             },
             x: {
-                grid: { display: false, drawBorder: false },
+                grid: { display: false },
                 ticks: { 
-                    autoSkip: false,
                     maxRotation: 45,
                     minRotation: 0,
-                    font: { size: 11, family: "'Plus Jakarta Sans', sans-serif" }
+                    font: { size: 11, family: "'Plus Jakarta Sans'" }
                 },
                 border: { display: false }
             }
-        },
-        layout: { padding: { top: 20 } }
+        }
     };
 
     const formatImagePath = (path) => {
@@ -122,17 +125,34 @@ export default function HasilTkaPage({ tkaGroups = [] }) {
         const lastWord = words.pop();
         return (
             <>
-                {words.join(' ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-yellow to-yellow-200">{lastWord}</span>
+                {words.join(' ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">{lastWord}</span>
             </>
         );
     };
 
+    // Hitung statistik ringkas
+    const summaryStats = useMemo(() => {
+        if (!activeGroup) return null;
+        const scores = activeGroup.subjects.map(s => parseFloat(s.average_score));
+        const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : 0;
+        const max = scores.length > 0 ? Math.max(...scores) : 0;
+        const min = scores.length > 0 ? Math.min(...scores) : 0;
+        return { avg, max, min, total: scores.length };
+    }, [activeGroup]);
+
+    const getScoreIndicator = (score) => {
+        const val = parseFloat(score);
+        if (val >= 75) return <ArrowUp className="w-4 h-4 text-emerald-500" />;
+        if (val >= 50) return <Minus className="w-4 h-4 text-amber-500" />;
+        return <ArrowDown className="w-4 h-4 text-red-500" />;
+    };
+
     return (
-        <div className="bg-[#FAFAFA] font-sans text-gray-800 min-h-screen flex flex-col">
+        <div className="bg-white min-h-screen font-sans text-gray-800 flex flex-col">
             <SEOHead 
                 title={`Hasil TKA - ${siteName}`}
-                description={`Rekapitulasi nilai rata-rata Tes Kompetensi Akademik (TKA) siswa ${siteName}.`}
-                keywords="hasil tka, nilai rata-rata, statistik akademik, utbk, try out"
+                description={`Rekapitulasi nilai rata-rata Tes Kompetensi Akademik siswa ${siteName}.`}
+                keywords="hasil tka, nilai rata-rata, statistik akademik, UTBK"
                 image={heroImage}
             />
 
@@ -144,157 +164,178 @@ export default function HasilTkaPage({ tkaGroups = [] }) {
             />
 
             <main id="main-content" className="pt-20 flex-grow" tabIndex="-1">
-                {/* HERO SECTION */}
-                <section className="relative h-[35vh] min-h-[350px] flex items-center justify-center overflow-hidden">
+                {/* HERO SECTION - Konsisten dengan halaman lain */}
+                <section className="relative h-[40vh] min-h-[400px] flex items-center justify-center overflow-hidden">
                     <div className="absolute inset-0 z-0">
                         <img 
                             src={formatImagePath(heroImage)} 
                             alt="Background" 
-                            className="w-full h-full object-cover scale-105"
+                            className="w-full h-full object-cover"
                             loading="eager"
-                            fetchpriority="high"
+                            fetchPriority="high"
                         />
-                        <div className="absolute inset-0 bg-primary/90 mix-blend-multiply"></div>
-                        <div className="absolute inset-0 bg-black/40"></div>
-                        
-                        {/* Decorative pattern */}
-                        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                        <div className="absolute inset-0 bg-black/60"></div>
                     </div>
 
                     <div className="relative z-10 container mx-auto px-4 text-center text-white">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur border border-white/20 mb-4">
-                            <BookOpen className="w-4 h-4 text-accent-yellow" />
-                            <span className="text-xs font-bold tracking-widest uppercase">Evaluasi Akademik</span>
-                        </div>
                         <h1 className={`${TYPOGRAPHY.heroTitle} mb-4`}>
                             {renderHighlightedTitle('Hasil Nilai TKA')}
                         </h1>
-                        <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90 text-lg font-light`}>
-                            Pemetaan kemampuan akademik siswa melalui analisis nilai rata-rata per mata pelajaran.
+                        <p className={`${TYPOGRAPHY.heroText} max-w-2xl mx-auto opacity-90`}>
+                            Analisis capaian akademik siswa melalui Tes Kompetensi Akademik
                         </p>
                     </div>
                 </section>
 
                 {/* CONTENT SECTION */}
-                <section className="py-12 sm:py-16 -mt-10 relative z-20">
+                <section className="py-16 bg-gray-50">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         
                         {tkaGroups.length > 0 ? (
-                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                                 
-                                {/* SIDEBAR FILTER */}
-                                <div className="lg:col-span-1 lg:sticky lg:top-28">
-                                    <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                                        <div className="p-5 border-b border-gray-100 bg-gray-50/50">
+                                {/* SIDEBAR */}
+                                <div className="lg:col-span-1 space-y-6">
+                                    {/* Filter Periode */}
+                                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                                        <div className="p-4 border-b border-gray-100">
                                             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
                                                 <Filter className="w-4 h-4 text-primary" />
                                                 Pilih Periode
                                             </h3>
                                         </div>
-                                        <div className="p-2 space-y-1 max-h-[400px] overflow-y-auto custom-scrollbar">
+                                        <div className="p-2">
                                             {tkaGroups.map((group, idx) => (
                                                 <button
                                                     key={`${group.academic_year}-${group.exam_type}`}
                                                     onClick={() => setSelectedGroupIndex(idx)}
-                                                    className={`w-full text-left p-3 rounded-xl text-sm font-medium transition-all duration-200 group flex items-center justify-between ${
+                                                    className={`w-full text-left p-3 rounded-xl text-sm transition-colors ${
                                                         selectedGroupIndex === idx 
-                                                        ? 'bg-primary text-white shadow-md shadow-blue-500/20' 
-                                                        : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
+                                                        ? 'bg-primary text-white' 
+                                                        : 'text-gray-700 hover:bg-gray-50'
                                                     }`}
                                                 >
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold">{group.exam_type}</span>
-                                                        <span className={`text-xs mt-0.5 ${selectedGroupIndex === idx ? 'text-blue-200' : 'text-gray-400'}`}>
-                                                            Tahun {group.academic_year}
-                                                        </span>
+                                                    <div className="font-semibold">{group.exam_type}</div>
+                                                    <div className={`text-xs mt-0.5 ${selectedGroupIndex === idx ? 'text-blue-200' : 'text-gray-400'}`}>
+                                                        Tahun {group.academic_year}
                                                     </div>
-                                                    {selectedGroupIndex === idx && <ChevronRight className="w-4 h-4" />}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
-                                    
-                                    {/* Info Card */}
-                                    <div className="mt-6 bg-blue-50 rounded-2xl p-5 border border-blue-100 hidden lg:block">
-                                        <h4 className="text-blue-900 font-bold text-sm mb-2 flex items-center gap-2">
-                                            <AlertCircle className="w-4 h-4" /> Informasi
-                                        </h4>
-                                        <p className="text-xs text-blue-700/80 leading-relaxed">
-                                            Grafik menampilkan nilai rata-rata gabungan seluruh siswa pada periode ujian yang dipilih.
+
+                                    {/* Summary Stats */}
+                                    {summaryStats && (
+                                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Ringkasan</h3>
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-gray-500">Rata-rata Keseluruhan</span>
+                                                    <span className="font-bold text-primary">{summaryStats.avg}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-gray-500">Nilai Tertinggi</span>
+                                                    <span className="font-bold text-emerald-600">{summaryStats.max}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-gray-500">Nilai Terendah</span>
+                                                    <span className="font-bold text-gray-600">{summaryStats.min}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-gray-500">Jumlah Mapel</span>
+                                                    <span className="font-bold text-gray-900">{summaryStats.total}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Info */}
+                                    <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100 mb-6">
+                                        <p className="text-xs text-blue-700 leading-relaxed">
+                                            Data menampilkan nilai rata-rata gabungan seluruh siswa pada periode ujian yang dipilih.
                                         </p>
+                                    </div>
+
+                                    {/* Quick Links */}
+                                    <div className="bg-gray-50 rounded-2xl p-6 shadow-sm border border-gray-100">
+                                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Lihat Juga</h3>
+                                        <div className="space-y-2">
+                                            <Link 
+                                                href="/akademik/prestasi-akademik/serapan-ptn" 
+                                                className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-200 text-gray-700 hover:border-primary hover:text-primary transition-colors"
+                                            >
+                                                <span className="font-medium text-sm">Data Serapan PTN</span>
+                                                <ChevronRight className="w-4 h-4" />
+                                            </Link>
+                                            <Link 
+                                                href="/alumni" 
+                                                className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-200 text-gray-700 hover:border-primary hover:text-primary transition-colors"
+                                            >
+                                                <span className="font-medium text-sm">Cerita Alumni</span>
+                                                <ChevronRight className="w-4 h-4" />
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* MAIN CONTENT CHART */}
-                                <div className="lg:col-span-3 space-y-8">
+                                {/* MAIN CONTENT */}
+                                <div className="lg:col-span-3 space-y-6">
                                     {activeGroup && chartData ? (
                                         <>
-                                            {/* CHART CARD */}
-                                            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden p-6 sm:p-8">
-                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                                                    <div>
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide">
-                                                                Grafik Analisis
-                                                            </span>
-                                                        </div>
-                                                        <h2 className="text-2xl font-bold text-gray-900">
-                                                            {activeGroup.exam_type}
-                                                        </h2>
-                                                        <p className="text-gray-500">Tahun Akademik {activeGroup.academic_year}</p>
-                                                    </div>
-                                                    <div className="text-left sm:text-right bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
-                                                        <p className="text-2xl font-black text-primary">
-                                                            {activeGroup.subjects.length}
-                                                        </p>
-                                                        <p className="text-xs text-gray-400 font-semibold uppercase">Mata Pelajaran</p>
-                                                    </div>
+                                            {/* Header */}
+                                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                                <div>
+                                                    <span className="text-xs font-bold text-primary uppercase tracking-wider">{activeGroup.academic_year}</span>
+                                                    <h2 className="text-2xl font-bold text-gray-900">{activeGroup.exam_type}</h2>
                                                 </div>
-                                                
-                                                <div className="h-[350px] sm:h-[450px] w-full relative">
+                                                <div className="bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
+                                                    <span className="text-2xl font-bold text-primary">{activeGroup.subjects.length}</span>
+                                                    <span className="text-sm text-gray-500 ml-1">Mata Pelajaran</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Chart Card */}
+                                            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                                                <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                    <BarChart3 className="w-4 h-4 text-primary" />
+                                                    Grafik Nilai Rata-rata
+                                                </h3>
+                                                <div className="h-[350px]">
                                                     <Bar data={chartData} options={chartOptions} />
                                                 </div>
                                             </div>
 
-                                            {/* DETAIL TABLE CARD */}
-                                            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                                                <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                                                    <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
-                                                        <BookOpen className="w-5 h-5 text-primary" />
-                                                        Rincian Nilai Per Mapel
+                                            {/* Table Card */}
+                                            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                                                <div className="px-6 py-4 border-b border-gray-100">
+                                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                        <BookOpen className="w-4 h-4 text-primary" />
+                                                        Rincian Per Mata Pelajaran
                                                     </h3>
                                                 </div>
                                                 <div className="overflow-x-auto">
-                                                    <table className="w-full text-sm text-left">
-                                                        <thead className="bg-white border-b border-gray-100 text-gray-400 uppercase text-xs font-bold tracking-wider">
+                                                    <table className="w-full text-sm">
+                                                        <thead className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
                                                             <tr>
-                                                                <th className="px-6 py-4">Mata Pelajaran</th>
-                                                                <th className="px-6 py-4">Kategori</th>
-                                                                <th className="px-6 py-4 text-right">Nilai Rata-rata</th>
-                                                                <th className="px-6 py-4 text-right w-24">Status</th>
+                                                                <th className="px-6 py-3 text-left font-semibold">Mata Pelajaran</th>
+                                                                <th className="px-6 py-3 text-right font-semibold">Nilai Rata-rata</th>
+                                                                <th className="px-6 py-3 text-center font-semibold w-20">Status</th>
                                                             </tr>
                                                         </thead>
-                                                        <tbody className="divide-y divide-gray-50">
-                                                            {activeGroup.subjects.sort((a,b) => b.average_score - a.average_score).map((subject, idx) => (
-                                                                <tr key={idx} className="group hover:bg-blue-50/30 transition-colors">
-                                                                    <td className="px-6 py-4 font-bold text-gray-800 group-hover:text-primary transition-colors">
+                                                        <tbody className="divide-y divide-gray-100">
+                                                            {[...activeGroup.subjects]
+                                                                .sort((a, b) => b.average_score - a.average_score)
+                                                                .map((subject, idx) => (
+                                                                <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                                                    <td className="px-6 py-4 font-medium text-gray-900">
                                                                         {subject.subject_name}
                                                                     </td>
-                                                                    <td className="px-6 py-4 text-gray-500">
-                                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                                            Akademik
-                                                                        </span>
-                                                                    </td>
-                                                                    <td className="px-6 py-4 text-right font-black text-gray-900 text-base">
-                                                                        {subject.average_score}
-                                                                    </td>
                                                                     <td className="px-6 py-4 text-right">
-                                                                        <div className="flex justify-end">
-                                                                            {parseFloat(subject.average_score) >= 75 ? (
-                                                                                <TrendingUp className="w-5 h-5 text-emerald-500" />
-                                                                            ) : (
-                                                                                <div className="w-5 h-1 bg-gray-200 rounded-full mt-2"></div>
-                                                                            )}
+                                                                        <span className="font-bold text-gray-900 text-base">{subject.average_score}</span>
+                                                                    </td>
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="flex justify-center">
+                                                                            {getScoreIndicator(subject.average_score)}
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -305,30 +346,57 @@ export default function HasilTkaPage({ tkaGroups = [] }) {
                                             </div>
                                         </>
                                     ) : (
-                                        <div className="h-96 flex flex-col items-center justify-center bg-white rounded-3xl border-2 border-dashed border-gray-200 text-center p-8">
-                                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                                                <BarChart3 className="w-8 h-8 text-gray-300" />
+                                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-16 text-center">
+                                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <BarChart3 className="w-8 h-8 text-gray-400" />
                                             </div>
-                                            <h3 className="text-lg font-bold text-gray-900">Pilih Data</h3>
-                                            <p className="text-gray-500 mt-1 max-w-xs mx-auto">
-                                                Silakan pilih periode ujian di sebelah kiri untuk menampilkan grafik nilai.
-                                            </p>
+                                            <h3 className="text-lg font-bold text-gray-900 mb-2">Pilih Periode</h3>
+                                            <p className="text-gray-500">Silakan pilih periode ujian di sebelah kiri.</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100">
-                                <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-6">
-                                    <BarChart3 className="w-10 h-10 text-gray-300" />
+                            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-16 text-center">
+                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <BarChart3 className="w-8 h-8 text-gray-400" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Belum Ada Data TKA</h2>
+                                <h2 className="text-xl font-bold text-gray-900 mb-2">Belum Ada Data TKA</h2>
                                 <p className="text-gray-600 max-w-md mx-auto">
-                                    Admin sekolah belum mengunggah data hasil TKA. Data akan muncul di sini setelah dipublikasikan.
+                                    Admin sekolah belum mengunggah data hasil TKA.
                                 </p>
                             </div>
                         )}
+                    </div>
+                </section>
 
+                {/* CTA SECTION - Konsisten dengan Landing Page */}
+                <section className="py-20 bg-primary relative overflow-hidden mt-16 rounded-3xl mx-4 mb-16">
+                    {/* Decorative Circles */}
+                    <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                    <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
+
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                            Siap Menjadi Bagian dari Kami?
+                        </h2>
+                        <p className="text-blue-100 text-lg mb-10 max-w-2xl mx-auto">
+                            Bergabunglah dengan {siteName} dan raih impianmu masuk ke Perguruan Tinggi Negeri favorit.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <Link 
+                                href="/informasi-spmb" 
+                                className="px-8 py-4 bg-accent-yellow text-gray-900 font-bold rounded-xl hover:bg-yellow-400 transition-colors shadow-lg"
+                            >
+                                Informasi PPDB
+                            </Link>
+                            <Link 
+                                href="/kontak" 
+                                className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-xl hover:bg-white hover:text-primary transition-colors"
+                            >
+                                Hubungi Kami
+                            </Link>
+                        </div>
                     </div>
                 </section>
             </main>

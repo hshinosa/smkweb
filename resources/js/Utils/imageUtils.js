@@ -29,7 +29,7 @@ export const normalizeUrl = (url) => {
     // If it already starts with /, check if it is a valid path or needs storage prefix
     if (typeof url === 'string' && url.startsWith('/')) {
         // Known public paths that should NOT get /storage prefix
-        const publicPaths = ['/images/', '/scraped-images/', '/logo.png', '/favicon.ico', '/storage/'];
+        const publicPaths = ['/images/', '/scraped-images/', '/logo.png', '/favicon.ico', '/storage/', '/media/'];
         if (publicPaths.some(path => url.startsWith(path))) {
             return url;
         }

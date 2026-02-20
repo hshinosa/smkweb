@@ -26,7 +26,7 @@ class ChatCacheService
     public function generateKey(string $message, array $context = []): string
     {
         // Normalize message for consistent caching (case-insensitive hashing on macOS/Windows)
-        $normalizedMessage = mb_strtolower(trim($message));
+        $normalizedMessage = trim($message);
         
         // Include context in key to account for session-specific caching
         $content = $normalizedMessage . json_encode($context);
@@ -57,14 +57,22 @@ class ChatCacheService
             
             if ($cached !== null) {
                 $this->recordHit();
-                
+
                 Log::info('[ChatCacheService] Cache hit', [
                     'message' => substr($message, 0, 50),
                     'key' => substr($key, -10),
                 ]);
+
+                return $cached;
             }
-            
-            return $cached;
+
+            $this->recordMiss();
+            Log::info('[ChatCacheService] Cache miss', [
+                'message' => substr($message, 0, 50),
+                'key' => substr($key, -10),
+            ]);
+
+            return null;
         } catch (\Exception $e) {
             Log::warning('[ChatCacheService] Get failed', [
                 'error' => $e->getMessage(),
@@ -106,9 +114,21 @@ class ChatCacheService
             // Track cache metadata
             Cache::increment($this->prefix . 'size');
             Cache::put($this->prefix . 'last:' . $key, now()->timestamp, $this->ttl);
-            
+
             // Add to batch for tracking
             $this->addToBatch($key);
+
+            // Ensure size doesn't exceed max after eviction
+            $newSize = (int) Cache::get($this->prefix . 'size', 0);
+            if ($newSize > $this->maxSize) {
+                $evicted = $this->evictBatch();
+                if ($evicted > 0) {
+                    Log::info('[ChatCacheService] Evicted cache entries post-insert', [
+                        'count' => $evicted,
+                        'new_size' => Cache::get($this->prefix . 'size', 0),
+                    ]);
+                }
+            }
             
             Log::debug('[ChatCacheService] Response cached', [
                 'message' => substr($message, 0, 50),
@@ -184,53 +204,48 @@ class ChatCacheService
     protected function evictBatch(): int
     {
         try {
-            $evictedCount = 0;
-            
+            $oldestKey = null;
+            $oldestTimestamp = PHP_INT_MAX;
+            $oldestBatchKey = null;
+
             for ($i = 0; $i < $this->batchCount; $i++) {
-                $batchNum = 'batch:' . $i;
-                $batchKey = $this->prefix . $batchNum;
+                $batchKey = $this->prefix . 'batch:' . $i;
                 $batch = Cache::get($batchKey, []);
-                
+
                 if (empty($batch)) {
                     continue;
                 }
-                
-                // Find oldest key in this batch
-                $oldestKey = null;
-                $oldestTimestamp = PHP_INT_MAX;
-                
+
                 foreach ($batch as $key) {
                     $timestamp = Cache::get($this->prefix . 'last:' . $key, 0);
-                    
+
                     if ($timestamp < $oldestTimestamp) {
                         $oldestTimestamp = $timestamp;
                         $oldestKey = $key;
+                        $oldestBatchKey = $batchKey;
                     }
-                }
-                
-                if ($oldestKey) {
-                    Cache::forget($oldestKey);
-                    Cache::forget($this->prefix . 'last:' . $oldestKey);
-                    Cache::decrement($this->prefix . 'size');
-                    
-                    // Remove from batch
-                    $batchKeyWithoutPrefix = str_replace($this->prefix, '', $batchNum);
-                    $batch = Cache::get($batchKeyWithoutPrefix, []);
-                    $batch = array_diff($batch, [$oldestKey]);
-                    
-                    if (empty($batch)) {
-                        Cache::forget($batchKeyWithoutPrefix);
-                        Cache::decrement($this->prefix . 'batch_count');
-                    } else {
-                        Cache::put($batchKeyWithoutPrefix, $batch, $this->ttl);
-                    }
-                    
-                    $evictedCount++;
                 }
             }
-            
-            return $evictedCount;
-            
+
+            if (!$oldestKey || !$oldestBatchKey) {
+                return 0;
+            }
+
+            Cache::forget($oldestKey);
+            Cache::forget($this->prefix . 'last:' . $oldestKey);
+            Cache::decrement($this->prefix . 'size');
+
+            $batch = Cache::get($oldestBatchKey, []);
+            $batch = array_values(array_diff($batch, [$oldestKey]));
+
+            if (empty($batch)) {
+                Cache::forget($oldestBatchKey);
+                Cache::decrement($this->prefix . 'batch_count');
+            } else {
+                Cache::put($oldestBatchKey, $batch, $this->ttl);
+            }
+
+            return 1;
         } catch (\Exception $e) {
             Log::error('[ChatCacheService] Batch eviction failed', [
                 'error' => $e->getMessage(),

@@ -1,0 +1,1 @@
+import{j as a}from"./markdown-vendor-CIGiOj7E.js";import{T as e}from"./typography-ChUjANkt.js";function n({value:r,className:o="",children:s,...t}){return a.jsx("label",{...t,className:`block ${e.formLabel} `+o,children:r||s})}export{n as I};
